@@ -1,0 +1,1671 @@
+"Info"
+{
+	"0" "English Name"
+	"1" "French Name"
+	"2" "Czech Name"
+	"3" "Region"
+}
+"0"
+{
+	"0" "Afghanistan"
+	"1" "Afghanistan"
+	"2" "Afghanestan"
+	"3" "South-Central Asia"
+}
+"1"
+{
+	"0" "Albania"
+	"1" "Albanie"
+	"2" "Shqiperia"
+	"3" "Southern Europe"
+}
+"2"
+{
+	"0" "Algeria"
+	"1" "Algérie"
+	"2" "Al Jaza'ir"
+	"3" "Northern Africa"
+}
+"3"
+{
+	"0" "American Samoa"
+	"1" "Samoa Américaines"
+	"2" "American Samoa"
+	"3" "Polynesia, Oceania"
+}
+"4"
+{
+	"0" "Andorra"
+	"1" "Andorre"
+	"2" "Andorra"
+	"3" "Southern Europe"
+}
+"5"
+{
+	"0" "Angola"
+	"1" "Angola"
+	"2" "Angola"
+	"3" "Central Africa"
+}
+"6"
+{
+	"0" "Anguilla"
+	"1" "Anguilla"
+	"2" "Anguilla"
+	"3" "Leeward Islands, Caribbean"
+}
+"7"
+{
+	"0" "Antarctica"
+	"1" "Antarctique"
+	"2" "Antarctica"
+	"3" "Antarctica"
+}
+"8"
+{
+	"0" "Antigua and Barbuda"
+	"1" "Antigua-et-Barbuda"
+	"2" "Antigua and Barbuda"
+	"3" "Leeward Islands, Caribbean"
+}
+"9"
+{
+	"0" "Argentina"
+	"1" "Argentine"
+	"2" "Argentina"
+	"3" "Southern South America"
+}
+"10"
+{
+	"0" "Armenia"
+	"1" "Arménie"
+	"2" "Hayastan"
+	"3" "Western Asia"
+}
+"11"
+{
+	"0" "Aruba"
+	"1" "Aruba"
+	"2" "Aruba"
+	"3" "Leeward Islands, Caribbean"
+}
+"12"
+{
+	"0" "Australia"
+	"1" "Australie"
+	"2" "Australia"
+	"3" "Australia"
+}
+"13"
+{
+	"0" "Austria"
+	"1" "Autriche"
+	"2" "Österreich"
+	"3" "Western Europe"
+}
+"14"
+{
+	"0" "Azerbaijan"
+	"1" "Azerbaidjan"
+	"2" "Azarbaycan"
+	"3" "Caucasus, Western Asia"
+}
+"15"
+{
+	"0" "Bahamas"
+	"1" "Bahamas"
+	"2" "Bahamas"
+	"3" "Caribbean"
+}
+"16"
+{
+	"0" "Bahrain"
+	"1" "Bahrein"
+	"2" "Al Bahrayn"
+	"3" "Arabian Peninsula, Middle East"
+}
+"17"
+{
+	"0" "Bangladesh"
+	"1" "Bangladesh"
+	"2" "Bangladesh"
+	"3" "South-Central Asia"
+}
+"18"
+{
+	"0" "Barbados"
+	"1" "Barbade"
+	"2" "Barbados"
+	"3" "Lesser Antilles, Caribbean"
+}
+"19"
+{
+	"0" "Belarus"
+	"1" "Bélarus"
+	"2" "Byelarus"
+	"3" "Eastern Europe"
+}
+"20"
+{
+	"0" "Belgium"
+	"1" "Belgique"
+	"2" "Belgique/Belgie"
+	"3" "Western Europe"
+}
+"21"
+{
+	"0" "Belize"
+	"1" "Belize"
+	"2" "Belize"
+	"3" "Central America"
+}
+"22"
+{
+	"0" "Benin"
+	"1" "Bénin"
+	"2" "Benin"
+	"3" "West Africa"
+}
+"23"
+{
+	"0" "Bermuda"
+	"1" "Bermudes"
+	"2" "Bermuda"
+	"3" "North America"
+}
+"24"
+{
+	"0" "Bhutan"
+	"1" "Bhoutan"
+	"2" "Bhutan"
+	"3" "South-Central Asia"
+}
+"25"
+{
+	"0" "Bolivia"
+	"1" "Bolivie"
+	"2" "Bolivia"
+	"3" "Central South America"
+}
+"26"
+{
+	"0" "Bosnia and Herzegovina"
+	"1" "Bosnie-Herzégovine"
+	"2" "Bosna i Hercegovina"
+	"3" "Southern Europe"
+}
+"27"
+{
+	"0" "Botswana"
+	"1" "Botswana"
+	"2" "Botswana"
+	"3" "Southern Africa"
+}
+"28"
+{
+	"0" "Brazil"
+	"1" "Brésil"
+	"2" "Brasil"
+	"3" "Central Eastern South America"
+}
+"29"
+{
+	"0" "Brunei Darussalam"
+	"1" "Brunéi Darussalam"
+	"2" "Negara Brunei Darussalam"
+	"3" "Southeast Asia"
+}
+"30"
+{
+	"0" "Bulgaria"
+	"1" "Bulgarie"
+	"2" "Bulgaria"
+	"3" "Eastern Europe"
+}
+"31"
+{
+	"0" "Burkina Faso"
+	"1" "Burkina Faso"
+	"2" "Burkina Faso"
+	"3" "West Africa"
+}
+"32"
+{
+	"0" "Burundi"
+	"1" "Burundi"
+	"2" "Burundi"
+	"3" "Eastern Africa, African Great Lakes"
+}
+"33"
+{
+	"0" "Cambodia"
+	"1" "Cambodge"
+	"2" "Kampuchea"
+	"3" "South-East Asia"
+}
+"34"
+{
+	"0" "Cameroon"
+	"1" "Cameroun"
+	"2" "Cameroon"
+	"3" "Central Africa"
+}
+"35"
+{
+	"0" "Canada"
+	"1" "Canada"
+	"2" "Canada"
+	"3" "North North America"
+}
+"36"
+{
+	"0" "Cape Verde"
+	"1" "Cap-Vert"
+	"2" "Cabo Verde"
+	"3" "West Africa"
+}
+"37"
+{
+	"0" "Cayman Islands"
+	"1" "Caimanes, Îles"
+	"2" "Cayman Islands"
+	"3" "Greater Antilles, Caribbean"
+}
+"38"
+{
+	"0" "Central African Republic"
+	"1" "Centrafricaine, République"
+	"2" "Republique Centrafricaine"
+	"3" "Central Africa"
+}
+"39"
+{
+	"0" "Chad"
+	"1" "Tchad"
+	"2" "Tchad"
+	"3" "Central Africa"
+}
+"40"
+{
+	"0" "Chile"
+	"1" "Chili"
+	"2" "Chile"
+	"3" "Western South America"
+}
+"41"
+{
+	"0" "China"
+	"1" "Chine"
+	"2" "Zhong Guo"
+	"3" "Eastern Asia"
+}
+"42"
+{
+	"0" "Christmas Island"
+	"1" "Île Christmas"
+	"2" "Christmas Island"
+	"3" "Southeast Asia"
+}
+"43"
+{
+	"0" "Cocos (Keeling) Islands"
+	"1" "Îles Cocos (Keeling)"
+	"2" "Cocos (Keeling) Islands"
+	"3" "South-East Asia, Australia"
+}
+"44"
+{
+	"0" "Colombia"
+	"1" "Colombie"
+	"2" "Colombia"
+	"3" "North West South America"
+}
+"45"
+{
+	"0" "Comoros"
+	"1" "Comores"
+	"2" "Comores"
+	"3" "Eastern Africa"
+}
+"46"
+{
+	"0" "Democratic Republic of the Congo (Kinshasa)"
+	"1" "Congo, La République Démocratique du"
+	"2" "République Démocratique du Congo"
+	"3" "Central Africa"
+}
+"47"
+{
+	"0" "Congo, Republic of (Brazzaville)"
+	"1" "République du Congo"
+	"2" "République du Congo"
+	"3" "Central Africa"
+}
+"48"
+{
+	"0" "Cook Islands"
+	"1" "Îles Cook"
+	"2" "Cook Islands"
+	"3" "Polynesia, Oceania"
+}
+"49"
+{
+	"0" "Costa Rica"
+	"1" "Costa Rica"
+	"2" "Costa Rica"
+	"3" "Central America"
+}
+"50"
+{
+	"0" "Ivory Coast"
+	"1" "Côte D'ivoire"
+	"2" "Cote d'Ivoire"
+	"3" "West Africa"
+}
+"51"
+{
+	"0" "Croatia"
+	"1" "Croatie"
+	"2" "Hrvatska"
+	"3" "Southern Europe"
+}
+"52"
+{
+	"0" "Cuba"
+	"1" "Cuba"
+	"2" "Cuba"
+	"3" "Greater Antilles, Caribbean"
+}
+"53"
+{
+	"0" "Cyprus"
+	"1" "Chypre"
+	"2" "Kibris, Kypros"
+	"3" "Mediterranean, Western Asia"
+}
+"54"
+{
+	"0" "Czech Republic"
+	"1" "République Tcheque"
+	"2" "Ceska Republika"
+	"3" "Eastern Europe"
+}
+"55"
+{
+	"0" "Denmark"
+	"1" "Danemark"
+	"2" "Danmark"
+	"3" "Northern Europe"
+}
+"56"
+{
+	"0" "Djibouti"
+	"1" "Djibouti"
+	"2" "Djibouti"
+	"3" "Eastern Africa"
+}
+"57"
+{
+	"0" "Dominica"
+	"1" "Dominique"
+	"2" "Dominica"
+	"3" "Lesser Antilles, Caribbean"
+}
+"58"
+{
+	"0" "Dominican Republic"
+	"1" "Dominicaine, République"
+	"2" "Dominicana, Republica"
+	"3" "Greater Antilles, Caribbean"
+}
+"59"
+{
+	"0" "East Timor (Timor-Leste)"
+	"1" "Timor-Leste (Timor Oriental)"
+	"2" "Timor"
+	"3" "South-East Asia"
+}
+"60"
+{
+	"0" "Ecuador"
+	"1" "Équateur"
+	"2" "Ecuador"
+	"3" "North West South America"
+}
+"61"
+{
+	"0" "Egypt"
+	"1" "Égypte"
+	"2" "Misr"
+	"3" "Africa, Middle East"
+}
+"62"
+{
+	"0" "El Salvador"
+	"1" "El Salvador"
+	"2" "El Salvador"
+	"3" "Central America"
+}
+"63"
+{
+	"0" "Equatorial Guinea"
+	"1" "Guinée Équatoriale"
+	"2" "Guinea Ecuatorial"
+	"3" "Central Africa"
+}
+"64"
+{
+	"0" "Eritrea"
+	"1" "Érythrée"
+	"2" "Hagere Ertra"
+	"3" "Eastern Africa"
+}
+"65"
+{
+	"0" "Estonia"
+	"1" "Estonie"
+	"2" "Eesti Vabariik"
+	"3" "Northern Europe"
+}
+"66"
+{
+	"0" "Ethiopia"
+	"1" "Éthiopie"
+	"2" "Ityop'iya"
+	"3" "Eastern Africa"
+}
+"67"
+{
+	"0" "Falkland Islands"
+	"1" "Falkland, Îles (Malvinas)"
+	"2" "Islas Malvinas"
+	"3" "Southern South America"
+}
+"68"
+{
+	"0" "Faroe Islands"
+	"1" "Îles Féroé"
+	"2" "Foroyar"
+	"3" "Northern Europe"
+}
+"69"
+{
+	"0" "Fiji"
+	"1" "Fidji"
+	"2" "Fiji"
+	"3" "Melanesia, Oceania"
+}
+"70"
+{
+	"0" "Finland"
+	"1" "Finlande"
+	"2" "Suomen Tasavalta"
+	"3" "Northern Europe"
+}
+"71"
+{
+	"0" "France"
+	"1" "France"
+	"2" "France"
+	"3" "Western Europe"
+}
+"72"
+{
+	"0" "French Guiana"
+	"1" "Guyane Française"
+	"2" "Guyane"
+	"3" "Northern South America"
+}
+"73"
+{
+	"0" "French Polynesia"
+	"1" "Polynésie Française"
+	"2" "Polynésie Française"
+	"3" "Polynesia, Oceania"
+}
+"74"
+{
+	"0" "French Southern Territories"
+	"1" "Terres Australes Françaises"
+	"2" "Terres Australes et Antarctiques Françaises"
+	"3" "Southern South America, Antarctic"
+}
+"75"
+{
+	"0" "Gabon"
+	"1" "Gabon"
+	"2" "Gabon"
+	"3" "Central Africa"
+}
+"76"
+{
+	"0" "Gambia"
+	"1" "Gambie"
+	"2" "The Gambia"
+	"3" "West Africa"
+}
+"77"
+{
+	"0" "Georgia"
+	"1" "Géorgie"
+	"2" "Sak'art'velo"
+	"3" "Western Asia"
+}
+"78"
+{
+	"0" "Germany"
+	"1" "Allemagne"
+	"2" "Deutschland"
+	"3" "Western Europe"
+}
+"79"
+{
+	"0" "Ghana"
+	"1" "Ghana"
+	"2" "Ghana"
+	"3" "West Africa"
+}
+"80"
+{
+	"0" "Gibraltar"
+	"1" "Gibraltar"
+	"2" "Gibraltar"
+	"3" "Southern Europe"
+}
+"81"
+{
+	"0" "Great Britain"
+	"1" "Grande-Bretagne"
+	"2" "Great Britain"
+	"3" "Northern Europe"
+}
+"82"
+{
+	"0" "Greece"
+	"1" "Grece"
+	"2" "Ellas or Ellada"
+	"3" "Southern Europe"
+}
+"83"
+{
+	"0" "Greenland"
+	"1" "Groenland"
+	"2" "Kalaallit Nunaat"
+	"3" "North America"
+}
+"84"
+{
+	"0" "Grenada"
+	"1" "Grenade"
+	"2" "Grenada"
+	"3" "Lesser Antilles, Caribbean"
+}
+"85"
+{
+	"0" "Guadeloupe"
+	"1" "Guadeloupe"
+	"2" "Guadeloupe"
+	"3" "Lesser Antilles, Caribbean"
+}
+"86"
+{
+	"0" "Guam"
+	"1" "Guam"
+	"2" "Guam"
+	"3" "Micronesia, Oceania"
+}
+"87"
+{
+	"0" "Guatemala"
+	"1" "Guatemala"
+	"2" "Guatemala"
+	"3" "Central America"
+}
+"88"
+{
+	"0" "Guinea"
+	"1" "Guinéee"
+	"2" "Guinee"
+	"3" "West Africa"
+}
+"89"
+{
+	"0" "Guinea-Bissau"
+	"1" "Guinée-Bissau"
+	"2" "Guine-Bissau"
+	"3" "West Africa"
+}
+"90"
+{
+	"0" "Guyana"
+	"1" "Guyana"
+	"2" "Guyana"
+	"3" "North Eastern South America"
+}
+"91"
+{
+	"0" "Haiti"
+	"1" "Haiti"
+	"2" "Haiti"
+	"3" "Greater Antilles, Caribbean"
+}
+"92"
+{
+	"0" "Holy See"
+	"1" "Saint-Siege (État de la Cité du Vatican)"
+	"2" "Status Civitatis Vaticana"
+	"3" "Southern Europe within Italy"
+}
+"93"
+{
+	"0" "Honduras"
+	"1" "Honduras"
+	"2" "Honduras"
+	"3" "Central America"
+}
+"94"
+{
+	"0" "Hong Kong"
+	"1" "Hong-Kong"
+	"2" "Xianggang"
+	"3" "Eastern Asia"
+}
+"95"
+{
+	"0" "Hungary"
+	"1" "Hongrie"
+	"2" "Magyarorszag"
+	"3" "Eastern Europe"
+}
+"96"
+{
+	"0" "Iceland"
+	"1" "Islande"
+	"2" "Lyoveldio Island"
+	"3" "Northern Europe"
+}
+"97"
+{
+	"0" "India"
+	"1" "Inde"
+	"2" "Bharat"
+	"3" "South-Central Asia"
+}
+"98"
+{
+	"0" "Indonesia"
+	"1" "Indonésie"
+	"2" "Indonesia"
+	"3" "Maritime South-East Asia"
+}
+"99"
+{
+	"0" "Iran (Islamic Republic of)"
+	"1" "République Islamique d' Iran"
+	"2" "Iran"
+	"3" "South-Central Asia"
+}
+"100"
+{
+	"0" "Iraq"
+	"1" "Iraq"
+	"2" "Iraq"
+	"3" "Middle East, Western Asia"
+}
+"101"
+{
+	"0" "Ireland"
+	"1" "Irlande"
+	"2" "Éire"
+	"3" "Northern Europe"
+}
+"102"
+{
+	"0" "Israel"
+	"1" "Israël"
+	"2" "Yisra'el"
+	"3" "Middle East, Western Asia"
+}
+"103"
+{
+	"0" "Italy"
+	"1" "Italie"
+	"2" "Italia"
+	"3" "Southern Europe"
+}
+"104"
+{
+	"0" "Jamaica"
+	"1" "Jamaique"
+	"2" "Jamaica"
+	"3" "Greater Antilles, Caribbean"
+}
+"105"
+{
+	"0" "Japan"
+	"1" "Japon"
+	"2" "Nippon"
+	"3" "Eastern Asia"
+}
+"106"
+{
+	"0" "Jordan"
+	"1" "Jordanie"
+	"2" "Al Urdun"
+	"3" "Middle East, Western Asia"
+}
+"107"
+{
+	"0" "Kazakhstan"
+	"1" "Kazakstan"
+	"2" "Qazaqstan"
+	"3" "Central Asia"
+}
+"108"
+{
+	"0" "Kenya"
+	"1" "Kenya"
+	"2" "Kenya"
+	"3" "Eastern Africa"
+}
+"109"
+{
+	"0" "Kiribati"
+	"1" "Kiribati"
+	"2" "Kiribati, Kiribas"
+	"3" "Micronesia, Oceania"
+}
+"110"
+{
+	"0" "Korea, Democratic People's Rep. (North Korea)"
+	"1" "Corée, République Populaire Démocratique de"
+	"2" "Choson"
+	"3" "Eastern Asia"
+}
+"111"
+{
+	"0" "Korea, Republic of (South Korea)"
+	"1" "Corée, République de"
+	"2" "Han-guk"
+	"3" "Eastern Asia"
+}
+"112"
+{
+	"0" "Kosovo"
+	"1" "Kosovo"
+	"2" "Kosovo"
+	"3" "Albanian: : Kosova ou Kosovë"
+}
+"113"
+{
+	"0" "Serbian: Kosovo"
+	"1" "Southern Europe"
+}
+"114"
+{
+	"0" "Kuwait"
+	"1" "Koweit"
+	"2" "Al Kuwayt"
+	"3" "Middle East, Western Asia"
+}
+"115"
+{
+	"0" "Kyrgyzstan"
+	"1" "Kirghizistan"
+	"2" "Kyrgyz Respublikasy"
+	"3" "Central Asia"
+}
+"116"
+{
+	"0" "Lao, People's Democratic Republic"
+	"1" "Lao, République Démocratique Populaire"
+	"2" "Lao"
+	"3" "South-East Asia"
+}
+"117"
+{
+	"0" "Latvia"
+	"1" "Lettonie"
+	"2" "Latvija"
+	"3" "Northern Europe"
+}
+"118"
+{
+	"0" "Lebanon"
+	"1" "Liban"
+	"2" "Lubnan"
+	"3" "Middle East, Western Asia"
+}
+"119"
+{
+	"0" "Lesotho"
+	"1" "Lesotho"
+	"2" "Lesotho"
+	"3" "Southern Africa"
+}
+"120"
+{
+	"0" "Liberia"
+	"1" "Libéria"
+	"2" "Liberia"
+	"3" "West Africa"
+}
+"121"
+{
+	"0" "Libya"
+	"1" "Libye"
+	"2" "Libiyah"
+	"3" "Northern Africa"
+}
+"122"
+{
+	"0" "Liechtenstein"
+	"1" "Liechtenstein"
+	"2" "Liechtenstein"
+	"3" "Western Europe"
+}
+"123"
+{
+	"0" "Lithuania"
+	"1" "Lituanie"
+	"2" "Lietuva"
+	"3" "Northern Europe"
+}
+"124"
+{
+	"0" "Luxembourg"
+	"1" "Luxembourg"
+	"2" "Luxembourg, Letzebuerg"
+	"3" "Western Europe"
+}
+"125"
+{
+	"0" "Macau"
+	"1" "Macao"
+	"2" "Aomen"
+	"3" "Eastern Asia"
+}
+"126"
+{
+	"0" "Macedonia, Rep. of"
+	"1" "Macédoine, l'ex-République Yougoslave de"
+	"2" "Makedonija"
+	"3" "Southern Europe"
+}
+"127"
+{
+	"0" "Madagascar"
+	"1" "Madagascar"
+	"2" "Madagascar"
+	"3" "Eastern Africa"
+}
+"128"
+{
+	"0" "Malawi"
+	"1" "Malawi"
+	"2" "Malawi"
+	"3" "Eastern Africa"
+}
+"129"
+{
+	"0" "Malaysia"
+	"1" "Malaisie"
+	"2" "Malaysia"
+	"3" "Southeast Asia"
+}
+"130"
+{
+	"0" "Maldives"
+	"1" "Maldives"
+	"2" "Dhivehi Raajje"
+	"3" "South-Central Asia"
+}
+"131"
+{
+	"0" "Mali"
+	"1" "Mali"
+	"2" "Mali"
+	"3" "West Africa"
+}
+"132"
+{
+	"0" "Malta"
+	"1" "Malte"
+	"2" "Malta"
+	"3" "Southern Europe"
+}
+"133"
+{
+	"0" "Marshall Islands"
+	"1" "Îles Marshall"
+	"2" "Marshall Islands"
+	"3" "Micronesia, Oceania"
+}
+"134"
+{
+	"0" "Martinique"
+	"1" "Martinique"
+	"2" "Martinique"
+	"3" "Lesser Antilles, Caribbean"
+}
+"135"
+{
+	"0" "Mauritania"
+	"1" "Mauritanie"
+	"2" "Muritaniyah"
+	"3" "West Africa"
+}
+"136"
+{
+	"0" "Mauritius"
+	"1" "Île Maurice"
+	"2" "Mauritius"
+	"3" "Eastern Africa"
+}
+"137"
+{
+	"0" "Mayotte"
+	"1" "Mayotte"
+	"2" "Mayotte"
+	"3" "Eastern Africa"
+}
+"138"
+{
+	"0" "Mexico"
+	"1" "Mexique"
+	"2" "Estados Unidos Mexicanos"
+	"3" "North America"
+}
+"139"
+{
+	"0" "Micronesia, Federal States of"
+	"1" "États Fédérés de Micronésie"
+	"2" "Micronesia"
+	"3" "Micronesia, Oceania"
+}
+"140"
+{
+	"0" "Moldova, Republic of"
+	"1" "Moldova, République de"
+	"2" "Moldova"
+	"3" "Eastern Europe"
+}
+"141"
+{
+	"0" "Monaco"
+	"1" "Monaco"
+	"2" "Monaco"
+	"3" "Southern Europe"
+}
+"142"
+{
+	"0" "Mongolia"
+	"1" "Mongolie"
+	"2" "Mongol Uls"
+	"3" "Eastern Asia"
+}
+"143"
+{
+	"0" "Montenegro"
+	"1" "Monténégro"
+	"2" "Crna Gora"
+	"3" "Southern Europe"
+}
+"144"
+{
+	"0" "Montserrat"
+	"1" "Montserrat"
+	"2" "Montserrat"
+	"3" "Lesser Antilles, Caribbean"
+}
+"145"
+{
+	"0" "Morocco"
+	"1" "Maroc"
+	"2" "Al Maghrib"
+	"3" "Northern Africa"
+}
+"146"
+{
+	"0" "Mozambique"
+	"1" "Mozambique"
+	"2" "Mocambique"
+	"3" "Eastern Africa"
+}
+"147"
+{
+	"0" "Myanmar, Burma"
+	"1" "Myanmar, Birmanie"
+	"2" "Myanma Naingngandaw"
+	"3" "Southeast Asia"
+}
+"148"
+{
+	"0" "Namibia"
+	"1" "Namibie"
+	"2" "Namibia"
+	"3" "Southern Africa"
+}
+"149"
+{
+	"0" "Nauru"
+	"1" "Nauru"
+	"2" "Nauru"
+	"3" "Micronesia, Oceania"
+}
+"150"
+{
+	"0" "Nepal"
+	"1" "Népal"
+	"2" "Nepal"
+	"3" "South-Central Asia"
+}
+"151"
+{
+	"0" "Netherlands"
+	"1" "Pays-Bas"
+	"2" "Nederland/Holland"
+	"3" "Western Europe"
+}
+"152"
+{
+	"0" "Netherlands Antilles"
+	"1" "Antilles Néerlandaises"
+	"2" "Nederlandse Antillen"
+	"3" "Caribbean"
+}
+"153"
+{
+	"0" "New Caledonia"
+	"1" "Nouvelle-Calédonie"
+	"2" "Nouvelle-Calédonie"
+	"3" "Melanesia, Oceania"
+}
+"154"
+{
+	"0" "New Zealand"
+	"1" "Nouvelle-Zélande"
+	"2" "Aotearoa"
+	"3" "Oceania; Australia"
+}
+"155"
+{
+	"0" "Nicaragua"
+	"1" "Nicaragua"
+	"2" "Nicaragua"
+	"3" "Central America"
+}
+"156"
+{
+	"0" "Niger"
+	"1" "Niger"
+	"2" "Niger"
+	"3" "West Africa"
+}
+"157"
+{
+	"0" "Nigeria"
+	"1" "Nigéria"
+	"2" "Nigeria"
+	"3" "West Africa"
+}
+"158"
+{
+	"0" "Niue"
+	"1" "Nioué"
+	"2" "Niue"
+	"3" "Polynesia, Oceania"
+}
+"159"
+{
+	"0" "Northern Mariana Islands"
+	"1" "Îles Mariannes du Nord"
+	"2" "Northern Mariana Islands"
+	"3" "Micronesia, Oceania"
+}
+"160"
+{
+	"0" "Norway"
+	"1" "Norvege"
+	"2" "Norge"
+	"3" "Northern Europe"
+}
+"161"
+{
+	"0" "Oman"
+	"1" "Oman"
+	"2" "Saltanat Uman"
+	"3" "Middle East"
+}
+"162"
+{
+	"0" "Pakistan"
+	"1" "Pakistan"
+	"2" "Pakistan"
+	"3" "South-Central Asia"
+}
+"163"
+{
+	"0" "Palau"
+	"1" "Palaos"
+	"2" "Belau"
+	"3" "Micronesia, Oceania"
+}
+"164"
+{
+	"0" "Palestinian territories"
+	"1" "Autorité Nationale Palestinienne"
+	"2" "Filastin"
+	"3" "Middle East, Western Asia"
+}
+"165"
+{
+	"0" "Panama"
+	"1" "Panama"
+	"2" "Panama"
+	"3" "Central America"
+}
+"166"
+{
+	"0" "Papua New Guinea"
+	"1" "Papouasie-Nouvelle-Guinée"
+	"2" "Papua Niu Gini"
+	"3" "Maritime Southeast Asia, Melanesia, Oceania"
+}
+"167"
+{
+	"0" "Paraguay"
+	"1" "Paraguay"
+	"2" "Paraguay"
+	"3" "Central South America"
+}
+"168"
+{
+	"0" "Peru"
+	"1" "Pérou"
+	"2" "Peru"
+	"3" "Western South America"
+}
+"169"
+{
+	"0" "Philippines"
+	"1" "Philippines"
+	"2" "Pilipinas"
+	"3" "Southeast Asia"
+}
+"170"
+{
+	"0" "Pitcairn Island"
+	"1" "Pitcairn"
+	"2" "Pitcairn Island"
+	"3" "Polynesia, Oceania"
+}
+"171"
+{
+	"0" "Poland"
+	"1" "Pologne"
+	"2" "Polska"
+	"3" "Eastern Europe"
+}
+"172"
+{
+	"0" "Portugal"
+	"1" "Portugal"
+	"2" "Portugal"
+	"3" "Southern Europe"
+}
+"173"
+{
+	"0" "Puerto Rico"
+	"1" "Porto Rico"
+	"2" "Puerto Rico"
+	"3" "Greater Antilles, Caribbean"
+}
+"174"
+{
+	"0" "Qatar"
+	"1" "Qatar"
+	"2" "Dawlat Qatar"
+	"3" "Arabian Peninsula, Middle East"
+}
+"175"
+{
+	"0" "Reunion Island"
+	"1" "Ile de la Réunion"
+	"2" "Ile de la Réunion"
+	"3" "Eastern Africa"
+}
+"176"
+{
+	"0" "Romania"
+	"1" "Roumanie"
+	"2" "Romania"
+	"3" "Eastern Europe"
+}
+"177"
+{
+	"0" "Russian Federation"
+	"1" "Russie, Fédération de"
+	"2" "Rossiya"
+	"3" "Eastern Europe - Northern Asia"
+}
+"178"
+{
+	"0" "Rwanda"
+	"1" "Rwanda"
+	"2" "Rwanda"
+	"3" "Eastern Africa, African Great Lakes"
+}
+"179"
+{
+	"0" "Saint Kitts and Nevis"
+	"1" "Saint-Kitts-et-Nevis"
+	"2" " "
+	"3" "Lesser Antilles, Caribbean"
+}
+"180"
+{
+	"0" "Saint Lucia"
+	"1" "Sainte-Lucie"
+	"2" "Saint Lucia"
+	"3" "Lesser Antilles, Caribbean"
+}
+"181"
+{
+	"0" "Saint Vincent and the Grenadines"
+	"1" "Saint-Vincent-et-les Grenadines"
+	"2" " "
+	"3" "Lesser Antilles, Caribbean"
+}
+"182"
+{
+	"0" "Samoa"
+	"1" "Samoa"
+	"2" "Samoa"
+	"3" "Polynesia, Oceania"
+}
+"183"
+{
+	"0" "San Marino"
+	"1" "Saint-Marin"
+	"2" "San Marino"
+	"3" "Southern Europe within Italy"
+}
+"184"
+{
+	"0" "Sao Tome and Principe"
+	"1" "Sao Tomé-et-Principe"
+	"2" "Sao Tome e Principe"
+	"3" "Central Africa"
+}
+"185"
+{
+	"0" "Saudi Arabia"
+	"1" "Arabie Saoudite"
+	"2" "Al Arabiyah as Suudiyah"
+	"3" "Arabian Peninsula, Middle East"
+}
+"186"
+{
+	"0" "Senegal"
+	"1" "Sénégal"
+	"2" "Senegal"
+	"3" "West Africa"
+}
+"187"
+{
+	"0" "Serbia"
+	"1" "Serbie"
+	"2" "Srbija"
+	"3" "Southern Europe"
+}
+"188"
+{
+	"0" "Seychelles"
+	"1" "Seychelles"
+	"2" "Seychelles"
+	"3" "Eastern Africa"
+}
+"189"
+{
+	"0" "Sierra Leone"
+	"1" "Sierra Leone"
+	"2" "Sierra Leone"
+	"3" "West Africa"
+}
+"190"
+{
+	"0" "Singapore"
+	"1" "Singapour"
+	"2" "Singapore"
+	"3" "Southeast Asia"
+}
+"191"
+{
+	"0" "Slovakia (Slovak Republic)"
+	"1" "Slovaquie"
+	"2" "Slovensko"
+	"3" "Eastern Europe"
+}
+"192"
+{
+	"0" "Slovenia"
+	"1" "Slovénie"
+	"2" "Slovenija"
+	"3" "Southern Europe"
+}
+"193"
+{
+	"0" "Solomon Islands"
+	"1" "Salomon, Îles"
+	"2" "Solomon Islands"
+	"3" "Melanesia, Oceania"
+}
+"194"
+{
+	"0" "Somalia"
+	"1" "Somalie"
+	"2" "Somalia"
+	"3" "Eastern Africa"
+}
+"195"
+{
+	"0" "South Africa"
+	"1" "Afrique du Sud"
+	"2" "South Africa"
+	"3" "Southern Africa"
+}
+"196"
+{
+	"0" "South Sudan"
+	"1" "Soudan du Sud"
+	"2" "South Sudan"
+	"3" "East-Central Africa"
+}
+"197"
+{
+	"0" "Spain"
+	"1" "Espagne"
+	"2" "Espana"
+	"3" "Southern Europe"
+}
+"198"
+{
+	"0" "Sri Lanka"
+	"1" "Sri Lanka"
+	"2" "Sri Lanka"
+	"3" "South-Central Asia"
+}
+"199"
+{
+	"0" "Sudan"
+	"1" "Soudan"
+	"2" "As-Sudan"
+	"3" "Northern Africa"
+}
+"200"
+{
+	"0" "Suriname"
+	"1" "Suriname"
+	"2" "Suriname"
+	"3" "North-Eastern South America"
+}
+"201"
+{
+	"0" "Swaziland"
+	"1" "Swaziland"
+	"2" "Swaziland"
+	"3" "Southern Africa"
+}
+"202"
+{
+	"0" "Sweden"
+	"1" "Suede"
+	"2" "Sverige"
+	"3" "Northern Europe"
+}
+"203"
+{
+	"0" "Switzerland"
+	"1" "Suisse"
+	"2" "Schweiz (German), Suisse (French), Svizzera (Italian)"
+	"3" "Western Europe"
+}
+"204"
+{
+	"0" "Syria, Syrian Arab Republic"
+	"1" "Syrienne, République Arabe"
+	"2" "Suriyah"
+	"3" "Middle East, Western Asia"
+}
+"205"
+{
+	"0" "Taiwan (Republic of China)"
+	"1" "Taiwan, Province de Chine"
+	"2" "T'ai-wan"
+	"3" "Eastern Asia"
+}
+"206"
+{
+	"0" "Tajikistan"
+	"1" "Tadjikistan"
+	"2" "Jumhurii Tojikiston"
+	"3" "Central Asia"
+}
+"207"
+{
+	"0" "United Republic of Tanzania"
+	"1" "Tanzanie, République-Unie de"
+	"2" "Jamhuri ya Muungano wa Tanzania"
+	"3" "Eastern Africa"
+}
+"208"
+{
+	"0" "Thailand"
+	"1" "Thailande"
+	"2" "Prathet Thai"
+	"3" "South-East Asia"
+}
+"209"
+{
+	"0" "Tibet"
+	"1" "Tibet"
+	"2" "Bod"
+	"3" "South-Central Asia"
+}
+"210"
+{
+	"0" "Timor-Leste (East Timor)"
+	"1" "Timor-Leste (Timor Oriental)"
+	"2" "Timor"
+	"3" "Maritime South-East Asia"
+}
+"211"
+{
+	"0" "Togo"
+	"1" "Togo"
+	"2" "Republique Togolaise"
+	"3" "West Africa"
+}
+"212"
+{
+	"0" "Tokelau"
+	"1" "Tokelau"
+	"2" "Tokelau"
+	"3" "Oceania/Australia"
+}
+"213"
+{
+	"0" "Tonga"
+	"1" "Tonga"
+	"2" "Tonga"
+	"3" "Polynesia, Oceania"
+}
+"214"
+{
+	"0" "Trinidad and Tobago"
+	"1" "Trinité-et-Tobago"
+	"2" "Trinidad, Tobago"
+	"3" "Northern South America, Caribbean"
+}
+"215"
+{
+	"0" "Tunisia"
+	"1" "Tunisie"
+	"2" "Tunis"
+	"3" "Northern Africa"
+}
+"216"
+{
+	"0" "Turkey"
+	"1" "Turquie"
+	"2" "Turkiye"
+	"3" "Southeastern Europe, Western Asia"
+}
+"217"
+{
+	"0" "Turkmenistan"
+	"1" "Turkménistan"
+	"2" "Turkmenistan"
+	"3" "Central Asia"
+}
+"218"
+{
+	"0" "Turks and Caicos Islands"
+	"1" "Turks et Caiques, Îles"
+	"2" "Turks and Caicos Islands"
+	"3" "Caribbean, parts of the Bahamas island chain."
+}
+"219"
+{
+	"0" "Tuvalu"
+	"1" "Tuvalu"
+	"2" "Tuvalu"
+	"3" "Polynesia, Oceania"
+}
+"220"
+{
+	"0" "Uganda"
+	"1" "Ouganda"
+	"2" "Uganda"
+	"3" "Eastern Africa"
+}
+"221"
+{
+	"0" "Ukraine"
+	"1" "Ukraine"
+	"2" "Ukrayina"
+	"3" "Eastern Europe"
+}
+"222"
+{
+	"0" "United Arab Emirates"
+	"1" "Émirats Arabes Unis"
+	"2" "Al Imarat al Arabiyah al Muttahidah"
+	"3" "Arabian Peninsula, Middle East"
+}
+"223"
+{
+	"0" "United Kingdom"
+	"1" "Royaume-Uni"
+	"2" "United Kingdom"
+	"3" "Northern Europe"
+}
+"224"
+{
+	"0" "United States"
+	"1" "États-Unis"
+	"2" "United States"
+	"3" "North America"
+}
+"225"
+{
+	"0" "Uruguay"
+	"1" "Uruguay"
+	"2" "Republica Oriental del Uruguay"
+	"3" "Central East South America"
+}
+"226"
+{
+	"0" "Uzbekistan"
+	"1" "Ouzbékistan"
+	"2" "Uzbekiston Respublikasi"
+	"3" "Central Asia"
+}
+"227"
+{
+	"0" "Vanuatu"
+	"1" "Vanuatu"
+	"2" "Vanuatu"
+	"3" "Melanesia, Oceania"
+}
+"228"
+{
+	"0" "Vatican City State (Holy See)"
+	"1" "Saint-Siege (État de la Cité du Vatican)"
+	"2" "Status Civitatis Vaticana"
+	"3" "Southern Europe within Italy"
+}
+"229"
+{
+	"0" "Venezuela"
+	"1" "Venezuela"
+	"2" "Venezuela"
+	"3" "Northern South America"
+}
+"230"
+{
+	"0" "Vietnam"
+	"1" "Viet Nam"
+	"2" "Viet Nam"
+	"3" "South-East Asia"
+}
+"231"
+{
+	"0" "Virgin Islands (British)"
+	"1" "Îles Vierges Britanniques"
+	"2" ""
+	"3" "Lesser Antilles, Caribbean"
+}
+"232"
+{
+	"0" "Virgin Islands (U.S.)"
+	"1" "Îles Vierges des États-Unis"
+	"2" "Virgin Islands"
+	"3" "Lesser Antilles, Caribbean"
+}
+"233"
+{
+	"0" "Wallis and Futuna Islands"
+	"1" "Wallis et Futuna"
+	"2" "Wallis et Futuna"
+	"3" "Polynesia, Oceania"
+}
+"234"
+{
+	"0" "Western Sahara"
+	"1" "Sahara Occidental"
+	"2" "A?-?a?ra’ al-Gharbiyah"
+	"3" "Northern Africa"
+}
+"235"
+{
+	"0" "Yemen"
+	"1" "Yémen"
+	"2" "Al Yaman"
+	"3" "Arabian Peninsula, Middle East"
+}
+"236"
+{
+	"0" "Zambia"
+	"1" "Zambie"
+	"2" "Zambia"
+	"3" "Eastern Africa"
+}
+"237"
+{
+	"0" "Zimbabwe"
+	"1" "Zimbabwe"
+	"2" "Zimbabwe"
+	"3" "Eastern Africa"
+}

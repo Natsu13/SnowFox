@@ -1,0 +1,195 @@
+body {
+    color: white;
+    background: black;
+}
+
+.topbar {
+    background: #3c3c3c;
+    padding: 9px;
+    font-size: 20px;
+    color: white;
+}
+
+.page-info {
+    padding: 10px;
+}
+
+.page-info-200 {
+    background: #4f805d;
+}
+
+.page-info a {
+    color: white;
+    font-size: 19px;
+}
+
+.page-info .page-data {
+    margin: -7px 0px;
+    font-size: 12px;
+}
+
+.page-info .page-data label {
+    padding: 5px;
+    padding-left: 0px;
+    margin: 0px;
+    font-weight: bold;
+    margin-right: 2px;
+}
+
+.page-info .page-data span {
+    padding: 5px;
+    padding-left: 0px;
+    margin: 0px;
+    margin-right: 15px;
+    display: inline-block;
+}
+
+.main {
+    display: flex;
+}
+.main .main-sidebar {
+    width: 220px;
+    background: #444;
+}
+.main .content {
+    flex: 1;
+    padding: 5px 10px;
+}
+
+.menu {
+    list-style: none;
+    margin: 0px;
+    padding: 0px;
+}
+.menu li a {
+    display: block;
+    padding: 10px;
+    color: white;
+    border-bottom: 1px solid #5a5a5a;
+}
+.menu li.active a, .menu li:hover a {
+    background: #7b7b7b;
+}
+
+.menu-tabbed {
+    list-style: none;
+    margin: 8px 0px;
+    padding: 0px;
+}
+.menu-tabbed li {
+    display: inline-block;
+    background: #555;
+    border: 1px solid #444;
+    color: var(--tab-color);
+    cursor: pointer;
+    display: inline-block;
+    font-size: 16px;
+    margin: 0 0 0 -1px;
+    padding: .5em .75em;
+    z-index: 1;
+}
+.menu-tabbed li:hover, .menu-tabbed li.selected {
+    background: #8a8a8a;
+}
+
+table {
+    background: #2e3136;
+    width:100%;
+    border: 1px solid #757575;
+}
+table tr th {
+    background-color: #555;
+    font-weight: bold;
+    padding: 9px;
+    border: 1px solid #757575;    
+    font-size: 13px;
+    border-width: 1px 0;
+}
+table tr td.key {
+    width: 20%;
+}
+table tr td {
+    padding: 9px;
+    border: 1px solid #757575;
+    font-family: monospace;
+    font-size: 13px;
+    border-width: 1px 0;
+    vertical-align: top;
+}
+.border-dash {
+    border: 3px dashed #2e3136;
+    padding: 10px;
+    color: #9a9a9a;
+}
+
+h3 {
+    margin-top: 20px;
+}
+
+.file-in {
+    font-size: 11px;
+    color: #8959A8;
+}
+
+.metric {
+    display: inline-block;
+    background: #555;
+    text-align: center;
+    margin-right: 15px;
+}
+.metric .value {
+    font-size: 29px;
+    margin: 9px 15px;
+}
+.metric .title {
+    padding: 6px 8px;
+    background: #2e3136;
+    font-size: 13px;
+    text-transform: uppercase;
+}
+.file {
+    color: #56DB3A;
+}
+.function {
+    color: #FF8400;
+    font-weight: bold;
+}
+.counter {
+    background: #484848;
+    padding: 4px;
+    margin-left: 7px;
+    border-radius: 4px;
+}
+.dis {
+    border: 1px solid #484848;
+    background: #2e3136;
+    padding: 5px 11px;
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+.dis span {
+    font-family: monospace;
+}
+tr.match-1 {
+    background: #96975e4d;
+}
+tr.match-2 {
+    background: #5e976e4d;
+}
+.count {
+    background: #555555;
+    padding: 3px 6px;
+    margin-left: 7px;
+    border-radius: 5px;
+    text-align: center;
+    border: 1px solid transparent;
+}
+.menu-tabbed li:not(.selected):not(:hover) .count {
+    border: 1px solid #47484a;
+}
+.fa-check {
+    color:#4f805d;
+}
+.fa-times {
+    color:#b0413e;
+}
