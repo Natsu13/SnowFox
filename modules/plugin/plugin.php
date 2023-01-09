@@ -53,5 +53,5 @@ function plugin_page_draw($t, &$output){
 }
 
 function getUpdateServer(){
-	return Config::getS("update-server", "http://localhost/www/SnowLeopard/plugin/");
+	return Config::getS("update-server", "https://natsu.cz/plugin/");
 }
