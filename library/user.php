@@ -7,7 +7,7 @@ class User {
 	}
 
 	public static $perms = array();
-	private static $perms_default = array("admin","public","recycle","info","menu","users","content","system");
+	private static $perms_default = array("admin","public","recycle","info","menu","users","content","system","style");
 
 	public static function initPerms(){
 		User::$perms = array_merge(User::$perms_default, User::$perms);
@@ -70,36 +70,11 @@ class User {
 				$data["expired"] = strtotime($permission["expired_register"]);
 			}
 			$result = dibi::query('INSERT INTO :prefix:users', $data);
-			$id = dibi::InsertId();			
+			$id = dibi::getInsertId();
 			if(!$result)
 				$error[] = t("An error occurred while creating the user account");
-			else if($reactive){				
+			else if($reactive){
 				Utilities::addHistory("user", "account", "created", array(), "Acount created", $id);
-				
-				//user_account_activate
-				/*
-				$template = dibi::query("SELECT * FROM :prefix:templates WHERE code=%s", "USER_ACCOUNT_ACTIVATE")->fetch();
-				if($template == null) {
-					$t->root->utilities->sendemail($email, t("Account activation"), t("Click to activate your account")."<br><a href='".Router::url()."activate/?key=".$key."&user=".$id."'>".t("Activate account")."</a>");
-				}else{
-					$model = array(
-						"key" => $key,
-						"user_id" => $id,
-						"user_name" => $username,
-						"user_email" => $email,
-						"url" => Router::url()."activate/?key=".$key."&user=".$id
-					);
-
-					ob_start();
-					$t->root->page->template_parse(_ROOT_DIR . "/views/_templates/".$template["hash"].".view", $model);
-					$text = ob_get_contents();
-					ob_end_clean();
-
-					$t->root->utilities->sendemail($email, $template["name"], $text, null, false, false);   
-				}				
-				//$t->root->utilities->sendemail($email, "Aktivace účtu", "Kod pro aktivaci účtu je: <b>".$key."</b><br><a href='".Router::url()."activate/?key=".$key."&user=".$id."'>Aktivovat účet</a>");
-				//$t->root->utilities->sendemail($email, "Aktivace účtu", "Kliknutím aktivujete váš účet<br><a href='".Router::url()."activate/?key=".$key."&user=".$id."'>Aktivovat účet</a>");				
-				*/
 
 				$model = array(
 					"key" => $key,
@@ -119,6 +94,10 @@ class User {
 			}else{
 				Utilities::addHistory("user", "account", "created", array(), "Acount created", $id);
 			}
+
+			if($result) {
+				Bootstrap::$self->getContainer()->get("notification")->create("New user registered", "User ".$username."(".$email.") created new account", "fas fa-user-plus", null, "register", Router::url()."adminv2/users/edit/".$id);
+			}
 		}
 
 		if(count($error) == 0){			
@@ -136,13 +115,14 @@ class User {
 		else return $user["data"][$name];
 	}
 
-	public static function setData($name, $value, $user = null){
-		if($user == null) $user = User::current(); else $user = User::get($user);
+	public static function setData($name, $value, $user = null){	
+		if($user == null) $user = User::current(); else $user = User::get($user);		
+
 		if(!$user){
 			$_COOKIE[$name] = $value;
 			Cookies::set($name, $value, "+1 year");			
 			return false;
-		}
+		}		
 		
 		$user["data"][$name] = $value;				
 
@@ -595,6 +575,7 @@ class User {
 				);
 		$result = dibi::query('INSERT INTO :prefix:block', $data);
 	}
+
 	public static function getBlock($ip, $nick, $action = null){
 		if($action == null){
 			$action = $nick;
@@ -602,6 +583,7 @@ class User {
 		}
 		return count(dibi::query('SELECT * FROM :prefix:block WHERE action = %s', $action, ' AND (ip = %s', $ip, ' OR nick = %s', $nick,') AND okay = 0 AND time_long > %i', strtotime("-1 month")));
 	}
+	
 	public static function getLastBlock($ip, $nick, $action = null){
 		if($action == null){
 			$action = $nick;
@@ -621,7 +603,7 @@ class User {
 		dibi::query('UPDATE :prefix:block SET ', array("okay" => 1), "WHERE `action`=%s", $action, ' AND okay = 0 AND (ip = %s', $ip, ' OR nick = %s', $ip,')');
 	}
 	public static function checkLogin(){
-		if(Cookies::exists("user") and Cookies::exists("id")){
+		if(Cookies::exists("user") && Cookies::exists("id")){
 			if(isset($_GET["logout"])){
 				//Cookies::delete(array("id","user","permission"));				
 				User::session_remove();
@@ -637,7 +619,7 @@ class User {
 				$session_login = false;
 
 			if(!$session_login){
-				echo "Tvoje relace byla zrušena nebo vypršela!";
+				echo "Your session has been canceled or has expired!";
 				header("location:".Router::url()."login/?logout&session");
 			}else if(!(Cookies::security_check("permission") and Cookies::security_check("id") and Cookies::security_check("session"))){
 				echo "COOKIES SECURITY ERROR!";

@@ -140,7 +140,7 @@ if($action == "templates"){
             var viewOverlay = {
                 token: function(stream, state) {
                     var ch;
-                    console.log("xxx");
+                    //console.log("xxx");
                     if (stream.match("{")) {                        
                         while ((ch = stream.next()) != null)
                             if (ch == "}" /*&& stream.next() == "}"*/) {
@@ -279,9 +279,14 @@ if($action == "templates"){
                         var linked = old.iterLinkedDocs(function(doc) {linked = doc;});
                         if (linked) {
                             lastEditor.document = linked;
-                            old.unlinkDoc(linked);
+                            old.unlinkDoc(linked);                            
                         }
                         editor.focus();
+                        
+                        setTimeout(function() {
+                            editor.refresh();
+                            editor.focus();
+                        },1);
 
                         lastOpen = openedEditor;
 

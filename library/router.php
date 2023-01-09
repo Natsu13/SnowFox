@@ -40,7 +40,7 @@ class Router {
 		$request_ = explode("?", $_SERVER["REQUEST_URI"]);
 		$request = $request_[0];
 		if($full){
-			if($_request and isset($request_[1]))
+			if($_request && isset($request_[1]))
 				$ret = $http . "://" . $_SERVER["SERVER_NAME"] . $request."?".$request_[1];
 			else
 				$ret = $http . "://" . $_SERVER["SERVER_NAME"] . $request;

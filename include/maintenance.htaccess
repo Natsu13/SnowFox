@@ -1,11 +1,12 @@
 # MAINTANCE HTACCESS IF YOU STUCK AT MAINTANCE MODE REMOVE THIS HTACCESS AND REPLACE IT WITH original.htaccess
-# YOU MSUT RENAME IT BACK TO .htaccess
+# YOU MUST RENAME IT BACK TO .htaccess
 
 RewriteEngine On
 {%MOD_REWRITE%}
 
 #RewriteCond %{REQUEST_FILENAME} !-f
 #RewriteCond %{REQUEST_FILENAME} !-d
-RewriteCond %{QUERY_STRING} !url=adminv2
+RewriteCond %{REMOTE_ADDR} !={%IP%}
+RewriteCond %{QUERY_STRING} !url=adminv3
 RewriteCond %{REQUEST_URI} !maintenance.html
 RewriteRule (.*) {%URL%}maintenance.html [L]

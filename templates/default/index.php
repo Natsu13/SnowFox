@@ -1,3 +1,8 @@
+<?php 
+if($this->config->get("style.menu.top") != "hide"){
+	$this->page->toptoolbar();
+}
+?>
 <div class="topmenu" id="topmenu" <?php echo ($this->config->get("style.menu.top") == "hide"?"style=\"display:none;\"":""); ?>>
 	<div>
 		<div class="open" onclick="$('#topmenu').toggleClass('expanded');"><i class="fas fa-bars"></i></div>

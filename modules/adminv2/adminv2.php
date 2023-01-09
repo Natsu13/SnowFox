@@ -13,7 +13,7 @@ $this->hook_register("page.adminv2.init.setting", "adminv2_init_setting", -10);
 $this->hook_register("page.adminv2", "adminv2_page_draw", 0);
 $this->hook_register("page.adminv2.init.template", "adminv2_init_template", 0);
 $this->hook_register("init.permissions", "adminv2_perms", 0);
-$this->hook_register("page.bbcode", "admin_bbcode", 0);
+$this->hook_register("init.language.adminv2", "admin_language", 0);
 
 function adminv2_init($t){
 	$t->router->add("admin[/<adminModule=info>][/<action=show>][/<id=1>][/<state=none>]", "module=adminv2&admin_module=<adminModule>&action=<action>&who=null&id=<id>&state=<state>");
@@ -22,33 +22,23 @@ function adminv2_init($t){
 	$t->router->add("adminv2/<adminModule=info>/<action=show>-<who=null>[/<id=1>][/<state=none>]", "module=adminv2&admin_module=<adminModule>&who=<who>&action=<action>&id=<id>&state=<state>");
 }
 
+function admin_language($lang) {
+	if(isset($_GET["setlangforadmin"])) {
+		if($_GET["setlangforadmin"] == "delete") {
+			Cookies::delete("language_admin");
+		}else{
+			Cookies::set("language_admin", $_COOKIE["language"], "+1 year");
+		}		
+		header("location:".$_SERVER['HTTP_REFERER']);
+	}
+	if(isset($_COOKIE["language_admin"])) 
+		return $_COOKIE["language_admin"];
+
+	return $lang;
+}
+
 function adminv2_perms(&$perms){
 	$perms[] = "templates";
-}
-
-function _LoadForm($callback, $t){
-	global $formID, $th;
-	$formID = $callback[1];
-	$th = $t;
-	include _ROOT_DIR."/modules/adminv2/bbcode_form.php";
-	return $output;
-}
-
-function admin_bbcode($t, &$output){
-	$output = preg_replace ('/\[b\](.*?)\[\/b\]/U', '<b>$1</b>', $output);
-	$output = preg_replace ('/\[i\](.*?)\[\/i\]/U', '<i>$1</i>', $output);
-	$output = preg_replace ('/\[u\](.*?)\[\/u\]/U', '<u>$1</u>', $output);
-	$output = preg_replace ('/\>\r\n\</U', '><', $output);
-	$output = preg_replace ('/\n/U', '<br>', $output);
-	//$output = nl2br($output);
-	//$output = preg_replace_callback('/\[form id=\"(.*?)\"\]/U','_LoadForm', $output);
-	$output = preg_replace_callback('/\[form id=\"(.*?)\"\]/U',function ($matches) use($t) {
-            return _LoadForm($matches, $t);
-		}, $output);
-	$output = preg_replace_callback('/(\s|^)(www\.|https?:\/\/)?[a-z0-9]+\.[a-z0-9]{2,4}\S*/m',function ($matches) {
-            return "<a href='".trim($matches[0])."' target=_blank>".trim($matches[0])."</a>";
-        }, $output);
-	//$output = preg_replace("/[\r\n]+/iU", "", $output);
 }
 
 function adminv2_init_setting($t){
@@ -62,6 +52,7 @@ function adminv2_init_setting($t){
 	$t->root->page->add_script("https://api.mapy.cz/loader.js");
 	$t->root->page->add_style(Router::url()."modules/adminv2/script/jquery.datetimepicker.css", false);
 	$t->root->page->add_script(Router::url()."modules/adminv2/script/jquery.datetimepicker.full.min.js", false);
+	$t->root->page->add_script(Router::url()."modules/adminv2/script.js", false);
 	//$t->root->page->add_script("https://unpkg.com/gijgo@1.9.13/js/gijgo.min.js");
 }
 
@@ -210,7 +201,7 @@ function adminv2_page_draw($t, &$admin_output){
 
 	foreach($arrayItems as $i => $item){
 		if($i == "info") $url = "/"; else $url = "/".$i."/";
-		if($i == "style") $isPerm = true; else $isPerm = User::isPerm($i);
+		/*if($i == "style") $isPerm = true; else */$isPerm = User::isPerm($i);
 		$haveOp[$i] = array($isPerm, $item["url"], $i);
 		if($t->router->_data["admin_module"][0]."/" == $item["url"]) {
 			$currentModule = $item;
@@ -261,10 +252,10 @@ function adminv2_page_draw($t, &$admin_output){
 		if($perm["admin"] == 1){
 			if($can){
 				foreach ($haveOp as $n => $op) {
-					if($op[0] == 1 and $op[2] != $t->router->_data["admin_module"][0]){
+					if($op[0] == 1 && $op[2] != $t->router->_data["admin_module"][0]){
 						//header("location:".$t->router->url_."adminv2".$op[1]);
 						break;
-					}elseif($op[0] == 1 and $op[2] == $t->router->_data["admin_module"][0]){
+					}elseif($op[0] == 1 && $op[2] == $t->router->_data["admin_module"][0]){
 						break;
 					}
 				}
@@ -315,9 +306,21 @@ function adminv2_page_draw($t, &$admin_output){
 			$(function(){
 				var notificiationCenter = new NotificationCenter();
 
-				notificiationCenter.add("fas fa-info", "Snowfox", "Hello world", "This is some text<br>second line<br>last line", "#", "23:18");
-				notificiationCenter.add("fas fa-info", "Snowfox", "Hello world 2", "This is some text<br>second line<br>last line", "#", "23:18");
-				notificiationCenter.add("fas fa-exclamation-triangle", "Snowfox", "Servise completed", "All finished", "#", "23:18");
+				<?php 
+					$c = Bootstrap::$self->getContainer()->get("notification");
+					foreach ($c->getAll() as $id => $notif) {
+						$link = $notif["link"];
+						if($link == null || $link == "") $link = "#";
+						$text = str_replace("\\", "\\\\", $notif["text"]);
+						$text = str_replace("\r\n", "<br/>", $text);
+						$text = str_replace("'", "\\'", $text);
+						echo "notificiationCenter.add('".$notif["icon"]."', '".$notif["creator"]."', '".$notif["title"]."', '".$text."', '".$link."', '".Strings::str_time($notif["created"], true, false, true)."');\n";
+					}
+					echo "$('#notifications .counter').html('".$c->getCount()."');\n";//$amount
+				?>
+				//notificiationCenter.add("fas fa-info", "Snowfox", "Hello world", "This is some text<br>second line<br>last line", "#", "23:18");
+				//notificiationCenter.add("fas fa-info", "Snowfox", "Hello world 2", "This is some text<br>second line<br>last line", "#", "23:18");
+				//notificiationCenter.add("fas fa-exclamation-triangle", "Snowfox", "Servise completed", "All finished", "#", "23:18");
 			});		
 			var actionButton;
 			$(function(){			
@@ -350,7 +353,22 @@ function adminv2_page_draw($t, &$admin_output){
 					{text: "Odhlásit", href: "?logout", icon: "fas fa-lock"}, 
 					<?php if(User::permission($currentUser["permission"])["level"] == 10000) { ?>
 						{text: "Debug mode", icon: "fas fa-bug", href: "?switchdebug", type: "check", ischecked: <?php echo ((isset($_COOKIE["debug"]) and $_COOKIE["debug"])==true?"true":"false"); ?>}, 
-					<?php } ?>
+					<?php } ?>					
+					{text: "", type: "line"}, 					
+					<?php if(isset($_COOKIE["language_admin"])) { ?>					
+						{text: "<?php echo t(_LANGUAGE); ?>", icon: "", type: "text"}, 
+						{text: "<?php echo t("Cancel for Admin only"); ?>", icon: "fas fa-screwdriver", href: "?setlangforadmin=delete", type: "text"}, 
+					<?php }else{ ?>	
+						<?php 
+						$languages = explode(",", Database::getConfig("languages"));
+						foreach($languages as $lang){
+							?>
+								{text: "<?php echo t($lang); ?>", icon: "", href: "?setlang=<?php echo $lang; ?>", type: "check", ischecked: <?php echo (_LANGUAGE == $lang?"true":"false"); ?>}, 
+							<?php
+						}
+						?>
+						{text: "<?php echo t("Set for Admin only"); ?>", icon: "fas fa-screwdriver", href: "?setlangforadmin", type: "text"}, 
+					<?php } ?>	
 				], {side: "left", closeButton: false, classes: ""});
 
 				$("#adminMenu").on("click", function(e){			

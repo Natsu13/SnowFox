@@ -10,8 +10,7 @@ $user = User::current();
 if($_GET["__type"]!="ajax"){
 	echo "<ul class='menu sub'>";
 		echo "<li ".($action == "form"?"class=select":"")."><a href='".$t->router->url_."adminv2/content/'>".t("Forms")."</a></li>";
-		echo "<li ".($action == "generators"?"class=select":"")."><a href='".$t->router->url_."adminv2/content/generators/'><s>".t("Generators")."</s></a></li>";
-		echo "<li ".($action == "pages"?"class=select":"")."><a href='".$t->router->url_."adminv2/content/pages/'><s>".t("Pages")."</s></a></li>";
+		echo "<li ".($action == "generators"?"class=select":"")."><a href='".$t->router->url_."adminv2/content/generators/'>".t("Generators")."</a></li>";
 	echo "</ul>";
 }
 
@@ -48,6 +47,8 @@ if($action == "generators"){
 		if($result == NULL){
 			$t->root->page->draw_error("Generator neexistuje", "Generator ".$t->router->_data["id"][0]." neexistuje!");
 		}else{
+			/* GENERATOR */
+
 			if($_GET["__type"] == "ajax"){
 				if(isset($_GET["editform"])){
 					$data = array(
@@ -58,10 +59,20 @@ if($action == "generators"){
 					if($q or $q==0) echo t("saved");
 					else echo "Error in saving!";
 				}
+				if(isset($_GET["save"])){
+					$data = array(
+								"data" => $_POST["data"]
+							);					
+
+					$q = dibi::query('UPDATE :prefix:generators SET ', $data, 'WHERE `id`=%s', $t->router->_data["id"][0]);
+					if($q or $q==0) echo json_encode(array("ok" => t("Saved")));
+					else echo json_encode(array("error" => "Error in saving!"));
+				}
 			}else{
 				if($t->router->_data["state"][0] == "ok"){
 					$t->root->page->error_box(t("the generators has been edited"), "ok");
 				}
+				/*
 				echo "<div style='padding:8px;'>";
 				echo "<div style='margin-bottom:5px;'>Generátor <form id=formedit action=# method=post style='display:inline;'><input type=text name=name value='".$result["name"]."'> <button class=blue onClick=\"ajaxsend('#formedit', this, '#showrrf', '".$t->router->url_."admin/content/generators-edit/".$t->router->_data["id"][0]."/?__type=ajax&editform');return false;\">".t("save")."</button> <span style='displa:none;color:red;' id='showrrf'></span></form> <a href='#' onClick=\"showhide('#properties');return false;\">Show/Hide Properties</a></div>";
 				echo "<div style='float:left;width:700px;background:white;'><div id='gen-data'><textarea id='generator-data'>".$result["data"]."</textarea><br>Pokud zde vidíte tento text zřejmě máte vypnutý JavaScrip!</div><div id='gen-content'></div></div>";
@@ -72,7 +83,37 @@ if($action == "generators"){
 				echo "</div>";
 
 				echo "<script>generatorPreview('#gen-data', '#gen-content', '');</script>";
+				*/
+				echo "<div id=grid class='-dark'></div>";
+				?>
+				<script>
+				var grid, mainWindow, objectWindow, propertyWindows, timeLineWindow, manager;
+
+				$(function(){
+					mainWindow = new GridWindow("Designer", true, "designerWindow");
+					objectWindow = new GridWindow("Objects");
+					timeLineWindow = new GridWindow("Time line");
+					propertyWindows = new GridWindow("Properties", false, "propsWindow");
+					grid = new GridManager('#grid', 
+					[
+						new GridContainer([
+							new GridContainer([
+								new GridContainer( mainWindow ),
+								new GridContainer( timeLineWindow , 50),
+							], 100, "vertical"), 
+							new GridContainer([
+								new GridContainer( objectWindow ),
+								new GridContainer( propertyWindows ),
+							], 30, "vertical")
+						], 100, "horizontal")
+					]);
+					manager = new DesignerManager(<?php echo $result["id"]; ?>, "<?php echo str_replace("\"", "\\\"", $result["data"]); ?>", mainWindow, objectWindow, propertyWindows, timeLineWindow);
+				});
+				</script>
+				<?php
 			}
+
+			/* GENERATOR */
 		}
 	}
 }
@@ -152,7 +193,7 @@ elseif($action == "form"){
 
 					echo "<b>".t("Browser")."</b>";
 					echo "<br>";
-					$brw = Utilities::get_browser_properties();
+					$brw = Utilities::get_browser_properties($result["browser"]);
 					echo $brw["browser"]." (".$brw["version"].") ";
 					echo "<a href=# onclick=\"$('#brwdat').toggle();\" title='Zobrazit data'><i class=\"far fa-eye\"></i></a><br>";
 					echo "<textarea id=brwdat style='display:none'>".$result["browser"]."</textarea><hr>";

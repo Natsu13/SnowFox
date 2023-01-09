@@ -400,7 +400,7 @@ else if($action == "show"){
                         echo "<div class='option'>".$t->root->config->get("version")."</div>";
                         echo t("Dabatase version");                 
                     echo "</li>";
-                    $t->root->config->load_variables("file", "root");
+                    $t->root->config->load_variables("file", "main");
                     echo "<li>";
                         echo "<div class='option'>".t($t->root->config->get_variable("Compress", "file", "FALSE"))." (".t("Size").": ".$t->root->config->get_variable("CompressChunk", "file", "16000").")</div>";
                         echo t("Compression");                

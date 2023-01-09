@@ -45,9 +45,9 @@ class Debuger {
 			mkdir(_ROOT_DIR."/log/debug/".date("Ydm"), 0777, true);
 		}
 
-		$soubor = fopen( _ROOT_DIR."/log/debug/".date("Ydm")."/".$this->debugToken.".log", "a");
-		fwrite($soubor, json_encode($debug));
-		fclose($soubor);
+		$file = fopen( _ROOT_DIR."/log/debug/".date("Ydm")."/".$this->debugToken.".log", "a");
+		fwrite($file, json_encode($debug));
+		fclose($file);
     }
     
     public function draw($token){

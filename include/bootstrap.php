@@ -46,7 +46,7 @@ class Bootstrap {
 
 	public $log_called = "";
 
-	public $GLOBAL_LANGUAGE = true;
+	public $GLOBAL_LANGUAGE = "cs";
 
 	public $template = "defaultold";
 
@@ -63,7 +63,7 @@ class Bootstrap {
 			define("_CACHE", time());
 		else
 			define("_CACHE", 16);
-		if($bl == "" or $bl == NULL){ $bl = _ROOT_DIR . "/log/base.log"; }
+		if($bl == "" || $bl == NULL){ $bl = _ROOT_DIR . "/log/base.log"; }
 		$this->base_log = $bl;
 	}
 
@@ -179,24 +179,14 @@ class Bootstrap {
 			$this->log("The configuration was loaded from the database");
 			date_default_timezone_set($this->config->get("utc"));
 			$this->log("The time zone has been set to ".$this->config->get("utc"));
-		}
+		}				
 
 		if(!isset($_COOKIE["language"]))
 			$lang = Database::getConfig("default-lang");
 		else
 			$lang = $_COOKIE["language"];				
 
-		$this->template = (_DEBUG && isset($_GET["style"]) ? $_GET["style"] : Database::getConfig("style"));
-		
-
-		define("_LANGUAGE", $lang);
-		global $lng;
-		if(file_exists(_ROOT_DIR . "/languages/" . $lang . ".php"))
-			include _ROOT_DIR . "/languages/" . $lang . ".php";
-		else {
-			$lng = array();
-			$this->log("Language file '/languages/".$lang.".php' was not found!", $this->_MESSAGE_ERROR);
-		}
+		$this->template = (_DEBUG && isset($_GET["style"]) ? $_GET["style"] : Database::getConfig("style"));		
 
 		//Calling hook with loaded setting
 		$this->module_manager->hook_call("init.setting");
@@ -213,6 +203,24 @@ class Bootstrap {
 		$this->router->add("cron/<hash>", "__type=cron&hash=<hash>");
 		
 		$this->router->start();
+
+		$pluginLang = $this->module_manager->hook_call("init.language.".$this->router->_data["module"][0], [$lang]);
+		if($pluginLang["called"] > 0){
+			$lang = $pluginLang["output"];
+		}
+
+		if(isset($_GET["showlang"])) {
+			$lang = $_GET["showlang"];
+		}
+
+		define("_LANGUAGE", $lang);
+		global $lng;
+		if(file_exists(_ROOT_DIR . "/languages/" . $lang . ".php"))
+			include _ROOT_DIR . "/languages/" . $lang . ".php";
+		else {
+			$lng = array();
+			$this->log("Language file '/languages/".$lang.".php' was not found!", $this->_MESSAGE_ERROR);
+		}
 
 		/* Language handling */
 		if(isset($_GET["setlang"])){
@@ -258,7 +266,7 @@ class Bootstrap {
 		$this->page->prepare();
 		if($this->page->isAjax()){
 			$_GET["__type"] = "ajax";
-		}
+		}		
 
 		$flash->flush();
 		$flash->store();
@@ -476,6 +484,14 @@ class Bootstrap {
 			"arguments" => array(
 				"core",
 				Flash::class
+			)
+		));
+
+		$this->container->register('notification', array(
+			"file" => "/library/notification.php",
+			"class" => "Notification",
+			"arguments" => array(
+				"core"
 			)
 		));
 	}

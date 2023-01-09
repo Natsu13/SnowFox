@@ -49,8 +49,7 @@ class Strings {
 		return $ret;
 	}
 	
-	public static function random($length, $special=false) 
-	{
+	public static function random($length, $special=false) {
 		if($special == Strings::$NUMBERS)
 			$mozne_znaky = '0123456789';
 		elseif($special)
@@ -69,7 +68,7 @@ class Strings {
 		$length = strlen( $needle );
 		return substr( $haystack, 0, $length ) === $needle;
    	}
-   
+
    	public static function endsWith( $haystack, $needle ) {
 	   $length = strlen( $needle );
 	   if( !$length ) {
@@ -127,24 +126,23 @@ class Strings {
 			$input);
 	} 
 	 
-	public static function strHtml($input, $double = false)
-	{ 
+	public static function strHtml($input, $double = false) { 
 		$output = str_replace(array("&lt;", "&gt;", "&quot;", "&#39;", "&amp;"), array("<", ">", "\"", "'", "&"), $input);
 		if($double) {
 			$output = Strings::strHtml($output);
 		}
 		return $output;
 	}
-	
-	public static function undiacritic($in, $na="-"){
+
+	public static function undiacritic($in, $na="-") {
 		$in = preg_replace('~[^\\pL0-9_]+~u', $na, $in);
 		$in = trim($in, $na);
 		$in = iconv("utf-8", "us-ascii//TRANSLIT", $in);
 		$in = strtolower($in);
 		$out = preg_replace('~[^-a-z0-9_]+~', '', $in);
 		return $out;
-	}
-	
+	}		
+		
 	public static function str_time($csp, $noconvert=true, $without_time=false, $nospan = false) {
 		//Utilities::getTimeFormat();
 
@@ -212,8 +210,7 @@ class Strings {
 		return $return;
 	}
 	
-	public static function mb_ucfirst($string, $encoding)
-	{
+	public static function mb_ucfirst($string, $encoding) {
 		$strlen = mb_strlen($string, $encoding);
 		$firstChar = mb_substr($string, 0, 1, $encoding);
 		$then = mb_substr($string, 1, $strlen - 1, $encoding);
@@ -280,8 +277,7 @@ class Strings {
 		return $r;
 	}
 
-	public static function time_difference($time_1, $time_2)
-	{
+	public static function time_difference($time_1, $time_2) {
 		$val_1 = new DateTime(date("Y-m-d H:i:s", $time_1));
 		$val_2 = new DateTime(date("Y-m-d H:i:s", $time_2));
 
@@ -297,7 +293,7 @@ class Strings {
 		);
 	}
 	
-	public static function markdown($text){
+	public static function markdown($text) {
 		$text = str_replace(array("\r\n", "\r"), "\n", $text);
 		
 		$pars = array(
@@ -330,5 +326,12 @@ class Strings {
 				return true;
 		}
 		return false;
+	}
+
+	public static function take($text, $length = 10, $append = "..."){
+		$appendLength = strlen($append);
+		//if($length < $appendLength) throw "Length is too short";
+		if($length < $appendLength || strlen($text) < $length) return $text;
+		return substr($text, 0, $length - $appendLength).$append;
 	}
 }

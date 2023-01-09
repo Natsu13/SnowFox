@@ -18,7 +18,7 @@ class Config {
 			if($is_protect){
 				$this->root->message[] = array( 
 												"state"		=> $this->root->_MESSAGE_ERROR, 
-												"message" 	=> "Triing to change PROTECTED variable! (" . $group . "::" .  $name . ")",
+												"message" 	=> "Trying to change PROTECTED variable! (" . $group . "::" .  $name . ")",
 												"execution_time" => round(microtime(true) - $this->root->time_start, 4)
 											);
 				return false;

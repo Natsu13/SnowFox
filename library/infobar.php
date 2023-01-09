@@ -71,12 +71,12 @@ class Infobar {
                 "description" => "Popup window over screen width close button",
                 "picto" => "<div class=picto-border><div class=picto-message><div class=picto-text></div><div class=picto-button></div></div></div>"
             ),
-            array(
+            /*array( //module
                 "name" => "Cart Toolbar", 
                 "id" => "cart_bar", 
                 "description" => "Toolbar show at top of basket",
                 "picto" => "<div class=picto-border><div class=picto-topbar></div><div class=picto-page><div class=picto-placeholder></div><div class=picto-placeholder></div></div></div>"
-            ),
+            ),*/
             array(
                 "name" => "Confirm pages", 
                 "id" => "confirm_page", 

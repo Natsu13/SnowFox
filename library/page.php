@@ -30,6 +30,303 @@ class Page {
 		$this->add_style($root->router->url  . "include/style.css");	
 
 		$root->getContainer()->set('page', $this);
+
+		$this->root->module_manager->hook_register("page.format", "default_page_formater", 0);
+	}
+
+	function default_page_formater($t, &$output){
+		$output = preg_replace ('/\[b\](.*?)\[\/b\]/U', '<b>$1</b>', $output);
+		$output = preg_replace ('/\[i\](.*?)\[\/i\]/U', '<i>$1</i>', $output);
+		$output = preg_replace ('/\[u\](.*?)\[\/u\]/U', '<u>$1</u>', $output);
+		$output = preg_replace ('/\>\r\n\</U', '><', $output);
+		$output = preg_replace ('/\n/U', '<br>', $output);
+		//$output = nl2br($output);
+		//$output = preg_replace_callback('/\[form id=\"(.*?)\"\]/U','_LoadForm', $output);
+		$output = preg_replace_callback('/\[form id=\"(.*?)\"\]/U', function ($matches) use($t) {
+				return Page::LoadForm($t->root, $matches[1]);
+			}, $output);
+		$output = preg_replace_callback('/(\s|^)(www\.|https?:\/\/)?[a-z0-9]+\.[a-z0-9]{2,4}\S*/m',function ($matches) {
+				return "<a href='".trim($matches[0])."' target=_blank>".trim($matches[0])."</a>";
+			}, $output);
+	}
+
+	public static function FormGetVariables($formId) {
+		$formItems = dibi::query('SELECT * FROM :prefix:form_items WHERE `parent`=%s', $formId, " ORDER BY position");
+		$fvars = [];
+
+		foreach ($formItems as $n => $row) {
+			$data = Config::sload($row["data"]);
+			if($row["type"] == "variable"){
+				$v = $row["value"];
+				if($data["list"] == ""){
+					$v = $row["value"];
+				}else{
+					$index = $row["value"];
+					$arra  = explode(",", $data["list"]);
+					foreach($arra as $key => $value){
+						if($index == trim($value)) $v = trim($value);
+						if($index == $key) $v = trim($value);
+					}
+				}
+				$fvars[$row["name"]] = $v;
+			}else if($row["type"] == "submit"){
+				//submit button
+			}else{
+				$fvars[$row["name"]] = $row["value"]; //all others default values
+			}
+		}
+
+		return $fvars;
+	}
+
+	public static function LoadForm($root, $formId, $customFormHook = false) {		
+		$output = "";
+		$result = dibi::query("SELECT * FROM :prefix:form WHERE id=%i", $formId)->fetch();
+		if($result == NULL) {
+			return str_replace("%0", $formId, t("Form %0 was not found"));
+		}
+
+		$data = Config::sload($result["data"]);
+		$settings = Config::sload($result["settings"]);
+		if(!isset($settings["version"]) || floatVal($settings["version"]) < 2) {
+			$settings = $data;
+		}
+
+		if($settings["enable"] != 1 && !$customFormHook) {
+			return t("The form has been disabled!");		
+		}
+		if(!isset($settings["onetime"])) { 
+			$settings["onetime"] = 0; 
+		}
+
+		$user = User::current();
+
+		$formItems = dibi::query('SELECT * FROM :prefix:form_items WHERE `parent`=%s', $formId, " ORDER BY position");
+		$formVariables = Page::FormGetVariables($formId);
+		$formWidth = $settings["width"];
+
+		$formState = Utilities::SendForm($formId, $customFormHook, true);
+		//Utilities::vardump($formState);
+
+		$disableAllFormField = $formState["disableForm"];
+		$formIsMultimedia = $formState["isMultimedia"];
+		$thisFormWasAleradyFilled = $formState["thisFormWasAleradyFilled"]; // 0 - False, 1 = True, 2 = You need to login
+
+		if($thisFormWasAleradyFilled == 1) {
+			$output.="<div class='box error'>".t("This form can only be filled in once!")."</div>";
+		}else if($thisFormWasAleradyFilled == 2) {
+			$output.="<div class='box error'>".t("Please log in to fill out the form")."</div>";
+		}
+
+		if($thisFormWasAleradyFilled == 0) {
+			foreach($formState["warnings"] as $key => $warning) {
+				$output.="<div class='box warning'>".$warning."</div>";
+			}
+			if($formState["submited"]) {
+				foreach($formState["errors"] as $key => $error) {
+					$output.="<div class='box error'>".$error."</div>";
+				}			
+			}
+
+			if($formState["success"] != "") {
+				$output.="<div class='box ok'>".$formState["success"]."</div>";
+				return $output;
+			}
+		}
+		
+		$output.="<a name='_form_id_".$formId."'></a>";
+		$output.="<form action='#_form_id_".$formId."' class='web-form' method=post ".($formIsMultimedia?"enctype=\"multipart/form-data\"":"").">";
+		$output.="<input type=hidden name=form_id value='".$formId."'/>";
+
+		$standartInputFieldType = ["textbox", "password", "textarea", "select", "picker", "upload", "slider"];
+	
+		foreach ($formItems as $id => $item) {
+			if($item["type"] == "variable") continue;
+			$itemData = Config::sload($item["data"]);			
+
+			$name = $item["name"];
+			$isRequired = false;
+			$isHidden = false;
+
+			if(in_array($item["type"], $standartInputFieldType)) {
+				if($itemData["state"] == "1") { 
+					$name.="<span class=requier id='form_input_".$item["id"]."_requie'>*</span>"; 
+					$isRequired = true;
+				}elseif($itemData["state"] == "3") {
+					$isHidden = true;
+				}
+			}else if($item["type"] == "recaptcha"){
+				$name.="<span class=requier id='form_input_".$item["id"]."_requie'>*</span>"; 
+				$isRequired = true;
+			}			
+
+			if(!$isRequired && $item["type"] != "submit"){
+				$name.="<span class=requier id='form_input_".$item["id"]."_requie' style='display:none;'>*</span>"; 
+			}
+
+			$item["value"] = preg_replace_callback('/\{#(.*?)\}/U', function ($matches) use($formVariables) {
+				return (isset($formVariables[$matches[1]])? $formVariables[$matches[1]]: "null");
+			}, $item["value"]);
+
+			$leftClass = $itemData["position"] == 1?"col-md-3":"col-md-12";
+			$rightClass = $itemData["position"] == 1?"col-md-9":"col-md-12";
+			$value = (isset($_POST["form_input_".$item["id"]])? $_POST["form_input_".$item["id"]]: $item["value"]);
+
+			$output.="<div class='form-group row mb-2' id='form_input_".$item["id"]."_html'>";
+				$output.= "<div class='static-text ".$leftClass." ".($itemData['position'] == 5?'hidden':'')."'>".($item["type"] != "submit"? $name: "")."</div>";
+
+				$element = "";
+				if($item["type"] == "text") {
+					$element = $item["value"];
+				}elseif($item["type"] == "upload") {
+					$element = "<input type='file' name='form_input_".$item["id"]."'>";				
+				}elseif($item["type"] == "textbox"){
+					$element = "<input type=text name='form_input_".$item["id"]."' onKeyUp=\"evaluate_form_".$formId."();\" id='form_input_".$item["id"]."' style='".($itemData["state"]=="3"?"display:none;":"")."' value='".$value."' placeholder='".$itemData["placeholder"]."' ".(($itemData["state"]=="2" || $disableAllFormField)?"disabled":"")." class='form-control ".(isset($formState["inputErrors"][$item["id"]]) ? "is-invalid": "")."'>";					
+				}elseif($item["type"] == "password") {
+					$element = "<input type=password name='form_input_".$item["id"]."' onKeyUp=\"evaluate_form_".$formId."();\" id='form_input_".$item["id"]."' style='".($itemData["state"]=="3"?"display:none;":"")."' placeholder='".$itemData["placeholder"]."' ".(($itemData["state"]=="2" || $disableAllFormField)?"disabled":"")." class='form-control ".(isset($formState["inputErrors"][$item["id"]]) ? "is-invalid": "")."'>";					
+				}elseif($item["type"] == "recaptcha") {
+					$element = '<div class="recaptcha'.(isset($formState["inputErrors"][$item["id"]])?" is-invalid":"").'"><div class="g-recaptcha" data-sitekey="'.$root->config->get("recaptcha-key").'"></div></div>';
+				}elseif($item["type"] == "textarea") {
+					$element = "<textarea name='form_input_".$item["id"]."' onKeyUp=\"evaluate_form_".$formId."();\" style='".($itemData["state"]=="3"?"display:none;":"")."' placeholder='".$itemData["placeholder"]."' ".(($itemData["state"]=="2" || $disableAllFormField)? "disabled": "")." class='form-control".(isset($formState["inputErrors"][$item["id"]]) ? " is-invalid": "")."' rows='".$itemData["rows"]."'>".$item["value"]."</textarea>";
+				}elseif($item["type"] == "submit") {
+					$element = "<input type=submit name='form_input_".$item["id"]."' id='form_input_".$item["id"]."' value='".$name."' ".($disableAllFormField? "disabled": "")." class='btn btn-primary'>";
+				}elseif($item["type"] == "slider") {
+					$element = "<input type=slider name='form_input_".$item["id"]."' id='form_input_".$item["id"]."' value='".$value."' ".(($itemData["state"]=="2" || $disableAllFormField)? "disabled": "")." data-formater='".$itemData['title']."' data-min='".$itemData['value_min']."' data-max='".$itemData['value_max']."' data-step='".$itemData['step']."'/>";
+				}elseif($item["type"] == "picker") { 
+					$pickerSelected = [];
+					$resultAnswers = dibi::query('SELECT * FROM :prefix:form_answer WHERE parent = %i', $formId, " ORDER BY id DESC");
+					foreach ($resultAnswers as $answerKey => $answer) {
+						$answerData = Config::sload($answer["data"]);
+						for($i = 0; $i < count($answerData); $i++){
+							$dtq = $answerData[$i];
+							if($dtq[3] == $item["id"]){
+								$mdq = explode("[;", $dtq[2]);
+								if(!isset($pickerSelected[$mdq[0]])){ 
+									$pickerSelected[$mdq[0]] = 1; 
+								} else { 
+									$pickerSelected[$mdq[0]]+= 1; 
+								}
+							}
+						}
+					}
+					$element.="<div class='picker'><input type=hidden id='form_input_".$item["id"]."' name='form_input_".$item["id"]."'>";
+						$items = explode("[;", $itemData["items"]);
+						for($index = 0; $index < count($items); $index++){	
+							if(!isset($pickerSelected[$index])){ $pickerSelected[$index] = 0; } 
+
+							$itemValue = explode("[,", $items[$index]);
+							$perm = User::permission($itemValue[2]);
+							$color = $perm['color'];
+							if($color == "") $color = "black";
+
+							$leftCount = -1;
+							$leftText = "";
+							if($itemValue[3] != 0){
+								$leftText = t("Lefts").": ".($itemValue[3] - $pickerSelected[$index]);
+								$leftCount = $itemValue[3] - $pickerSelected[$index];
+							}
+
+							$isDisabled = $disableAllFormField;
+							if(User::permission(User::current()["permission"])["level"] < $perm["level"] || $leftCount == 0) {
+								$isDisabled = true;
+							}
+							$onClick = "";
+							if(!$isDisabled) {
+								$onClick = "$('#form_input_".$item["id"]."').val('".$index."[;".$items[$index]."');";
+								if($itemData["displayas"] == "cells") {
+									$onClick.="showInfo(this, '".$item["id"]."', '#picker_".$item["id"]."_info', '<div class=rightmin>".$leftText."</div><b>".t("Selected")."</b><br>".$itemValue[0]."<br>".$itemValue[1]."');evaluate_form_".$formId."();";
+								} else {
+									$onClick.="var c = '".$item["id"]."'; if(typeof lastSel[c] == 'undefined'){ lastSel[c] = this; }else{ $(lastSel[c]).removeClass('sel'); lastSel[c] = this; } $(this).addClass('sel');";
+								}
+							}
+
+							if($itemData["displayas"] == "cells"){
+								$element.="<div onClick=\"".$onClick."\" data-index='".$index."' class='picker-cells".($disableAllFormField || $isDisabled?" disabled":"")."' title='".$itemValue[1]."' style='font-size: ".$itemData['fontsize']."px; width: ".$itemData['size']."px; height: ".$itemData['size']."px; color: ".$color.";'>".$itemValue[0]."</div>";
+							}else{
+								$element.="<div onClick=\"".$onClick."\" class='picker-".$itemData["displayas"]."".($disableAllFormField || $isDisabled?" disabled":"")."' style='color:".$color.";'>";								
+								$element.=$itemValue[0]."<div class='desc'>".$itemValue[1]."</div>";
+								if($leftText != "") { $element.="<div class='info-text'>".$leftText."</div>"; }
+								$element.="</div>";
+							}
+						}
+						$element.="<div style='clear:both;'></div><div style='display:none;' class='info-box' id='picker_".$item["id"]."_info'></div>";
+					$element.="</div>";
+				}elseif($item["type"] == "select") {
+					$items = explode("[;", $itemData["items"]);
+					
+					if($itemData["types"] == 1 || $itemData["types"] == 2){
+						$element = "<select id='form_input_".$item["id"]."' onChange=\"if(this.value=='custom'){ \$('#form_input_".$item["id"]."_custom_val').show(); \$('#form_input_".$item["id"]."_custom_val').focus(); }else{ \$('#form_input_".$item["id"]."_custom_val').hide(); }; evaluate_form_".$formId."();\" ".($itemData["types"] == 2?"multiple":"")." name='form_input_".$item["id"]."".($itemData["types"] == 2?"[]":"")."' style='width:100%;".($itemData["state"]=="3"?"display:none;":"")."' ".($data["state"]=="2" || $disableAllFormField?"disabled":"")." class='''>";
+						for($l=0; $l < count($items); $l++){
+							$itemValue = explode("[,", $items[$l]);
+							$optionValue = ($itemValue[1] == ""? $itemValue[0]: $itemValue[1]);
+							$isSelected = $itemValue[2] == 1;
+							if(isset($_POST["form_input_".$item["id"]])) {
+								$isSelected = $_POST["form_input_".$item["id"]] == $optionValue;
+							}
+							$element.="<option value='".$optionValue."' ".($isSelected ?"selected":"").">".$itemValue[0]."</option>";
+						}
+						if($itemData["custom"] == 1){
+							$element.="<option value='custom'>".t("Custom value")."...</option>";
+						}
+						$element.="</select>";
+					}elseif($itemData["types"] == 3){
+						for($l=0; $l < count($items); $l++){
+							$itemValue = explode("[,", $items[$l]);
+							$optionValue = $itemValue[1] == ""? $itemValue[0]: $itemValue[1];
+							$isSelected = $itemValue[2] == 1;
+							if(isset($_POST["form_input_".$item["id"]])) {
+								$isSelected = false;
+								foreach($_POST["form_input_".$item["id"]] as $value) {
+									if($value == $optionValue) { $isSelected = true; }
+								}
+							}
+							$element.="<span class='itemsel form-input-check'><input class='form-input-check-input' onChange=\"evaluate_form_".$formId."();\" type=checkbox name='form_input_".$item["id"]."_".$l."' ".(($itemData["state"] == "2" || $disableAllFormField)? "disabled": "")." id='form_input_".$item["id"]."_".$l."' value='".$optionValue."' ".($isSelected?"checked":"")."><label for='form_input_".$item["id"]."_".$l."'>".$itemValue[0]."</label></span> ";
+							if($itemData["place"] == "2") $element.="<br>";
+						}
+						if($itemData["custom"] == 1){
+							$element.="<span class='itemsel form-input-check'><input class='form-input-check-input' onChange=\"if(\$(this).is(':checked')){ \$('#form_input_".$item["id"]."_custom_val').show(); \$('#form_input_".$item["id"]."_custom_val').focus(); }else{ \$('#form_input_".$item["id"]."_custom_val').hide(); }; evaluate_form_".$formId."();\" type=checkbox name='form_input_".$item["id"]."_custom' id='form_input_".$item["id"]."_custom' value='custom' ".($itemData["state"]=="2" || $disableAllFormField? "disabled": "")."><label for='form_input_".$item["id"]."_custom'>".t("Custom value")."...</label></span>";
+						}
+					}
+					elseif($itemData["types"] == 4){
+						for($l=0; $l < count($items); $l++){
+							$itemValue = explode("[,", $items[$l]);
+							$optionValue = $itemValue[1] == ""? $itemValue[0]: $itemValue[1];
+							$isSelected = $itemValue[2] == 1;
+							if(isset($_POST["form_input_".$item["id"]])) {
+								$isSelected = $_POST["form_input_".$item["id"]] == $optionValue;
+							}
+							$element.="<span class='itemsel form-input-check'><input class='form-input-check-input' type=radio onChange=\"\$('#form_input_".$item["id"]."_custom_val').hide(); evaluate_form_".$formId."();\" name='form_input_".$item["id"]."' id='form_input_".$item["id"]."_".$l."' value='".$optionValue."' ".($isSelected?"checked":"")." ".(($itemData["state"] == "2" || $disableAllFormField)?"disabled":"")."><label for='form_input_".$item["id"]."_".$l."'>".$itemValue[0]."</label></span> ";
+							if($itemData["place"] == "2") $element.="<br>";
+						}
+						if($itemData["custom"] == 1){
+							$element.="<span class='itemsel form-input-check'><input class='form-input-check-input' onChange=\"\$('#form_input_".$item["id"]."_custom_val').show(); \$('#form_input_".$item["id"]."_custom_val').focus(); evaluate_form_".$formId."();\" type=radio name='form_input_".$item["id"]."' id='form_input_".$item["id"]."_custom' value='custom' ".(($itemData["state"]=="2" || $disableAllFormField)? "disabled": "")."><label for='form_input_".$item["id"]."_custom'>".t("Custom value")."...</label></span>";
+						}
+					}
+
+					if($itemData["custom"] == 1){
+						$element.="<div class=custom_value_div><input type=text id='form_input_".$item["id"]."_custom_val' name='form_input_".$item["id"]."_custom_val' value='".(isset($_POST["form_input_".$item["id"]."_custom_val"])?$_POST["form_input_".$item["id"]."_custom_val"]:"")."' style='display:none;' value='' placeholder='".t("Custom value")."...' onKeyUp=\"evaluate_form_".$formId."();\" class='custom_val form-control'></div>";
+					}
+				}
+
+				$error = "";
+				if(isset($formState["inputErrors"][$item["id"]])){
+					if($formState["inputErrors"][$item["id"]] == 2)
+						$error="<div class='inpoerror'>".t("Please enter a valid email!")."</div>";
+					elseif($formState["inputErrors"][$item["id"]] == 1 || $formState["inputErrors"][$item["id"]] === true)
+						$error="<div class='inpoerror'>".t("This field is required!")."</div>";
+					else
+						$error="<div class='inpoerror' style='".($item["type"] == "recaptcha"?"width: 302px;":"")."'>".$formState["inputErrors"][$item["id"]]."</div>";
+				}
+
+				$output.= "<div class='".$rightClass."'>";
+					$output.= $element.$error;
+				$output.= "</div>";
+
+			$output.="</div>";			
+		}
+		$output.="</form>";
+		$output.="<script>function evaluate_form_".$formId."() {  }</script>";
+		return $output;
 	}
 
 	public function head(){		
@@ -64,9 +361,12 @@ class Page {
 		}
 		echo '<link href="' . Router::url() . 'favicon.ico?cache='._CACHE.'" rel="icon">';		
 
-		$cookieNoJs = $this->root->config->getD("cookie-no-js", "window['ga-disable-GA_MEASUREMENT_ID'] = true;");
+		$cookieNoJs = $this->root->config->getD("cookie-no-js", "window['cookies'] = false;");
+		$cookieJs = $this->root->config->getD("cookie-js", "cookieEnabled = true;");
 		if(!Utilities::CookiesAccepted()) {
 			echo "<script>".$cookieNoJs."</script>";
+		}else{
+			echo "<script>".$cookieJs."</script>";
 		}
 
 		if($this->script != null){
@@ -102,7 +402,7 @@ class Page {
 				
 				$htaccessMaintance = str_replace("{%MOD_REWRITE%}", $htaccessModRewrite, $htaccessMaintance);
 				$htaccessMaintance = str_replace("{%URL%}", Router::url(), $htaccessMaintance);
-				$htaccessMaintance = str_replace("{%IP%}", Utilities::ip(), $htaccessMaintance);
+				$htaccessMaintance = str_replace("{%IP%}", Utilities::ip(true), $htaccessMaintance);
 
 				file_put_contents(_ROOT_DIR."/.htaccess", $htaccessMaintance);
 
@@ -323,6 +623,7 @@ class Page {
 							}
 							echo "<div class=line><b>Using sessions</b><span><span class='upper colored-".($this->root->config->get("session_used") == 1?"red": "green")."'>".($this->root->config->get("session_used") == 1?"Yes":"No")."</span></span></div>";						
 							echo "<div class=line><b>Template</b><span>".$this->root->template."</span></div>";
+							echo "<div class=line><b>Language</b><span>"._LANGUAGE."</span></div>";							
 						echo "</div>";
 					echo "</div>";
 				echo "</div>";	
@@ -344,7 +645,7 @@ class Page {
 				echo "<div class='d'></div>";
 
 				//memory usage
-				$memUsage = Utilities::convertBtoMB(memory_get_usage(), "MB");
+				$memUsage = Utilities::convertBtoMB(memory_get_usage(true), "MB");
 				$memLimit = Utilities::convertBtoMB(ini_get('memory_limit'), "MB");
 				echo "<div class='a".(Utilities::convertBtoMB(memory_get_usage(), "MB") > 20?" atoolbar-color-yellow":"")."'>";
 					echo "<a href=#><i class=\"fas fa-memory\"></i> <b>".$memUsage."</b></a>";
@@ -390,6 +691,26 @@ class Page {
 							echo "<div class=line><b>Engine</b><span>".$this->root->database->_use."</span></div>";
 							echo "<div class=line><b>Database queries</b><span>".dibi::$numOfQueries."</span></div>";
 							echo "<div class=line><b>Query time</b><span>".$dbTime." ms</span></div>";							
+						echo "</div>";
+					echo "</div>";
+				echo "</div>";
+				echo "<div class='d'></div>";
+
+				//$this->styles
+				//Styles, Javascript
+				$total = count($this->styles)+count($this->script);
+				echo "<div class='a'>";
+					echo "<a href=#><i class=\"fas fa-file-code\"></i> ".$total."</a>";
+					echo "<div class='atool-popup'>";
+						echo "<div>";
+							echo "<div class=cat><span class='cat-tag tag-yellow'>CSS</span></div>";
+							foreach($this->styles as $n => $file) {
+								echo "<div class=line>".str_replace(Router::url(), "", $file["url"])."</div>";						
+							}
+							echo "<div class=cat><span class='cat-tag tag-purple'>JS</span></div>";
+							foreach($this->script as $n => $file) {
+								echo "<div class=line>".str_replace(Router::url(), "", $file["url"])."</div>";						
+							}
 						echo "</div>";
 					echo "</div>";
 				echo "</div>";
@@ -586,7 +907,8 @@ class Page {
 				.">".$row["title"]."</a></".$setting["custom_tag"].">";
 		}
 		else if($row["typ"] == "article"){
-			if( $this->root->router->_data["module"][0]=="article" and ( $this->root->router->_data["id"][0] == $data["alias"] or $this->root->router->_data["id"][0] == $data["id"] ) ){
+			//TODO: multilang and changes better is ID
+			if( $this->root->router->_data["module"][0]=="article" && ( $this->root->router->_data["id"][0] == $data["alias"] or $this->root->router->_data["id"][0] == $data["id"] ) ){
 				$select = true;
 			}else{ $select = false; }
 			echo "<".$setting["custom_tag"]." class='".$setting["li_class"]." ".
@@ -596,7 +918,7 @@ class Page {
 				.">".$row["title"]."</a></".$setting["custom_tag"].">";
 		}
 		else if($row["typ"] == "category"){
-			if( $this->root->router->_data["module"][0]=="category" and ( $this->root->router->_data["id"][0] == $data["alias"] or $this->root->router->_data["id"][0] == $data["id"] ) ){
+			if( $this->root->router->_data["module"][0]=="category" && ( $this->root->router->_data["id"][0] == $data["alias"] or $this->root->router->_data["id"][0] == $data["id"] ) ){
 				$select = true;
 			}else{ $select = false; }
 			echo "<".$setting["custom_tag"]." class='".$setting["li_class"]." ".
@@ -710,57 +1032,71 @@ class Page {
 
 	private $view = null;
 
-	public function prepare(){		
-		$module = strtolower($_GET["module"]);
-		$fdef = file_exists(_ROOT_DIR . "/controllers/" . $module . ".php");
-		$fcon = file_exists(_ROOT_DIR . "/controllers/" . $module. "Controller.php");		
+	public function getContent($module, $action, $loadController = true, $folder = "controllers", $subClass = "Controller"){
+		$file = "";
+		$className = "";
+		$actionName = "";
+		$_view = "";
+		$lastError = "";
+		$module = strtolower($module);
 
-		if($fdef || $fcon){
-			$this->root->config->set("system.page.use", "controller");
-			$this->root->config->set("system.page.name", $module);
+		$fdef = file_exists(_ROOT_DIR . "/" . $folder . "/" . $module . ".php");
+		$fcon = file_exists(_ROOT_DIR . "/" . $folder . "/" . $module . "Controller.php");		
+		$class = strtolower($module);
 
-			if($fdef) {					
-				$this->root->config->set("system.page.file", _ROOT_DIR . "/controllers/" . $module . ".php");
-				include_once _ROOT_DIR . "/controllers/" . $module . ".php";
+		if($fdef || $fcon || class_exists($class)){
+			//$this->root->config->set("system.page.use", "controller");
+			//$this->root->config->set("system.page.name", $module);
+
+			if($loadController) {
+				if($fdef) {					
+					//$this->root->config->set("system.page.file", _ROOT_DIR . "/controllers/" . $module . ".php");
+					$file = _ROOT_DIR . "/" . $folder . "/" . $module . ".php";
+					include_once $file;
+				}
+				else {
+					//$this->root->config->set("system.page.file", _ROOT_DIR . "/controllers/" . $module . "Controller.php");
+					$file = _ROOT_DIR . "/" . $folder . "/" . $module . "Controller.php";
+					include_once $file;
+				}
 			}
-			else {
-				$this->root->config->set("system.page.file", _ROOT_DIR . "/controllers/" . $module . "Controller.php");
-				include_once _ROOT_DIR . "/controllers/" . $module . "Controller.php";
-			}
 
-			$this->root->log("Loaded controller " . $module);
-
-			$class = strtolower($module);
-			if(class_exists($class)) {				
+			//$this->root->log("Loaded controller " . $module);
+			
+			if(class_exists($class)) {		
 				$controller = new $class($this->root);
-				$this->root->config->set("system.page.controller", get_class($controller));
+				//$this->root->config->set("system.page.controller", get_class($controller));
+				$className = get_class($controller);
 			}
 			else if(class_exists($class."Controller")){
 				$class = $class."Controller";				
 				$controller = new $class($this->root);
-				$this->root->config->set("system.page.controller", get_class($controller));
+				//$this->root->config->set("system.page.controller", get_class($controller));
+				$className = get_class($controller);
 			}
 			else{
-				echo Utilities::fatal("Controller", "Controller \"".$class."\" not exists");
-				return;
+				//echo Utilities::fatal("Controller", "Controller \"".$class."\" not exists");
+				return array(false, "Controller \"".$class."\" not exists");
 			}
 
-			$this->root->log("Class was created " . $class);
+			//$this->root->log("Class was created " . $class);
+			//$action = $_GET["action"];
 
-			$action = $_GET["action"];
 			$customArguments = [];
 			//$view = $controller->$action();
 
-			while(true){
-				$lastError = "";
+			//$this->root->log("Controller action '" . $action . "'");
 
+			while(true){
 				try{					
 					$reflection = new ReflectionMethod($controller, $action);
-					$this->root->config->set("system.page.action", $reflection->getName());
+					//$this->root->config->set("system.page.action", $reflection->getName());
+					$actionName = $reflection->getName();
 				}catch(ReflectionException $e) {
-					echo Utilities::fatal("Controller", "Method \"".$class.".".$action."\" not found!");
-					return;
+					//echo Utilities::fatal("Controller", "Method \"".$class.".".$action."\" not found!");
+					return array(false, "Method \"".$class.".".$action."\" not found!");
 				}
+				
 				$fireArgs = array();
 				foreach($reflection->getParameters() as $arg){
 					if(isset($customArguments[$arg->name]))
@@ -793,21 +1129,21 @@ class Page {
 				$sComment = $reflection->getDocComment();
 				$sParams = null;
 				//Parse standart
-				if (preg_match_all('%^\s*\*\s*@([a-zA-Z]+)\s+([a-zA-Z/ =!_]+)\s*$%im', $sComment, $result, PREG_SET_ORDER, 0)) {
+				if (preg_match_all('%^\s*\*\s*@([a-zA-Z]+)(\s+([a-zA-Z/ =!_]+))*\s*$%im', $sComment, $result, PREG_SET_ORDER, 0)) {
 					$sParams = $result;
 					foreach ($result as $sProp) {
 						$wh = strtolower($sProp[1]);					
 						if($wh == "method"){
-							$method = trim(strtoupper($sProp[2]));
+							$method = trim(strtoupper($sProp[3]));
 						}
 						else if($wh == "post"){
-							$onmethod["post"] = $sProp[2];
+							$onmethod["post"] = $sProp[3];
 						}
 						else if($wh == "get"){
-							$onmethod["get"] = $sProp[2];
+							$onmethod["get"] = $sProp[3];
 						}
 						else if($wh == "param"){						
-							$d = explode(" ", $sProp[2]);
+							$d = explode(" ", $sProp[3]);
 							if($fireArgs[$d[0]] != null){
 								$ar = $fireArgs[$d[0]];
 								$po = strtolower($d[1]);
@@ -821,8 +1157,8 @@ class Page {
 										$is = true;
 								}
 								if(!$is){
-									echo Utilities::fatal("Controller", "Method \"".$class.".".$action."\" argument \"".$d[0]."\" must be type of \"".$po."\" got \"".$ar."\"");
-									return;
+									//echo Utilities::fatal("Controller", "Method \"".$class.".".$action."\" argument \"".$d[0]."\" must be type of \"".$po."\" got \"".$ar."\"");
+									return array(false, "Method \"".$class.".".$action."\" argument \"".$d[0]."\" must be type of \"".$po."\" got \"".$ar."\"");
 								}
 							}
 						}
@@ -842,23 +1178,19 @@ class Page {
 						$action = $onmethod[strtolower($_SERVER['REQUEST_METHOD'])];
 						continue;
 					}
-					echo Utilities::fatal("Controller", "Method \"".$class.".".$action."\" must be show only with \"".$method."\" method. Current method is \"".$_SERVER['REQUEST_METHOD']."\"");
-					return;
+					//echo Utilities::fatal("Controller", "Method \"".$class.".".$action."\" must be show only with \"".$method."\" method. Current method is \"".$_SERVER['REQUEST_METHOD']."\"");
+					return array(false, "Method \"".$class.".".$action."\" must be show only with \"".$method."\" method. Current method is \"".$_SERVER['REQUEST_METHOD']."\"");
 				}
 
 				if($lastError != ""){
-					echo Utilities::fatal("Controller", $lastError);
-					return;
+					//echo Utilities::fatal("Controller", $lastError);
+					return array(false, $lastError);
 				}										
 
-				if(!is_subclass_of($class, "Controller")){
-					echo Utilities::fatal("Controller", "Controller \"".$class."\" not implement class \"Controller\"");
-					return;
-				}			
-				if($view["type"] == "html" && $view["template"] == null){
-					echo Utilities::fatal("Controller", "View \"".$view["view"]."\" not found in views/".$class."/");
-					return;
-				}
+				if(!is_subclass_of($class, $subClass)){
+					//echo Utilities::fatal("Controller", "Controller \"".$class."\" not implement class \"".$subClass."\"");
+					return array(false, "Controller \"".$class."\" not implement class \"".$subClass."\"");
+				}									
 
 				$overideAction = null;
 				try{
@@ -869,6 +1201,7 @@ class Page {
 					foreach($sParams as $i => $param) {
 						if(!isset($cParams[$param[1]])) $cParams[$param[1]] = 1;
 
+						if(!isset($param[3])) $param[3] = true;
 						if($cParams[$param[1]] == 1) {
 							$aParams[$param[1]] = $param[2];
 						}else{
@@ -895,18 +1228,40 @@ class Page {
 				}catch(ReflectionException $e){}
 
 				if($overideAction != null) {
-					$this->root->log("View function " . $reflection->getName()." id overidet by before!");
-					$this->view = $overideAction;
+					//$this->root->log("View function " . $reflection->getName()." id overidet by before!");
+					$_view = $overideAction;
 				}else{
 					$view = call_user_func_array(array($controller, $action), $fireArgs);
-					$this->root->log("View function was called " . $reflection->getName());
-					$this->view = $view;
+					//$this->root->log("View function was called " . $reflection->getName());
+					$_view = $view;
+				}
+
+				if($_view["type"] == "html" && $_view["template"] == null){
+					//echo Utilities::fatal("Controller", "View \"".$view["view"]."\" not found in views/".$class."/");
+					return array(false, "View \"".$_view["view"]."\" not found in ".$_view["folder"]."/".$class."/");
 				}
 				
 				break;
 			}
+			return array(true, $file, $module, $className, $actionName, $_view);
+		}
+	}
+
+	public function prepare(){		
+		$prep = $this->getContent($_GET["module"], $_GET["action"]);
+		if($prep == null) return;
+
+		if($prep[0] === false) {
+			echo Utilities::fatal("Controller", $prep[1]);
 			return;
 		}
+
+		$this->root->config->set("system.page.use", "controller");
+		$this->root->config->set("system.page.name", $prep[2]);
+		$this->root->config->set("system.page.file", $prep[1]);
+		$this->root->config->set("system.page.controller", $prep[3]);
+		$this->root->config->set("system.page.action", $prep[4]);
+		$this->view = $prep[5];
 	}
 
 	public function isAjax(){
@@ -961,7 +1316,7 @@ class Page {
 			else if($this->view["type"] == "content"){		
 				header('Content-Type: '.$this->view["content"]);		
 				echo $this->view["data"]; 
-			}else{		
+			}else{
 				$this->template_parse($this->view["template"], $this->view["model"]);
 			}
 		}else{
@@ -981,7 +1336,7 @@ class Page {
 		}
 	}
 
-	public function template_parse($filename, $model = NULL, $onlycompile = false){		
+	public function template_parse($filename, $model = NULL, $onlycompile = false, &$outputFile = null){		
 		//Owerload by template		
 		if(substr($filename,0,strlen(_ROOT_DIR)) == _ROOT_DIR) {
 			if(file_exists($filename)){
@@ -1006,6 +1361,8 @@ class Page {
 			$hash = "debug";
 		
 		$file = _ROOT_DIR."/temp/templates/".$this->root->router->_data["module"][0].".".$name.".".$hash.".template.php";
+		$outputFile = $file;
+
 		if(file_exists($file) && !_DEBUG){
 			if(!$onlycompile)
 				include($file);
@@ -1055,6 +1412,10 @@ class Page {
 	public function add_script($url, $inhead = true){
 		$this->script[] = array("url" => $url, "inhead" => $inhead);
 	}
+}
+
+function default_page_formater($t, &$output){
+	return Page::default_page_formater($t, $output);
 }
 
 //For better page view :3
@@ -1107,31 +1468,32 @@ class Controller {
 		return Bootstrap::$self->getContainer();
 	}
 
-    public function View($name = null, $model = null, $noTemplate = false){
+    public function View($name = null, $model = null, $noTemplate = false, $folder = "views", $debugBack = 1){
         $file = null;
         
-		$caller = debug_backtrace()[1];		
-		$class = strtolower(str_replace("Controller", "", $caller["class"]));
+		$caller = debug_backtrace()[$debugBack];		
+		$class = str_replace("controller", "", strtolower($caller["class"]));
 
         if(!is_string($name)){
             $model = $name;
             $name = $caller["function"];
 		}
-		$name = strtolower($name);
+		$name = str_replace("controller", "", strtolower($name));
 		
 		/*if(file_exists(_ROOT_DIR . "/templates/".$this->template."/views/".$class."/" . $name . ".view"))
 			$file = _ROOT_DIR . "/templates/".$this->template."/views/".$class."/" . $name . ".view";  
-		else*/ if(file_exists(_ROOT_DIR . "/views/".$class."/" . $name . ".view"))
-            $file = _ROOT_DIR . "/views/".$class."/" . $name . ".view";  
-        else if(file_exists(_ROOT_DIR . "/views/".$class."/" . $name . ".templatte"))
-			$file = _ROOT_DIR . "/views/".$class."/" . $name . ".templatte";   
+		else*/ if(file_exists(_ROOT_DIR . "/".$folder."/".$class."/" . $name . ".view"))
+            $file = _ROOT_DIR . "/".$folder."/".$class."/" . $name . ".view";  
+        else if(file_exists(_ROOT_DIR . "/".$folder."/".$class."/" . $name . ".templatte"))
+			$file = _ROOT_DIR . "/".$folder."/".$class."/" . $name . ".templatte";   
 
         return array(
 			"type" => "html",
 			"template" => $file, 
 			"view" => $name, 
 			"model" => $model,
-			"ajax" => $noTemplate
+			"ajax" => $noTemplate,
+			"folder" => $folder
 		);
 	}
 
@@ -1211,6 +1573,34 @@ function internal_GET_ARRAY($name){
 		}
 	}
 	return count($array) == 0? null: $array;
+}
+
+/**
+ * Table creator for views
+ */
+function table($id, $data_url, $columns){
+	$col_data = [];
+	$table = "<table id='table-".$id."' class='table table-ajax'>";
+		$table.= "<thead>";
+		foreach($columns as $key => $column) {
+			$table.= "<th id='table-".$id."-".$key."' ".(isset($column["width"])?"width='".$column["width"]."'":"")." ".(isset($column["title"])?"title='".$column["title"]."'":"").">";
+				$table.= "<span>".t($column["name"])."</span>";
+			$table.= "</th>";
+			$col_data[] = "\"".$key."\"";
+		}
+		$table.= "</thead>";
+		$table.= "<tbody><tr class=loading-line><td colspan=".count($columns).">".t("Loading")."...</td></tr></tbody>";
+	$table.= "</table>";
+	$table.= "<script>var table_".$id." = new TableManager('".$id."', '".$data_url."', [".implode(", ", $col_data)."]);</script>";
+	return $table;
+}
+
+function tablePaginator($id){
+	$table = "<div id='table-".$id."-paginator' class=table-paginator>";
+		$table.= "<div class=left>".t("Totaly")." <span class=total-count>0</span> ".t("records").".</div>";
+		$table.= "<div class=right><span>".t("Page")." <span class=page-number>0</span> ".t("@from")." <span class=page-total>0</span></span> <span class=paginator></span></div>";
+	$table.= "</div>";
+	return $table;
 }
 
 class Compiler {
@@ -2588,10 +2978,13 @@ Templater::$components["form"] = array(
 					$ret.= "<?php Templater::\$components[".$who."]['callback'](".$wha[1]."); ?>";
 				}
 			}else{
-				if(substr($code[1], 0, 1) != " " && substr($code[1], 0, 1) != "\n"){
+				if(substr($code[1], 0, 1) != " " && substr($code[1], 0, 1) != "\n" && substr($code[1], 0, 1) != "{"){
 					$ret.="<?php echo ".$this->replaceFunctionAlias($code[1])."; ?>";
 				}else{
-					$ret.="{".$code[1]."}";
+					if(substr($code[1], 0, 1) == "{")
+						$ret.="{".substr($code[1], 1, strlen($code[1]) - 2)."}";
+					else
+						$ret.="{".$code[1]."}";
 				}
 			}			
 		}
@@ -2701,7 +3094,7 @@ Templater::$components["form"] = array(
 						$s = $r;
 						$temp = new Templater($r, true, $this);
 						$r = $temp->template();
-						if(substr($s, 0, 2) == "{\$" || substr($s, 0, 3) == "{!\$"){
+						if(substr($s, 0, 2) == "{\$" || substr($s, 0, 3) == "{!\$" && substr($s, strlen($s) - 1, 1) == "}"){
 							$ph = str_replace("<?php", "", $r);
 							$ph = str_replace("?>", "", $ph);
 							$ph = str_replace("echo", "", $ph);
@@ -2720,10 +3113,11 @@ Templater::$components["form"] = array(
 
 			$this->debugInfo .= "{ " . $attributesSource . " }";
 			
-			if($this->getNextToken()[0] == "DIV/CLOSE" && $name == "!doctype"){				
+			$nt = $this->getNextToken();
+			if($nt[0] == "DIV/CLOSE" && $name == "!doctype"){				
 				$this->eat("DIV/CLOSE");
 				$ret.= ">";
-			}elseif($this->getNextToken()[0] == "DIV/END"){
+			}elseif($nt[0] == "DIV/END"){
 				$this->eat("DIV/END");
 				$ret.= " />";
 			}else{
@@ -2741,7 +3135,8 @@ Templater::$components["form"] = array(
 				$ret.= $next[1];
 			//	echo $next[0]."(2. ".htmlentities($next[1]).") -> ".$name."<hr/>";
 				$this->eat("VAR");
-				$ret.=">";
+				$next = $this->getNextToken();
+				$ret.=">";for($p=0;$p<$next[3];$p++) { $ret.=" "; }
 				$this->eat("DIV/CLOSE");
 			}
 		}
@@ -2824,10 +3219,10 @@ Templater::$components["form"] = array(
 			return array("DIV/BEGIN", "<");
 		}
         if($chars[0] == "/" and $chars[1] == ">")
-            return array("DIV/END", "/>");
+            return array("DIV/END", "/>", 1, $this->getWhiteChars());
         if($chars[0] == ">"){
 			$this->catchTagAfter = 1;			
-			return array("DIV/CLOSE", ">");
+			return array("DIV/CLOSE", ">", 1, $this->getWhiteChars());
 		}
         if($chars[0] == "=" and $chars[1] == "=")
             return array("EQUAL", "==");
@@ -2906,6 +3301,7 @@ Templater::$components["form"] = array(
     public function toSpace(){
         $ret = "";
 		$i = $this->pos;
+		$nospace = 0;
 		if($this->catchTagAfter == 2){
 			$open = false;
 			$this->catchTagAfter = 0;
@@ -2950,6 +3346,22 @@ Templater::$components["form"] = array(
 		}  		
         return $ch;
     }
+
+	public function getWhiteChars(){
+		if($this->pos >= count($this->chars)) return 0;
+		
+		$white = 1;
+		$pos = $this->pos + 1;
+        $whiteChars = array(" ", "\n", "\r", "\t");
+        if(in_array($this->chars[$pos], $whiteChars)){
+            while(in_array($this->chars[$pos], $whiteChars)){
+				if(in_array($this->chars[$pos], array("\n", "\r"))) break;
+                $white++;
+				$pos++;
+            }
+		}
+		return $white;
+	}
 }
 
 function utf8Split($str, $len = 1) {

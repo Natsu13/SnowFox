@@ -28,7 +28,7 @@ if($action == "delete"){
 	}else{
 		dibi::query('DELETE FROM :prefix:menu WHERE `id`=%s', $t->router->_data["id"][0]);
 	}
-	header("location:".$t->router->url_."adminv2/menu/show/".$t->router->_data["state"][0]);
+	header("location:".$t->router->url_."adminv2/menu/show/".$t->router->_data["state"][0]."?language=".$_GET["language"]);
 }
 elseif($action == "new"){
 	$data = array(
@@ -43,6 +43,26 @@ elseif($action == "new"){
 			);
 	$result = dibi::query('INSERT INTO :prefix:menu', $data);
 	header("location:".$t->router->url_."adminv2/menu/edit/".dibi::InsertId()."/?language=".$_GET["language"]);
+}
+elseif($action == "duplicate"){
+	$result = dibi::query("SELECT * FROM :prefix:menu WHERE id=%i", $t->router->_data["id"][0])->fetch();
+	if($result == NULL){
+		$t->root->page->draw_error(t("called item does not exist!"));
+	}else{
+		$data = array(
+					"title" => $result["title"]." - Duplicated",
+					"typ" => $result["typ"],
+					"visible" => 0,
+					"position" => $result["position"] + 1,
+					"box" => $result["box"],
+					"milevel" => $result["milevel"],
+					"malevel" => $result["malevel"],
+					"language" => $result["language"],
+					"data" => $result["data"]
+				);
+		dibi::query('INSERT INTO :prefix:menu', $data);
+		header("location:".$t->router->url_."adminv2/menu/edit/".dibi::InsertId()."/?language=".$result["language"]);
+	}
 }
 elseif($action == "edit"){
 	$result = dibi::query("SELECT * FROM :prefix:menu WHERE id=%i", $t->router->_data["id"][0])->fetch();
@@ -291,7 +311,7 @@ elseif($action == "edit"){
 					echo "<div class=\"form-group row mb-2\">";
 						echo "<label class=\"col-sm-3 col-form-label\"></label>";
 						echo "<div class=\"col-sm-9\">";
-							echo "<input type=submit name=edit class='btn btn-primary' value=".t("edit")."> <a class='btn btn-secondary' href='".$t->router->url_."adminv2/menu/show/".$result["box"]."'>".t("back")."</a>";
+							echo "<input type=submit name=edit class='btn btn-primary' value=".t("edit")."> <a class='btn btn-secondary' href='".$t->router->url_."adminv2/menu/show/".$result["box"]."/?language=".$_GET["language"]."'>".t("back")."</a>";
 						echo "</div>";
 					echo "</div>";					
 				echo "</form>";
@@ -308,6 +328,9 @@ elseif($action == "show"){
 				$update = array("position" => $i);
 				if(isset($_GET["setbox"])){
 					$update["box"] = $_GET["setbox"];
+				}
+				if(isset($_GET["language"])){					
+					$update["language"] = ($_GET["language"] == ""? null: $_GET["language"]);
 				}
 				dibi::query('UPDATE :prefix:menu SET ', $update, "WHERE `id`=%i", $so);
 				$i++;
@@ -347,6 +370,7 @@ elseif($action == "show"){
 					echo "<div class=sortable_menu id='menusortable' data-box='".$sel."'>";				
 					foreach ($result as $n => $row) {
 						echo "<a class='sortable' href='".Router::url()."adminv2/menu/edit/".$row["id"]."?language=".$_GET["language"]."' data-id='".$row["id"]."'>";
+							echo "<span onclick=\"window.location.href = '".Router::url()."adminv2/menu/duplicate/".$row["id"]."'; event.stopPropagation(); return false;\" class='duplicate-icon'><i class=\"far fa-copy\"></i></span>";
 							echo "<span class=mover></span>";
 							if($row["visible"] == 0){
 								echo "<span class='title desc'><s>".$row["title"]."</s></span>";
@@ -377,8 +401,8 @@ elseif($action == "show"){
 							echo "<span class=type>".t($row["typ"])."</span>";
 						echo "</a>";
 					}
-					echo "<a href='".Router::url()."adminv2/menu/delete/trash/".$sel."' class='btn btn-danger mt-3'><i class=\"far fa-trash-alt\"></i> ".t("Delete all items in trash")."</a>";
 					echo "</div>";
+					echo "<a href='".Router::url()."adminv2/menu/delete/trash/".$sel."/?language=".$_GET["language"]."' class='btn btn-danger mt-3'><i class=\"far fa-trash-alt\"></i> ".t("Delete all items in trash")."</a>";					
 				echo "</div>";
 			echo "</div>";
 		echo "</div>";
@@ -424,7 +448,7 @@ elseif($action == "show"){
 					if(sort == ""){
 						$(this).parent().find(".empty").show();
 					}else { $(this).parent().find(".empty").hide(); }
-                    $.get('<?php echo Router::url()."adminv2/menu/?__type=ajax"; ?>', { sort: sort, setbox: $(this).data("box") }, function(data){ });                                      
+                    $.get('<?php echo Router::url()."adminv2/menu/?__type=ajax"; ?>', { sort: sort, setbox: $(this).data("box"), language: "<?php echo $_GET["language"]; ?>" }, function(data){ });                                      
                 }
             });
         } );

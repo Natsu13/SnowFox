@@ -1,23 +1,27 @@
 <?php
-/**
- * Name: Article
- * Description: Showing article on page
- * Version: 1.2
- * Author: Natsu
- * Author-Web: http://natsu.cz/
- * Code: article
- */
 $this->hook_register("page.article.init.setting", "databaze_init_setting", -10);
 $this->hook_register("page.article", "article_page_draw", 0);
-$this->hook_register("admin.toolbar.article", "admin_toolbar_article", 0);
 $this->hook_register("page.global.init", "article_init", -10);
 $this->hook_register("module.article.install", "article_install", -10);
-
 $this->hook_register("admin.icons", "article_admin_icons", 0);
 $this->hook_register("init.permissions", "article_perms", 0);
+$this->hook_register("page.default.handler", "article_hook_handler", -10);
+//$this->hook_register("admin.toolbar.article", "admin_toolbar_article", 0);
+$this->hook_register("admin.register", "article_admin", -20);
+
+function article_admin(){
+	Adminv3Controller::registerController("modules/article/AdminArticleController.php", "AdminArticleController");
+}
 
 function article_admin_icons($t, &$output) {
-	$output["article"] = array("module" => "article", "url" => "article/", "icon" => "fas fa-book", "text" => "Articles", "showMobile" => true, "file" => "article.admin.php");
+	$output["article"] = array(
+		"module" => "AdminArticleController", 
+		"url" => "article/", 
+		"icon" => "fas fa-book", 
+		"text" => "Articles", 
+		"showMobile" => true, 
+		"file" => "article.admin.php"
+	);
 }
 
 function article_perms(&$perms){
@@ -28,111 +32,183 @@ function article_install($t){
 	return array("state" => true);
 }
 
+function article_hook_handler($t, &$output){
+	$alias = $t->router->_data["id"][0];
+	$result = dibi::query("SELECT count(*) FROM :prefix:category WHERE alias=%s", $alias)->fetchSingle();	
+	if($result != 0){
+		$output = "article";
+		$_GET["action"] = "category";
+		return;
+	}
+}
+
 function article_init($t){
 	$articleId = $t->router->_data["id"][0];
-	$resultAliasId = $articleId;	
-	$resultAlias = dibi::query("SELECT * FROM :prefix:article WHERE (alias=%s", $articleId,") AND (language = '')")->fetch();
-	if($resultAlias != null) $resultAliasId = $resultAlias["id"];
+	$action = $_GET["action"];
 
-	if(($articleId == Database::getConfig("mainpage") || $resultAliasId == Database::getConfig("mainpage")) && $t->router->_data["module"][0] == "article")
-		$t->root->config->set("style.body.class", "index");
+	if($action == "category") {
 
-	if((($t->router->_data["id"][0] == Database::getConfig("mainpage")) || $articleId == "") && $t->router->_data["module"][0] == "article")
-		$t->root->config->set("style.body.class", "index");
+	}else{
+		$resultAliasId = $articleId;	
+		$resultAlias = dibi::query("SELECT * FROM :prefix:article WHERE (alias=%s", $articleId,") AND (language = '')")->fetch();
+		if($resultAlias != null) $resultAliasId = $resultAlias["id"];
+
+		$mainPage = Database::getConfig("mainpage");
+		if(($articleId == $mainPage || $resultAliasId == $mainPage) && $t->router->_data["module"][0] == "article")
+			$t->root->config->set("style.body.class", "index");
+
+		if((($t->router->_data["id"][0] == $mainPage) || $articleId == "") && $t->router->_data["module"][0] == "article")
+			$t->root->config->set("style.body.class", "index");
+	}
+}
+
+function get_article_by_id_or_alias($id) {
+	$result = dibi::query("SELECT * FROM :prefix:article WHERE (alias=%s", $id," or id=%i", $id,")")->fetch();
+	if($result["language"] == _LANGUAGE) {
+		return $result;
+	}
+	$result = dibi::query("SELECT * FROM :prefix:article WHERE (mid=%i", $result["mid"]," and language=%s", _LANGUAGE,")")->fetch();
+	return $result;
 }
 
 function databaze_init_setting($t){
 	$articleId = $t->router->_data["id"][0];
-	if($articleId == NULL){
-		$articleId = Database::getConfig("mainpage");
-	}
-	$resultAliasId = $articleId;	
+	$action = $_GET["action"];
 
-	$resultAlias = dibi::query("SELECT * FROM :prefix:article WHERE (alias=%s", $articleId,") AND (language = '')")->fetch();
-	if($resultAlias != null) $resultAliasId = $resultAlias["id"];
-	
-	$result = dibi::query("SELECT * FROM :prefix:article WHERE (id=%i", $articleId, " or mid=%i", $resultAliasId," or alias=%s", $articleId,") AND (language = %s", _LANGUAGE, ")")->fetch();
-	if($result == NULL) {
-		$result = dibi::query("SELECT * FROM :prefix:article WHERE (id=%i", $articleId, " or mid=%i", $resultAliasId," or alias=%s", $articleId,") AND (language = %s", "", ")")->fetch();
-	}
-
-	if($result == NULL){	
-		if(file_exists(_ROOT_DIR."/templates/".Database::getConfig("style")."/error404.php")){
-			$t->root->config->set("show-title", false);
-			$t->root->config->set("custom-render", true);
+	if($action == "category") {
+		$result = dibi::query("SELECT * FROM :prefix:category WHERE alias=%s", $articleId)->fetch();
+		if($result != NULL) {
+			$t->root->config->set("pre-title", $result["name"]);
 		}
-		$title = t("Error 404");
 	}else{
-		$title = $result["title"];
-
-		$dtags = explode(",", $result["tags"]);
-		if(trim($result["tags"]) == "")
-			$dtags = [];
-
-		if(in_array("template", $dtags)){	
-			$t->root->config->set("show-title", false);
-			$t->root->config->set("custom-render", true);
+		if($articleId == NULL){
+			$articleId = Database::getConfig("mainpage");
 		}
 
-		if($result["custommenu"] != ""){
-			$t->root->config->set("style.menu.left", "hide");
+		$result = get_article_by_id_or_alias($articleId);
+
+		if($result == NULL){	
+			if(file_exists(_ROOT_DIR."/templates/".Database::getConfig("style")."/error404.php")){
+				$t->root->config->set("show-title", false);
+				$t->root->config->set("custom-render", true);
+			}
+			$title = t("Error 404");
+		}else{
+			$title = $result["title"];
+
+			$dtags = explode(",", $result["tags"]);
+			if(trim($result["tags"]) == "")
+				$dtags = [];
+
+			if(in_array("template", $dtags)){	
+				$t->root->config->set("show-title", false);
+				$t->root->config->set("custom-render", true);
+			}
+
+			if($result["custommenu"] != ""){
+				$t->root->config->set("style.menu.left", "hide");
+			}
 		}
-	}
-	$t->root->config->set("pre-title",$title);
-}
-
-function admin_toolbar_article($t, &$output){	
-	if($t->router->_data["id"][0] == "index" or $t->router->_data["id"][0] == null)
-		$t->router->_data["id"][0] = Database::getConfig("mainpage");
-
-	$result = dibi::query("SELECT * FROM :prefix:article WHERE id=%i", $t->router->_data["id"][0], " or alias=%s", $t->router->_data["id"][0])->fetch();
-
-	if($result == NULL){
-		echo "<div class='d right'></div>";
-		echo "<div class='l right'>Článek neexistuje</div>";
-		echo "<div class='l b right'>Správa članku</div>";
-	}else{
-		echo "<div class='d right'></div>";
-		echo "<div class='l right'>";
-			echo "<select id=action_article><option value=1 selected>Veřejné</option><option>Soukromé</option><option>Nepublikovano</option></select>";
-		echo "</div>";
-		echo "<a href='".$t->router->url."admin/article/nopublic/".$result["id"]."' class=right>Zrušit publikaci</a>";
-		echo "<a href='".$t->router->url."admin/article/edit/".$result["id"]."' class=right>Upravit</a>";
-		echo "<div class='l b right'>Správa članku</div>";
+		$t->root->config->set("pre-title",$title);
 	}
 }
 
 function article_page_draw($t, &$output){
 	$articleId = $t->router->_data["id"][0];
+	$action = $_GET["action"];
+
+	if($action == "category") {
+		$result = dibi::query("SELECT * FROM :prefix:category WHERE alias=%s", $articleId)->fetch();
+		if($result == NULL) {
+			http_response_code(404);
+			if(!Utilities::isErrorPage()){
+				$t->root->page->draw_error("", t("Page not found!"));
+			}
+		}else{
+			$level = User::permission(User::currentOrNull(false, "permission"))["level"];
+
+			if($level < $result["minlevel"]) {
+				http_response_code(404);
+				if(!Utilities::isErrorPage()){
+					$t->root->page->draw_error("", t("Page not found!"));
+				}
+			}else{
+				$paginator = new Paginator(10, Router::url().$result["alias"]."/?page=(:page)");
+				$paginator->queryCount("SELECT count(*) FROM :prefix:article WHERE category = %i", $result["id"], " AND state = 0 AND tags NOT LIKE %~like~ ", "template"," AND visiblity = %s", "", "AND language = %s", _LANGUAGE);
+				$model = array(
+					"items" => $paginator->query('SELECT * FROM :prefix:article WHERE category = %i', $result["id"], " AND state = 0 AND tags NOT LIKE %~like~ ", "template"," AND visiblity = %s", "", "AND language = %s", _LANGUAGE),
+					"itemsCount" => $paginator->getCount(),
+					"page" => $paginator->getPage(),
+					"limit" => 10
+				);
+
+				if(file_exists(_ROOT_DIR."/templates/".$t->root->template."/template.category.php")){
+					include _ROOT_DIR."/templates/".$t->root->template."/template.category.php";
+				}
+				else if(file_exists(_ROOT_DIR."/views/content/category.view")){
+					ob_start();
+					$t->root->page->template_parse(_ROOT_DIR."/views/content/category.view", $model);
+					$text = ob_get_contents();
+					ob_end_clean();
+
+					echo $text;		
+				}else{
+					function x($model, $result) {
+						echo '<div class="paginator text-right">';
+							$pages = Utilities::GetPaginatorArray($model["page"], $model["limit"], $model["itemsCount"]);
+							echo '<ul class="paginator">';
+								foreach ($pages["pages"] as $n => $page) {
+									if ($page["static"] == true)
+										echo '<li class="'.($page["current"] == true?"current":"").' static">'.$page["text"].'</li>';
+									else
+										echo '<li class="'.($page["current"] == true?"current":"").' page-mover"><a data-page="'.$page['page'].'" href="'.Router::url().$result["alias"].'/?page='.$page['page'].'">'.$page["text"].'</a></li>';
+								}
+							echo '</ul>';
+						echo '</div>';
+					}
+
+					x($model, $result);
+
+					foreach($model["items"] as $id => $article){
+						echo "<div class=article-preview>";
+							echo "<div class=title><a href='".Router::url().$article["alias"]."/'>".$article["title"]."</a></div>";
+							echo "<div class=text>".substr(strip_tags($article["text"]), 0, 150)."</div>";
+							echo "<div class=actions>";
+								echo "<a href='".Router::url().$article["alias"]."/'>".t("Read more")."...</a>";
+							echo "</div>";
+						echo "</div>";
+					}
+
+					x($model, $result);
+				}
+			}
+		}
+
+		return;
+	}
 
 	if($articleId == "index" || $articleId == null)
 		$articleId = Database::getConfig("mainpage");
 
-	$resultAliasId = $articleId;	
+	$result = get_article_by_id_or_alias($articleId);
 
-	$resultAlias = dibi::query("SELECT * FROM :prefix:article WHERE (alias=%s", $articleId,") AND (language = '')")->fetch();
-	if($resultAlias != null) $resultAliasId = $resultAlias["id"];
-	
-	$result = dibi::query("SELECT * FROM :prefix:article WHERE (id=%i", $articleId, " or mid=%i", $resultAliasId," or alias=%s", $articleId,") AND (language = %s", _LANGUAGE, ")")->fetch();
-	if($result == NULL) {
-		$result = dibi::query("SELECT * FROM :prefix:article WHERE (id=%i", $articleId, " or mid=%i", $resultAliasId," or alias=%s", $articleId,") AND (language = %s", "", ")")->fetch();
-	}
-	if($result == NULL or $result["state"] == 4){
+	if($result == NULL || $result["state"] == 4){
 		http_response_code(404);
 		if(!Utilities::isErrorPage()){
 			$t->root->page->draw_error("", t("Page not found!"));
 		}
 	}elseif($result["state"] == 5){
-		$t->root->page->draw_error("<br>Tento článek nebyl publikován", "Článek ".$result["title"]." není publikován!");
+		$t->root->page->draw_error(t("This article has not been published"), t("Article")." ".$result["title"]." ".t("not published!"));
 	}else{
-		if(isset($_GET["comid"]) and isset($_GET["delete"])){
+		if(isset($_GET["comid"]) && isset($_GET["delete"])){
 			//if($result["comments"] != 3){
 				$result_ = dibi::query('SELECT * FROM :prefix:comments WHERE `id`=%i', $_GET["comid"])->fetch();
-				if((User::current() and $result_["autor"] == User::current()["id"]) or (User::isPerm("admin"))){
+				if((User::current() && $result_["autor"] == User::current()["id"]) || (User::isPerm("admin"))){
 					dibi::query('UPDATE :prefix:comments SET ', array("isDelete" => 1), 'WHERE `id`=%s', $_GET["comid"]);
-					echo "<div class='succ_edit'><b>Smazano!</b></div>";
-				}else
-					echo "You dont have right permission";
+					echo "<div class='succ_edit'><b>".t("Deleted")."!</b></div>";
+				}else {
+					echo t("You dont have right permission");
+				}
 			//}
 		}
 		else if(isset($_GET["comid"])){
@@ -160,7 +236,7 @@ function article_page_draw($t, &$output){
 				else if(isset($_GET["delete"])){
 					if((User::current() and $result_["autor"] == User::current()["id"]) or (User::isPerm("admin"))){
 						dibi::query('UPDATE :prefix:comments SET ', array("isDelete" => 1), ' WHERE id = %s ', $_GET["comid"]);
-						echo "<div class='succ_edit'><b>".t("deleted")."!</b></div>";
+						echo "<div class='succ_edit'><b>".t("Deleted")."!</b></div>";
 					}
 				}else{
 					echo "<textarea class='form-control' rows=3 id='edit_text_".$_GET["comid"]."'>".$result_["text"]."</textarea>";
@@ -179,23 +255,39 @@ function article_page_draw($t, &$output){
 
 			if(isset($_GET["pass"])) $pass = $_GET["pass"]; else $pass = "";
 			$vis = $result["visiblity"];
-			if(substr($vis,0,1) == "!" and substr($vis,1) == $pass){ header("location:?pass=".sha1($pass)); }
-			if(substr($vis,0,1) == "!" and sha1(substr($vis,1)) != $pass){
-				echo "<h1>".t("this article is locked")."</h1>";
+			if(substr($vis,0,1) == "!" && substr($vis,1) == $pass){ header("location:?pass=".sha1($pass)); }
+			if(substr($vis,0,1) == "!" && sha1(substr($vis,1)) != $pass){
+				echo "<h1>".t("This article is locked")."</h1>";
 				echo "<br><form action=# method=get>".t("password").": <input type=password name=pass> <button>".t("send")."</button></form>";
 			}else{
 				$r = $result["text"];
-				$plugin = $t->root->module_manager->hook_call("page.bbcode", null, $r);
+				$plugin = $t->root->module_manager->hook_call("page.format", null, $r);
 
-				$t->root->config->set("comments.show", true);
-
-				if(file_exists(_ROOT_DIR."/templates/".$t->root->template."/template.article.php")){
-					include _ROOT_DIR."/templates/".$t->root->template."/template.article.php";
-				}else{
+				if(trim($result["tags"]) == "")
+					$dtags = [];
+				else
 					$dtags = explode(",", $result["tags"]);
-					if(trim($result["tags"]) == "")
-						$dtags = [];
 
+				$t->root->config->set("comments.show", (in_array("no-comments", $dtags)?false:true));
+
+				if(file_exists(_ROOT_DIR."/templates/".$t->root->template."/template.article.php") && !in_array("template", $dtags)){
+					include _ROOT_DIR."/templates/".$t->root->template."/template.article.php";
+				}
+				else if(file_exists(_ROOT_DIR."/views/content/article.view") && !in_array("template", $dtags)){
+					//$t->root->config->set("comments.show", false);
+					$render = false;
+
+					ob_start();
+					$model = $result;
+					$model["bbcode"] = $plugin["output"];
+					$model["author"] = User::get($result["author"]);
+
+					$t->root->page->template_parse(_ROOT_DIR."/views/content/article.view", $model);
+					$text = ob_get_contents();
+					ob_end_clean();
+
+					echo $text;		
+				}else{
 					$render = true;
 					if(in_array("template", $dtags)){						
 						$file = _ROOT_DIR."/views/content/".$result["text"].".view";
@@ -263,7 +355,7 @@ function article_page_draw($t, &$output){
 							echo "</div>";
 						}
 						echo "<div class=text>".$plugin["output"]."</div>";
-						if(!in_array("form", $dtags) and count($dtags) > 0){
+						if(!in_array("form", $dtags) && count($dtags) > 0){
 							echo "<div class=page-bott>";
 							for($i = 0; $i < count($dtags); $i++)
 								echo "<span class=val>".$dtags[$i]."</span>";
@@ -272,13 +364,13 @@ function article_page_draw($t, &$output){
 
 						echo "</article>";
 					}
-				}				
+				}
 
 				if($t->root->config->get("comments.show")){
 					echo "<div class=comments>";
 						$errc = 0;
 						if(isset($_POST["addcomment"])){
-							if(!User::current() and $_POST["nick"] == ""){
+							if(!User::current() && $_POST["nick"] == ""){
 								$errc=1;
 							}
 							if($_POST["text"] == ""){
@@ -290,6 +382,7 @@ function article_page_draw($t, &$output){
 
 							if($t->root->config->get("comment-max-url") == null) $t->root->config->set("comment-max-url", "2");
 							if($t->root->config->get("comment-timeout") == null) $t->root->config->set("comment-timeout", "20");
+							if($t->root->config->get("comment-ban-length") == null) $t->root->config->set("comment-ban-length", "1");							
 
 							if(count($matches[1]) > $t->root->config->get("comment-max-url")){
 								$errc = 5;
@@ -299,7 +392,7 @@ function article_page_draw($t, &$output){
 								$last = dibi::query('SELECT * FROM :prefix:comments WHERE ip = %s', Utilities::ip(), 'ORDER BY id DESC LIMIT 1');
 								if(count($last) > 0){
 									$last = $last->fetch();
-									if($last["time"] > strtotime("-".$t->root->config->get("comment-timeout")." seconds") and User::getBlock(Utilities::ip(), "comments-add") == 0){
+									if($last["time"] > strtotime("-".$t->root->config->get("comment-timeout")." seconds") && User::getBlock(Utilities::ip(), "comments-add") == 0){
 										User::block(Utilities::ip(), "comments-add", $t->root->config->get("comment-timeout"), "Automatical spam bot all block: ".User::getBlock(Utilities::ip(), "comments-add"), "", $_POST["text"]);
 										$errc = 7;
 									}else if($last["time"] > strtotime("-".$t->root->config->get("comment-timeout")." seconds")){
@@ -308,7 +401,7 @@ function article_page_draw($t, &$output){
 										if($how < 10)
 											User::block(Utilities::ip(), "comments-add", 60*5, "Automatical spam bot all block: ".User::getBlock(Utilities::ip().", still spaming block for 5 minutes", "comments-add"), "", $_POST["text"]);
 										else
-											User::block(Utilities::ip(), "comments-add", 60*60, "Automatical spam bot all block: ".User::getBlock(Utilities::ip().", still spaming block for 1 hour", "comments-add"), "", $_POST["text"]);
+											User::block(Utilities::ip(), "comments-add", 60 * 60 * $t->root->config->get("comment-ban-length"), "Automatical spam bot all block: ".User::getBlock(Utilities::ip().", still spaming block for ".$t->root->config->get("comment-ban-length")." hour", "comments-add"), "", $_POST["text"]);
 									}
 								}
 							}
@@ -329,7 +422,7 @@ function article_page_draw($t, &$output){
 								}
 								$resultc = dibi::query('INSERT INTO :prefix:comments', $data);
 								if($resultc){
-									$t->root->page->error_box("Komentář byl přidán", "ok");
+									$t->root->page->error_box(t("Comment added"), "ok");
 									header("location:".Router::url().$articleId);
 								}else{
 									$t->root->page->error_box("Error #256", "error");
@@ -339,7 +432,7 @@ function article_page_draw($t, &$output){
 
 						$showno=false;
 						if($result["comments"] != 3){
-							echo "<h2>Komentáře</h2>";
+							echo "<h2>".t("Comments")."</h2>";
 							if((User::getBlock(Utilities::ip(), "comments-add") > 1 && User::getLastBlock(Utilities::ip(), "comments-add")["time_long"] > time()) || $errc == 8){
 								$t->root->page->error_box(t("Sending new comments for you is baned until")." (".Strings::str_time(User::getLastBlock(Utilities::ip(), "comments-add")["time_long"]).")", "error");
 							}
@@ -359,17 +452,17 @@ function article_page_draw($t, &$output){
 											$t->root->page->error_box(t("The limit for sending new post is")." ".$t->root->config->get("comment-timeout")." ".t("seconds"), "error");
 									echo "</div>";
 								echo "</form>";
-							}else{ echo "<div class='info_small'>Pro přidání komentáře se musíte přihlásit!</div>"; }
+							}else{ echo "<div class='info_small'>".t("You must be logged in to add a comment!")."</div>"; }
 						}else{
 							$result_ = dibi::query('SELECT * FROM :prefix:comments WHERE `parent`=%s', "article_".($result["id"]), " AND isDelete = 0 ORDER BY id DESC");
 							if(count($result_ )>0)
-								$t->root->page->error_box("Komentáře byly zakázány", "error");
+								$t->root->page->error_box(t("Comments have been disabled"), "error");
 						}
 
 							$result_ = dibi::query('SELECT * FROM :prefix:comments WHERE `parent`=%s', "article_".($result["id"]), " AND isDelete = 0 ORDER BY id DESC LIMIT 30");
 							foreach ($result_ as $n => $row) {
 								if(substr($row["autor"],0,1)=="@"){
-									$autor["nick"] = "<span class=anonym title='nepřihlášen'>".substr($row["autor"],1,strlen($row["autor"])-1)."</span>";
+									$autor["nick"] = "<span class=anonym title='".t("Not logged in")."'>".substr($row["autor"],1,strlen($row["autor"])-1)."</span>";
 									$autor["avatar"] = Database::getConfig("default-avatar");
 									$autor["ip"] = "nepřihlášen";
 								}else{
@@ -382,9 +475,9 @@ function article_page_draw($t, &$output){
 									echo "<div class=body>";
 										$resh = dibi::query('SELECT * FROM :prefix:history WHERE `parent`=%s', "comment_".$row["id"], " ORDER BY date DESC LIMIT 1");
 										echo "<div class=titlebar>".$autor["nick"]." <span class='time'>".Strings::str_time($row["time"])."</span>";
-										echo (User::isPerm("admin")?"<span class='admin d-none d-sm-inline'><b>.:.</b> ".$autor["ip"]." / <span title='IP adresa autora příspěvku'>".$row["ip"]."</span></span>":"");
+										echo (User::isPerm("admin")?"<span class='admin d-none d-sm-inline'><b>.:.</b> ".$autor["ip"]." / <span title='".t("IP address of the author of the article")."'>".$row["ip"]."</span></span>":"");
 										if(count($resh) > 0){
-											echo "<span class='admin edited d-none d-sm-inline'>Upraveno</span>";
+											echo "<span class='admin edited d-none d-sm-inline'>".t("Edited")."</span>";
 											echo "<span class='admin edited d-sm-none d-inline'><i class='fas fa-pencil-alt'></i></span>";
 										}
 										if((User::current() and $row["autor"] == User::current()["id"]) or (User::isPerm("admin"))){
@@ -393,7 +486,7 @@ function article_page_draw($t, &$output){
 												$resh = $resh->fetch();
 												echo "<span class='admin editedby d-none d-md-inline'>Upravil <b>".User::get($resh["user"])["nick"]."</b> (".$resh["ip"]."), celkem ".(count(dibi::query('SELECT * FROM :prefix:history WHERE `parent`=%s', "comment_".$row["id"])))."x</span>";
 											}
-											echo "<a href='".Router::url()."comments/".$row["id"]."/edit/' onClick=\"ajaxcall_loadtext('".$t->router->url_."".$articleId."?__type=ajax&comid=".$row["id"]."', '#text_com_".$row["id"]."', '#edit_com_".$row["id"]."');return false;\">Upravit</a> <a href='".Router::url()."comments/".$row["id"]."/delete/' onClick=\"ajaxcall_loadtext('".$t->router->url_."".$t->router->_data["id"][0]."?__type=ajax&comid=".$row["id"]."&delete', '#text_com_".$row["id"]."', '#edit_com_".$row["id"]."');return false;\"><i class='fas fa-times'></i></a></span>";
+											echo "<a href='".Router::url()."comments/".$row["id"]."/edit/' onClick=\"ajaxcall_loadtext('".$t->router->url_."".$articleId."?__type=ajax&comid=".$row["id"]."', '#text_com_".$row["id"]."', '#edit_com_".$row["id"]."');return false;\">".t("Edit")."</a> <a href='".Router::url()."comments/".$row["id"]."/delete/' onClick=\"ajaxcall_loadtext('".$t->router->url_."".$t->router->_data["id"][0]."?__type=ajax&comid=".$row["id"]."&delete', '#text_com_".$row["id"]."', '#edit_com_".$row["id"]."');return false;\"><i class='fas fa-times'></i></a></span>";
 										}
 										echo "</div>";
 										echo "<div class=text>";
@@ -402,7 +495,7 @@ function article_page_draw($t, &$output){
 											$plugin = $t->root->module_manager->hook_call("page.bbcode", null, $r);
 
 											echo "<div id='text_com_".$row["id"]."'>".$plugin["output"]."</div>";
-											echo "<div style='display:none;' id='edit_com_".$row["id"]."'><span class='loading small'></span> Načítám...</div>";
+											echo "<div style='display:none;' id='edit_com_".$row["id"]."'><span class='loading small'></span> ".t("Loading")."...</div>";
 										echo "</div>";
 									echo "</div>";
 									echo "<div style='clear:both;'></div>";

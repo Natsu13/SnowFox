@@ -1,7 +1,7 @@
 <?php
 class Database {
 	private $config 		= null;
-	private $database_name 	= "";
+	public $database_name 	= "";
 	private $encode 		= "utf8";
 	private $connect;
 	public  $isConnected 	= false;
@@ -91,6 +91,7 @@ class Database {
 													}else{
 														echo "<h1>There was a mysql error</h1>";
 														echo "<h2>Please contact the site owner</h2>";
+														Bootstrap::$self->getContainer()->get("notification")->create("Mysql error [".$e->result->getCode()."]", $e->result->getMessage()."\r\n".$e->source[0].":".$e->source[1], "fas fa-bug", null, "mysql.error");
 														exit;
 													}
 												} else {

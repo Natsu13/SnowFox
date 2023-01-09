@@ -43,6 +43,8 @@ class PluginController extends Controller {
      * @type api
      */
     public function ApiList($pass = "", $page = 1){
+        $this->Cors();
+
         $list = [];
 
         $page -= 1;
@@ -64,6 +66,8 @@ class PluginController extends Controller {
      * @type api
      */
     public function ApiGetPlugin($code, $pass = ""){
+        $this->Cors();
+
         $result = dibi::query("SELECT * FROM plugin_list WHERE code = %s", $code, " AND state = %i", 1, " AND pass = %s", $pass," ORDER BY id DESC LIMIT 1")->fetch();
 
         if($result == null) {
@@ -87,6 +91,8 @@ class PluginController extends Controller {
      * @type api
      */
     public function ApiDownloadPlugin($code, $pass = ""){
+        $this->Cors();
+        
         $result = dibi::query("SELECT * FROM plugin_list WHERE code = %s", $code, " AND state = %i", 1, " AND pass = %s ", $pass," ORDER BY id DESC LIMIT 1")->fetch();
 
         if($result == null) {

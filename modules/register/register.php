@@ -136,6 +136,7 @@ function register_page_draw($t, &$output){
 
 		if($t->root->config->get("registration-enable") == 1){
 			$custom_form = $t->root->config->get("registration-form");
+			$created = false;
 
 			if(isset($_POST["register"])){
 				if($_POST["captcha"] != 1){
@@ -151,6 +152,7 @@ function register_page_draw($t, &$output){
 							$t->root->page->error_box(t("Your user account has been successfully created, your account still needs to be activated and an activation email will be sent to your email."), "ok");
 						else
 							$t->root->page->error_box(t("Your user account has been successfully created, you can log in."), "ok");
+						$created = true;
 					}else{
 						$mess = t("Error creating account").": <ul>";
 						for($i = 0;$i < count($create); $i++){
@@ -162,56 +164,58 @@ function register_page_draw($t, &$output){
 				}
 			}
 			
-			if($custom_form != "" and $custom_form != "-1"){
-				$r = "[form id=\"".$custom_form."\"]";
-				
-				global $errors_input,$customFormHook;
-				$errors_input = null;
-				$sf = Config::sload($t->root->config->get("registration-form-setting"));
-				$result_ = dibi::query('SELECT * FROM :prefix:form_items WHERE `parent`=%s', $custom_form, " ORDER BY position");
-				$buttons = null;
-				foreach ($result_ as $n => $row) {
-					if(!isset($sf[$row["id"]])) $sf[$row["id"]]=-1;
-					if($sf[$row["id"]] == "register"){ $regButton = "form_input_".$row["id"]; }
-					elseif($sf[$row["id"]] == "jmeno"){ $buttons["jmeno"] = array("form_input_".$row["id"], $row["id"]); }
-					elseif($sf[$row["id"]] == "email"){ $buttons["email"] = array("form_input_".$row["id"], $row["id"]); }
-					elseif($sf[$row["id"]] == "password"){ $buttons["password"] = array("form_input_".$row["id"], $row["id"]); }
-					elseif($sf[$row["id"]] == "password2"){ $buttons["password2"] = array("form_input_".$row["id"], $row["id"]); }
-					elseif($sf[$row["id"]] == "regaccept"){ $buttons["regaccept"] = array("form_input_".$row["id"]."_0", $row["id"]); }
-				}
-				$customFormHook = true;
-				if(isset($_POST[$regButton])){
-					if($_POST[$buttons["password"][0]] != $_POST[$buttons["password2"][0]]){
-						$t->root->page->error_box(t("The passwords entered are not the same!"), "error");
-						$errors_input[$buttons["password"][1]] = t("Please enter the same passwords!");
-					}else if(isset($buttons["regaccept"]) and  !isset($_POST[$buttons["regaccept"][0]])){
-						$t->root->page->error_box(t("You must agree to the registration conditions!"), "error");
-						$errors_input[$buttons["regaccept"][1]] = t("You must agree to the registration conditions!");
-					}else{
-						$create = User::create($_POST[$buttons["jmeno"][0]], $_POST[$buttons["password"][0]], $_POST[$buttons["email"][0]], $custom_form, $t, $out_id);
-						if(!is_array($create)){
-							$_POST[$buttons["jmeno"][0]] = "";
-							$_POST[$buttons["email"][0]] = "";
-
-							if($t->root->config->get("registration-activation") == 1)
-								$t->root->page->error_box(t("Your user account has been successfully created, your account still needs to be activated and an activation email will be sent to your email."), "ok");
-							else
-								$t->root->page->error_box(t("Your user account has been successfully created, you can log in."), "ok");
+			if(!$created){
+				if($custom_form != "" and $custom_form != "-1"){
+					$r = "[form id=\"".$custom_form."\"]";
+					
+					global $errors_input,$customFormHook;
+					$errors_input = null;
+					$sf = Config::sload($t->root->config->get("registration-form-setting"));
+					$result_ = dibi::query('SELECT * FROM :prefix:form_items WHERE `parent`=%s', $custom_form, " ORDER BY position");
+					$buttons = null;
+					foreach ($result_ as $n => $row) {
+						if(!isset($sf[$row["id"]])) $sf[$row["id"]]=-1;
+						if($sf[$row["id"]] == "register"){ $regButton = "form_input_".$row["id"]; }
+						elseif($sf[$row["id"]] == "jmeno"){ $buttons["jmeno"] = array("form_input_".$row["id"], $row["id"]); }
+						elseif($sf[$row["id"]] == "email"){ $buttons["email"] = array("form_input_".$row["id"], $row["id"]); }
+						elseif($sf[$row["id"]] == "password"){ $buttons["password"] = array("form_input_".$row["id"], $row["id"]); }
+						elseif($sf[$row["id"]] == "password2"){ $buttons["password2"] = array("form_input_".$row["id"], $row["id"]); }
+						elseif($sf[$row["id"]] == "regaccept"){ $buttons["regaccept"] = array("form_input_".$row["id"]."_0", $row["id"]); }
+					}
+					$customFormHook = true;
+					if(isset($_POST[$regButton])){
+						if($_POST[$buttons["password"][0]] != $_POST[$buttons["password2"][0]]){
+							$t->root->page->error_box(t("The passwords entered are not the same!"), "error");
+							$errors_input[$buttons["password"][1]] = t("Please enter the same passwords!");
+						}else if(isset($buttons["regaccept"]) and  !isset($_POST[$buttons["regaccept"][0]])){
+							$t->root->page->error_box(t("You must agree to the registration conditions!"), "error");
+							$errors_input[$buttons["regaccept"][1]] = t("You must agree to the registration conditions!");
 						}else{
-							$mess = t("Error creating account").": <ul>";
-							for($i = 0;$i < count($create); $i++){
-								$mess.= "<li>".$create[$i]."</li>";
+							$create = User::create($_POST[$buttons["jmeno"][0]], $_POST[$buttons["password"][0]], $_POST[$buttons["email"][0]], $custom_form, $t, $out_id);
+							if(!is_array($create)){
+								$_POST[$buttons["jmeno"][0]] = "";
+								$_POST[$buttons["email"][0]] = "";
+
+								if($t->root->config->get("registration-activation") == 1)
+									$t->root->page->error_box(t("Your user account has been successfully created, your account still needs to be activated and an activation email will be sent to your email."), "ok");
+								else
+									$t->root->page->error_box(t("Your user account has been successfully created, you can log in."), "ok");
+							}else{
+								$mess = t("Error creating account").": <ul>";
+								for($i = 0;$i < count($create); $i++){
+									$mess.= "<li>".$create[$i]."</li>";
+								}
+								$mess.= "</li>";
+								$t->root->page->error_box($mess, "error");
 							}
-							$mess.= "</li>";
-							$t->root->page->error_box($mess, "error");
 						}
 					}
+					
+					$plugin = $t->root->module_manager->hook_call("page.bbcode", null, $r);				
+					echo $plugin["output"];
+				}else{
+					$output = $t->root->page->template_parse(_ROOT_DIR . "/modules/register/register.templatte", $t);
 				}
-				
-				$plugin = $t->root->module_manager->hook_call("page.bbcode", null, $r);				
-				echo $plugin["output"];
-			}else{
-				$output = $t->root->page->template_parse(_ROOT_DIR . "/modules/register/register.templatte", $t);
 			}
 		}else{
 			$t->root->page->draw_error(t("Registration has been disabled"), t("Registration on this site is not allowed!"));

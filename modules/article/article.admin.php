@@ -137,15 +137,18 @@ if($action == "comments"){
 	header("location:".$t->router->url_."adminv2/article/");
 }elseif($action == "new"){
 	$data = array(
-				"title"   => t("new article"),
-				"alias"   => Strings::undiacritic(t("new article")),
-				"date"	  => time(),
-				"author"  => User::current()["id"],
-				"oauthor" => User::current()["id"],
-				"state"   => 5
+				"title"    => t("New article"),
+				"alias"    => Strings::random(10),
+				"date"	   => time(),
+				"author"   => User::current()["id"],
+				"oauthor"  => User::current()["id"],
+				"state"    => 5,
+				"language" => _LANGUAGE
 			);
 	$result = dibi::query('INSERT INTO :prefix:article', $data);
-	header("location:".$t->router->url_."admin/article/edit/".dibi::InsertId());
+	$id = dibi::getInsertId();
+	dibi::query('UPDATE :prefix:article SET ', array("mid" => $id, "alias" => Strings::undiacritic(t("New article"))."_".$id), 'WHERE `id`=%s', $id);
+	header("location:".$t->router->url_."admin/article/edit/".$id);
 }elseif($action == "recycle"){
 	if(User::isPerm("recycle") == 1){
 		dibi::query('DELETE FROM :prefix:article WHERE `state`=%i', 4);
@@ -161,7 +164,7 @@ if($action == "comments"){
 				"description" => "",
 				"minlevel" => 0
 			);
-		$result = dibi::query('INSERT INTO :prefix:category', $data);
+		$result = dibi::query('INSERT INTO :prefix:category', $data);		
 		header("location:".$t->router->url_."adminv2/article/category-edit/".dibi::InsertId());
 	}
 	elseif($_GET["who"] == "delete"){
@@ -201,6 +204,10 @@ if($action == "comments"){
 				echo "<div class=\"form-group row mb-2\">";
 					echo "<label class=\"col-sm-3 col-form-label\">".t("Alias")."</label>";
 					echo "<div class=\"col-sm-9\"><input type=text class=form-control name=alias value='".$result["alias"]."'></div>";
+				echo "</div>";
+				echo "<div class=\"form-group row mb-2\">";
+					echo "<label class=\"col-sm-3 col-form-label\"></label>";
+					echo "<div class=\"col-sm-9\"><a href='".Router::url().$result["alias"]."' target=_blank>Zobrazit <i class='fas fa-external-link-alt'></i></a></div>";
 				echo "</div>";
 
 				echo "<div class=\"form-group row mb-2\">";
@@ -313,8 +320,25 @@ if($action == "comments"){
 }elseif($action == "show"){
 	echo "<div class='bottommenu hide-mobile'><a href=# onClick='setHomePage();return false;'>".t("select the main article")."</a></div>";
 
-	$paginator = new Paginator(10, Router::url()."adminv2/article/?page=(:page)");
-	$result = $paginator->query('SELECT * FROM :prefix:article WHERE language=%s', '',' ORDER BY id DESC');
+	$category = NULL;
+	if(isset($_GET["category"])) $category = $_GET["category"];
+
+	$result_ = dibi::query('SELECT * FROM :prefix:category ORDER BY id');
+	echo "<label style='padding:5px;'>".t("Filter by category")." <select id=category name=category style='width:200px;' onchange=\"window.location.href='?category='+$(this).find('option:selected').val();\">";
+	echo "<option value=''>Všechny kategorie</option>";
+	foreach ($result_ as $n => $row) {
+		echo "<option value='" . $row["id"] . "' " . (($category == $row["id"]) ? "selected" : "") . ">" . $row["name"] . "</option>";
+	}
+	echo "</select></label>";
+
+	if($category == NULL) {
+		$paginator = new Paginator(10, Router::url()."adminv2/article/?page=(:page)");
+		$result = $paginator->query('SELECT * FROM :prefix:article WHERE mid=id ORDER BY id DESC');
+	}else{
+		$paginator = new Paginator(10, Router::url()."adminv2/article/?page=(:page)&category=".$category);
+		$result = $paginator->query('SELECT * FROM :prefix:article WHERE mid=id AND category = %s', $category,' ORDER BY id DESC');
+	}
+	
 
 	echo "<div class='content padding'>";
 
@@ -432,15 +456,16 @@ else if($action == "edit"){
 	$lng = "";
 	if(isset($_GET["lang"]))
 		$lng = $_GET["lang"];
+	if($lng == "") $lng = _LANGUAGE;
 
-	$result = dibi::query("SELECT * FROM :prefix:article WHERE (id=%i", $t->router->_data["id"][0], " or mid=%i", $t->router->_data["id"][0]," or alias=%s", $t->router->_data["id"][0], ") AND language=%s", $lng)->fetch();
+	$result = dibi::query("SELECT * FROM :prefix:article WHERE (mid=%i", $t->router->_data["id"][0],") AND language=%s", $lng)->fetch();
 	if($result == NULL){
 		if($lng != ""){
-			$result = dibi::query("SELECT * FROM :prefix:article WHERE (id=%i", $t->router->_data["id"][0], " or alias=%s", $t->router->_data["id"][0], ") AND language=%s", "")->fetch();
+			$result = dibi::query("SELECT * FROM :prefix:article WHERE (id=%i", $t->router->_data["id"][0], ")")->fetch();
 			$data = array(
 						"mid"			=> $result["id"],
 						"title"   		=> $result["title"],						
-						"alias"   		=> $result["alias"]."-".$lng,
+						"alias"   		=> $result["alias"],
 						"date"	  		=> time(),
 						"author"  		=> User::current()["id"],
 						"oauthor" 		=> $result["oauthor"],
@@ -453,20 +478,22 @@ else if($action == "edit"){
 						"category" 		=> $result["category"],
 						"language" 		=> $lng
 					);
-			$result = dibi::query('INSERT INTO :prefix:article', $data);
-			header("location:".$t->router->url_."adminv2/article/edit/".$result["id"]."?lang=".$lng);
+			dibi::query('INSERT INTO :prefix:article', $data);
+			header("location:".$t->router->url_."adminv2/article/edit/".$result["id"]."/?lang=".$lng);
 		}
 		$t->root->page->draw_error(t("article does not exist"), t("article")." ".$t->router->_data["id"][0]." ".t("does not exist")."!");
 	}else{
 		if(isset($_GET["saveConcept"])){
 			$time = Strings::str_time(time());
 			//$koncept = dibi::query("SELECT * FROM :prefix:history WHERE parent=%s", "article_".$t->router->_data["id"][0], "ORDER BY id DESC")->fetch();
-			$koncept = null;$koncept_ = null;
-			$resultDraft = null;$konceptDraft = null;
+			$koncept = null;
+			$koncept_ = null;
+			$resultDraft = null;
+			$konceptDraft = null;
 			$koncept = dibi::query("SELECT * FROM :prefix:history WHERE parent=%s", "article_".$t->router->_data["id"][0], " ORDER BY id DESC LIMIT 10");
 			foreach ($koncept as $n2 => $ro2) {
 				if($ro2["type"] != "article_concept") break;
-				if($resultDraft == null and $ro2["user"] == User::current()["id"]){
+				if($resultDraft == null && $ro2["user"] == User::current()["id"]){
 					$resultDraft = Config::sload($ro2["data"]);
 					$resultDraft["text"] = $ro2["text"];
 					$konceptDraft = $ro2;
@@ -501,12 +528,12 @@ else if($action == "edit"){
 					);
 				$result__ = dibi::query('INSERT INTO :prefix:history', $data);
 			}
-			echo "<span class='sbox ok'>Koncept byl uložen ".$time."</span>";
+			echo "<span class='sbox ok'>".t("Draft saved")." ".$time."</span>";
 			exit;
 		}elseif(isset($_GET["showArticle"])){
 			$resul2 = dibi::query("SELECT * FROM :prefix:history WHERE id=%i", $_GET["showArticle"])->fetch();
 			$resul3 = Config::sload($resul2["data"]);
-			echo "<span class='sbox ok'>Příspěvek ".$resul3["title"]." (ID: ".$_GET["showArticle"].")</span>";
+			echo "<span class='sbox ok'>".t("Contribution")." ".$resul3["title"]." (#".$_GET["showArticle"].")</span>";
 			echo "<textarea rows=15 style='width:100%;'>".$resul2["text"]."</textarea>";
 			exit;
 		}
@@ -537,8 +564,14 @@ else if($action == "edit"){
 						"visiblity" => $vis,
 						"tags" => $_POST["article_tags"],
 						"category" => $_POST["category"]
-						);
+						);			
 			dibi::query('UPDATE :prefix:article SET ', $arr, 'WHERE `id`=%s', $_POST["oid"]);
+
+			/*if($result["mid"] == $result["id"]) {						
+				$arr = array("alias" => $_POST["alias"]);
+				dibi::query('UPDATE :prefix:article SET ', $arr, 'WHERE `mid`=%i', $result["mid"]);
+			}*/
+
 			$data = array(
 						"user" 		=> User::current()["id"],
 						"ip" 		=> Utilities::ip(),
@@ -574,213 +607,252 @@ else if($action == "edit"){
 		}
 		if($resultDraft != null){
 			$result = $resultDraft;
-			$t->root->page->error_box(t("you modifies automatically saved draft")." | ".t("created")." ".Strings::str_time($konceptDraft["date"])." ".t("by", array("first-u" => false))." <b>".User::get($konceptDraft["user"])["nick"]."</b> <span style='color:#807f7f;'>".strlen(utf8_decode($konceptDraft["text"]))."b</span> <a style='float:right;' href='".$t->router->url_."admin/article/edit/".$result["id"]."?nodraft'>X</a>", "info");
+			$t->root->page->error_box(t("You modifies automatically saved draft")." | ".t("Created")." ".Strings::str_time($konceptDraft["date"])." ".t("by", array("first-u" => false))." <b>".User::get($konceptDraft["user"])["nick"]."</b> <span style='color:#807f7f;'>".strlen(utf8_decode($konceptDraft["text"]))."b</span> <a style='float:right;' href='".$t->router->url_."admin/article/edit/".$result["id"]."?nodraft'>X</a>", "info");
 		}
 
 		if($t->router->_data["state"][0] == "ok"){
-			$t->root->page->error_box(t("article was updated"), "ok", true);
+			$t->root->page->error_box(t("Article was updated"), "ok", true);
 		}
 		//echo "<h1>".t("editing article")." \"".$result["title"]."\"</h1>";
-		echo "<h1 class=fix><span class=id>#".$result["id"]."</span> ".t("editing article")." <span class=highlight>".$result["title"]."</span></h1>";
+		echo "<h1 class='fix mobile-small'><span class=id><a href='".Router::url()."".$result["id"]."' target=_blank>#".$result["id"]."</a></span> ".t("Editing article")." <span class=highlight>".$result["title"]."</span></h1>";
 		echo "<form method=post><input type='hidden' name=oid value='".$result["id"]."'>";
-//		echo "<input type=submit name=edit value='".t("save article")."'>";// <input type=submit name=copy value='".t("save the article as a copy")."'>
+			//		echo "<input type=submit name=edit value='".t("save article")."'>";// <input type=submit name=copy value='".t("save the article as a copy")."'>
 
-			echo "<div style='float:right;width: 28%;'>";
+		echo "<div class=content>";
+			
+			echo "<div class=left-side>";
+				echo "<div class=\"form-group row mb-2\">";
+					echo "<label class=\"col-sm-2 col-form-label\">".t("Title")."</label>";
+					echo "<div class=\"col-sm-10\"><input type=\"text\" class=\"form-control\" value=\"".$result["title"]."\" id='title-name' name=\"title\"></div>";
+				echo "</div>";
+				echo "<div class=\"form-group row mb-2\">";
+					echo "<label class=\"col-sm-2 col-form-label hide-mobile\"></label>";
+					echo "<label class=\"col-sm-2 col-form-label col-form-bold\">".t("Alias")."</label>";
+					echo "<div class=\"col-sm-6 col-8\">";
+						echo "<input type=\"text\" class=\"form-control\" onfocus=\"if($(this).val()==''){ $(this).val(toUrl($('#title-name').val())); }\" value=\"".$result["alias"]."\" name=\"alias\">";						
+					echo "</div>";
+					echo "<div class=\"col-sm-2 col-4\">";
+					if ($result["language"] != _LANGUAGE) {
+						echo "<a href='".Router::url()."".$result["alias"]."/?showlang=".$result["language"]."' class='btn btn-primary btn-full-width' title='".t("Open on a new page")."' data-title='".t("Open on a new page")."' target=_blank><i class=\"fas fa-external-link-alt\"></i> ".t("View")."</a>";
+					}else{
+						echo "<a href='".Router::url()."".$result["alias"]."/' class='btn btn-primary btn-full-width' title='".t("Open on a new page")."' data-title='".t("Open on a new page")."' target=_blank><i class=\"fas fa-external-link-alt\"></i> ".t("View")."</a>";
+					}
+					echo "</div>";
+				echo "</div>";
+				echo "<div style='margin-top:25px;'></div>";
+				
+				echo "<textarea name=text style='display:none;' id=oldtextsaved>" . $result["text"] . "</textarea><input type=hidden name=html id=htmlonlyval value='" . (isset($_GET["html"])? $_GET["html"]: $result["html"]) . "'>";
+				echo "<a name=html></a>";
+				echo "<div style='margin-bottom: -3px;'>";
+					echo "<a href=# class='stb' onClick=\"switchToEditor(" . ($result["html"] == 1 ? "true" : "false") . ");return false;\">Editor</a>";
+					echo "<a href=# class='stb' onClick=\"switchToHtml();return false;\">HTML</a>";
+				echo "</div>";
+				//echo "<a href=# onClick=\"$('#htmlonly').val($('#oldtextsaved').val());return false;\">Load text from save to html</a><br>";
+				echo "<textarea name=text style='width:100%;' class='tinimcenocheck' id=intereditor rows=20>" . htmlentities($result["text"]) . "</textarea>";
+				//echo "<textarea id=htmlonly name=htmltext style='width: 100%; height: 250px; z-index: 5000; position: relative; border:1px solid silver; border-width: 5px 1px 1px; border-style: solid; border-color: #222;outline:0px;".($result["html"] == 1?"":"display:none;")."'>".$result["text"]."</textarea>";
+
+				/*$output = preg_replace_callback('/\[form id=\"(.*?)\"\]/U',function ($matches) use($t) {
+						return _LoadForm($matches, $t);
+					}, $output);*/
+				$result_ = dibi::query('SELECT * FROM :prefix:form');
+				$forms = array();
+				foreach ($result_ as $n => $row) {
+					$forms[$row["id"]] = array("(#" . $row["id"] . ") " . $row["name"], "<a class='btn btn-primary btn-sm' style='font-size: 11px;margin-top: -3px;' href='" . $t->router->url_ . "admin/content/form-answer/" . $row["id"] . "'>" . t("answers") . "</a>", "<a class='btn btn-primary btn-sm' style='font-size: 11px;margin-top: -3px;' href='" . $t->router->url_ . "admin/content/form-edit/" . $row["id"] . "'>" . t("edit") . "</a>");
+				}
+				preg_match_all('/\[form id=\"(.*?)\"\]/U', $result["text"], $matches, PREG_OFFSET_CAPTURE);
+				for ($i = 0; $i < count($matches[1]); $i++) {
+					$id = $matches[1][$i][0];
+					echo "<div style='padding: 8px;background: #3c3c3c;color: white;border-bottom: 1px solid #505050;'><div style='float:right;'>" . $forms[$id][1] . " " . $forms[$id][2] . "</div><span class=formim><i class=\"fas fa-clipboard-list\"></i> " . $forms[$id][0] . "</span></div>";
+				}				
+
+				echo "<div style='border: 1px solid #757575;background: #060606;;'><div style='padding: 4px 10px;background: #1b1b1b;color:white;'>" . t("history") . "</div><div style='overflow-y: auto;height: 200px;'>";
+				echo "<table class='table table-bordered table-sm tablik' style='margin:0px;' border=0>";
+				echo "<tr><th width=120>" . t("edited") . "</th><th width=120>" . t("when") . "</th><th width=90>" . t("IP") . "</th><th width=70>" . t("size") . "</th><th width=160>" . t("type") . "</th><th width=80>" . t("action") . "</th></tr>";
+				$result_ = dibi::query('SELECT * FROM :prefix:history WHERE `parent`=%s', "article_" . $result["id"], " ORDER BY id DESC");
+				foreach ($result_ as $n => $row) {
+					echo "<tr><td>" . User::get($row["user"])["nick"] . "</td><td style='font-size: 14px;'>" . Strings::str_time($row["date"]) . "</td>";
+					echo "<td><span style='text-overflow: ellipsis;overflow: hidden;width: 95px;display: block;font-size: 14px;' title='" . $row["ip"] . "'>" . $row["ip"] . "</span></td>";
+					echo "<td style='color:#807f7f;'>" . (strlen(utf8_decode($row["text"])) == 0 ? "---" : strlen(utf8_decode($row["text"])) . "b") . "</td>";
+					if ($row["type"] == "article_history") {
+						echo "<td><span style='background: #37ea76;padding: 3px;font-size: 12px;text-transform: uppercase;'>" . t("Editing article") . "</span></td>";
+						echo "<td><a href='" . $t->router->url_ . "adminv2/article/edit/" . $result["id"] . "?history=" . $row["id"] . "'>" . t("load") . "</a> | <a href='#' onClick=\"loadArticle(" . $row["id"] . ");return false;\">O</a></td>";
+					}
+					if ($row["type"] == "article_concept") { //showArticle
+						echo "<td><span style='background: #25aee2;padding: 3px;font-size: 12px;text-transform: uppercase;'>" . t("Saved draft") . "</span></td>";
+						echo "<td><a href='#' onClick=\"loadArticle(" . $row["id"] . ");return false;\">" . t("show") . "</a></td>";
+					}
+					if ($row["type"] == "article_recycled") {
+						echo "<td><span style='background: red;padding: 3px;font-size: 12px;text-transform: uppercase;'>" . t("Article recycled") . "</span></td>";
+						echo "<td></td>";
+					}
+					if ($row["type"] == "article_cancel_recycled") {
+						echo "<td><span style='background: orange;padding: 3px;font-size: 12px;text-transform: uppercase;'>" . t("Recycling is canceled") . "</span></td>";
+						echo "<td></td>";
+					}
+					echo "</tr>";
+				}
+				echo "</table></div></div>";
+			echo "</div>";
+			
+			echo "<div class='right-side'>";
 				echo "<div class='expandable' id='cat_1'>";
-				echo "<div class=title_admin><a href=# onclick=\"showhideclass('#cat_1', 'closed');return false;\">".t("default setting")."</a></div>";
+				echo "<div class=title_admin><a href=# onclick=\"showhideclass('#cat_1', 'closed');return false;\">" . t("Default setting") . "</a></div>";
 				echo "<div>";
 
-				if($result["state"] == 5 || $result["state"] == 0){
-					if(User::isPerm("public") == 0 and $result["state"] == 5)
-						echo "<s>".t("publish article")."</s> <font color=#888888 title='".t("you do not have permission to publish articles")."'>( ".t("without permission")."! )</font>";
-					elseif(Database::getConfig("mainpage") == $result["id"])
-						echo "<b>".t("article published")."</b><br><font color=#888888>".t("main article")."</font>";
+				if ($result["state"] == 5 || $result["state"] == 0) {
+					if (User::isPerm("public") == 0 and $result["state"] == 5)
+						echo "<s>" . t("publish article") . "</s> <font color=#888888 title='" . t("you do not have permission to publish articles") . "'>( " . t("without permission") . "! )</font>";
+					elseif (Database::getConfig("mainpage") == $result["id"])
+					echo "<b>" . t("article published") . "</b><br><font color=#888888>" . t("main article") . "</font>";
 					else {
 						//echo "<label><input type=checkbox name=public value=1 ".($result["state"] != 5?"checked":"")."> ".t("publish article")."</label>";
-						echo "<label><input class=red type='toggle_swipe' name='public' value=1  ".($result["state"] != 5?"checked":"")."> ".t("publish article")."</label>";
+						echo "<label><input class=red type='toggle_swipe' name='public' value=1  " . ($result["state"] != 5 ? "checked" : "") . "> " . t("publish article") . "</label>";
 					}
-					if($result["state"] == 5){
-						echo "<br><b>".t("article not public")."</b>";
+					if ($result["state"] == 5) {
+						echo "<br><b>" . t("Article not public") . "</b>";
 					}
-				}else{
-					echo "<s>".t("publish article")."</s><br>";
-					if($result["state"] == 4)
-						echo "<b><img src='".Router::url()."/modules/admin/images/smaz.gif' class=des>".t("article recycled")."</b>";
+				} else {
+					echo "<s>" . t("Publish article") . "</s><br>";
+					if ($result["state"] == 4)
+						echo "<b><img src='" . Router::url() . "/modules/admin/images/smaz.gif' class=des>" . t("article recycled") . "</b>";
 					else
-						echo "<b>".t("state").": ".$result["state"]."</b>";
+						echo "<b>" . t("State") . ": " . $result["state"] . "</b>";
 				}
-				echo "<hr><div style='padding: 5px;'><b>Jazyk: </b>";
+				echo "<hr><div style='padding: 5px;'><b>".t("Language").": </b>";
 
 				$languages = explode(",", Database::getConfig("languages"));
 				$default   = Database::getConfig("default-lang");
-				echo "<select id=lang name=lang style='width:150px;' onChange=\"var l = $('#lang option:selected').val(); if(l != '".$result["language"]."'){window.location.href='?lang='+l;}\">";
-				foreach($languages as $lng){
-					echo "<option value='".($lng == $default?"":$lng)."' ".($lng == $result["language"] || ($result["language"] == "" && $lng == $default)?"selected":"").">".t($lng)."</option>";
+				echo "<select id=lang name=lang style='width:150px;' onChange=\"var l = $('#lang option:selected').val(); if(l != '" . $result["language"] . "'){window.location.href='?lang='+l;}\">";
+				foreach ($languages as $lng) {
+					echo "<option value='" . ($lng == $default ? "" : $lng) . "' " . ($lng == $result["language"] || ($result["language"] == "" && $lng == $default) ? "selected" : "") . ">" . t($lng) . "</option>";
 				}
 				echo "</select>";
-				if($result["mid"] != 0){
-					echo "<br><a href='".$t->router->url_."adminv2/article/edit/".$result["mid"]."/'>Rodičovský článek</a>";
+				if ($result["mid"] != $result["id"]) {
+					echo "<br><a href='" . $t->router->url_ . "adminv2/article/edit/" . $result["mid"] . "/'>".t("Parent article")."</a>";
 				}
-				echo "</div>";				
+				echo "</div>";
 
 				echo "<hr><div style='padding: 5px;'><b>Viditelnost:</b></div>";
 				echo "<div class='visibility-admin'>";
-				echo "<input type=radio onChange=\"$('#span-vishes').hide();\" name=visiblity value=1 id=vispub ".($result["visiblity"]==""?"checked":"")."> <label for=vispub>".t("public")."</label>";
-				echo "<br><input type=radio onChange=\"$('#span-vishes').hide();\" name=visiblity value=2 id=vishid ".($result["visiblity"]=="2"?"checked":"")."> <label for=vishid>".t("private")."</label>";
-				echo "<br><input type=radio onChange=\"if($(this).is(':checked') && $(this).val() == '3'){ $('#span-vishes').css('display','block');$('#vishes-pass').select(); }else{ $('#span-vishes').hide(); }\" name=visiblity value=3 id=vishes ".($result["visiblity"] != "" && $result["visiblity"] != "2"?"checked":"")."> <label for=vishes>".t("protected by password")."</label>";
-				echo "<span id='span-vishes' style='display:".($result["visiblity"] != "" && $result["visiblity"] != "2"?"block":"none").";border: 1px solid rgb(222, 219, 219);padding: 4px 4px;font-size: 14px;margin-left: 27px;background: #e4e4e4;margin-bottom: 10px;'>".t("enter password").":<br><input type=text name=vishes-pass id=vishes-pass value='".($result["visiblity"] != "" && $result["visiblity"] != "2"?substr($result["visiblity"],1):"")."' style='width:100%;'></span>";
+				echo "<input type=radio onChange=\"$('#span-vishes').hide();\" name=visiblity value=1 id=vispub " . ($result["visiblity"] == "" ? "checked" : "") . "> <label for=vispub>" . t("public") . "</label>";
+				echo "<br><input type=radio onChange=\"$('#span-vishes').hide();\" name=visiblity value=2 id=vishid " . ($result["visiblity"] == "2" ? "checked" : "") . "> <label for=vishid>" . t("private") . "</label>";
+				echo "<br><input type=radio onChange=\"if($(this).is(':checked') && $(this).val() == '3'){ $('#span-vishes').css('display','block');$('#vishes-pass').select(); }else{ $('#span-vishes').hide(); }\" name=visiblity value=3 id=vishes " . ($result["visiblity"] != "" && $result["visiblity"] != "2" ? "checked" : "") . "> <label for=vishes>" . t("protected by password") . "</label>";
+				echo "<span id='span-vishes' style='display:" . ($result["visiblity"] != "" && $result["visiblity"] != "2" ? "block" : "none") . ";border: 1px solid rgb(222, 219, 219);padding: 4px 4px;font-size: 14px;margin-left: 27px;background: #e4e4e4;margin-bottom: 10px;'>" . t("enter password") . ":<br><input type=text name=vishes-pass id=vishes-pass value='" . ($result["visiblity"] != "" && $result["visiblity"] != "2" ? substr($result["visiblity"], 1) : "") . "' style='width:100%;'></span>";
 				echo "</div>";
 				echo "<hr style='margin-bottom: 10px;'>";
-				echo "<input type=submit onclick='beforeSubmit();' class='btn btn-primary' name=edit value='".t("save article")."'> <button style='padding: 6px;' name=edit class='btn btn-warning' onClick=\"saveConcept();return false;\">".t("save draft")."</button> <div id='state-info' style='margin-top: 7px;display:none;'></div>";
+				echo "<input type=submit onclick='beforeSubmit();' class='btn btn-primary' name=edit value='" . t("save article") . "'> <button style='padding: 6px;' name=edit class='btn btn-warning' onClick=\"saveConcept();return false;\">" . t("save draft") . "</button> <div id='state-info' style='margin-top: 7px;display:none;'></div>";
 				echo "</div>";
-				echo "</div>";
-				echo "<textarea id='oldtextfromarticle' style='display:none;'>".$result["text"]."</textarea>";
+				echo "</div>";			
+				echo "<textarea id='oldtextfromarticle' style='display:none;'>" . $result["text"] . "</textarea>";
 
 				$menus = null;
 				$result_ = dibi::query('SELECT * FROM :prefix:menu');
 				foreach ($result_ as $n => $row) {
-					if(!isset($menus[$row["box"]])){ $menus[$row["box"]] = array( 0 => true, 1 => 0); }
+					if (!isset($menus[$row["box"]])) {
+						$menus[$row["box"]] = array(0 => true, 1 => 0);
+					}
 				}
 
 				echo "<div class='expandable closed' id='cat_2'>";
-				echo "<div class=title_admin><a href=# onclick=\"showhideclass('#cat_2', 'closed');return false;\">".t("display other menu")."</a></div>";//style.enable.custommenu				
+				echo "<div class=title_admin><a href=# onclick=\"showhideclass('#cat_2', 'closed');return false;\">" . t("Display other menu") . "</a></div>"; //style.enable.custommenu				
 				echo "<div>";
-				if($t->root->config->get("style.enable.custommenu") == true){
-					echo "<select id=box name=custommenu style='width:100%;'><option value=''> - ".t("not to use")." - </option>";
-					foreach($menus as $n => $box){
-						echo "<option value='".$n."' ".($result["custommenu"] == $n?"selected":"").">".$n."</option>";
+				if ($t->root->config->get("style.enable.custommenu") == true) {
+					echo "<select id=box name=custommenu style='width:100%;'><option value=''> - " . t("not to use") . " - </option>";
+					foreach ($menus as $n => $box) {
+						echo "<option value='" . $n . "' " . ($result["custommenu"] == $n ? "selected" : "") . ">" . $n . "</option>";
 					}
 					echo "</select>";
-				}else{
-					echo "<span class=error>".t("template not support custom left menu")."</span>";
+				} else {
+					echo "<span class=error>" . t("template not support custom left menu") . "</span>";
 				}
 				echo "</div>";
 				echo "</div>";
 
 				echo "<div class='expandable closed' id='cat_3'>";
-					echo "<div class=title_admin><a href=# onclick=\"showhideclass('#cat_3', 'closed');return false;\">".t("category")."</a></div>";	
-					echo "<div>";
-					$result_ = dibi::query('SELECT * FROM :prefix:category ORDER BY id');
-					echo "<select id=category name=category style='width:100%;'>";
-					foreach ($result_ as $n => $row) {
-						echo "<option value='".$row["id"]."' ".(($result["category"] == $row["id"])?"selected":"").">".$row["name"]."</option>";
-					}
-					echo "</select>";
-					echo "</div>";					
+				echo "<div class=title_admin><a href=# onclick=\"showhideclass('#cat_3', 'closed');return false;\">" . t("Category") . "</a></div>";
+				echo "<div>";
+				$result_ = dibi::query('SELECT * FROM :prefix:category ORDER BY id');
+				echo "<select id=category name=category style='width:100%;'>";
+				foreach ($result_ as $n => $row) {
+					echo "<option value='" . $row["id"] . "' " . (($result["category"] == $row["id"]) ? "selected" : "") . ">" . $row["name"] . "</option>";
+				}
+				echo "</select>";
+				echo "</div>";
 				echo "</div>";
 
 				echo "<div class='expandable closed' id='cat_4'>";
-					echo "<div class=title_admin><a href=# onclick=\"showhideclass('#cat_4', 'closed');return false;\">".t("comments")."</a></div>";	
-					echo "<div class='visibility-admin'>";
-					if(!isset($result["comments"]) or $result["comments"] == "") $result["comments"]=1;
-					echo "<div style='padding:0px 4px;'><input type=radio name=comments value=1 ".($result["comments"] == 1?"checked":"")." id=cm1> <label for=cm1>".t("enable comments")."</label></div>";
-					echo "<div style='padding:0px 4px;'><input type=radio name=comments value=2 ".($result["comments"] == 2?"checked":"")." id=cm2> <label for=cm2>".t("only logged")."</label></div>";
-					echo "<div style='padding:0px 4px;'><input type=radio name=comments value=3 ".($result["comments"] == 3?"checked":"")." id=cm3> <label for=cm3>".t("disable comments")."</label></div>";
-					echo "</div>";
+				echo "<div class=title_admin><a href=# onclick=\"showhideclass('#cat_4', 'closed');return false;\">" . t("Comments") . "</a></div>";
+				echo "<div class='visibility-admin'>";
+				if (!isset($result["comments"]) or $result["comments"] == "") $result["comments"] = 1;
+				echo "<div style='padding:0px 4px;'><input type=radio name=comments value=1 " . ($result["comments"] == 1 ? "checked" : "") . " id=cm1> <label for=cm1>" . t("enable comments") . "</label></div>";
+				echo "<div style='padding:0px 4px;'><input type=radio name=comments value=2 " . ($result["comments"] == 2 ? "checked" : "") . " id=cm2> <label for=cm2>" . t("only logged") . "</label></div>";
+				echo "<div style='padding:0px 4px;'><input type=radio name=comments value=3 " . ($result["comments"] == 3 ? "checked" : "") . " id=cm3> <label for=cm3>" . t("disable comments") . "</label></div>";
+				echo "</div>";
 				echo "</div>";
 
 				echo "<div class='expandable closed' id='cat_5'>";
-					echo "<div class=title_admin><a href=# onclick=\"showhideclass('#cat_5', 'closed');return false;\">".t("author")."</a></div>";
-					echo "<div>";
-					echo "<select id=author name=author class='' style='width:100%;' onChange=\"var parent = $('#'+$(this).attr('parent'));if(parent.attr('value_') == 'custom'){ $('#customname').show();$('#customname').focus(); }else{ $('#customname').hide(); };\">";
-					
-					$custom = false;$cname = "";
-					if(substr($result["author"],0,1)=="@"){
-						$custom = true;
-						$cname = substr($result["author"],1);
-					}
-					echo "<option value='custom' ".($custom?"selected":"").">".t("custom")."</option>";
+				echo "<div class=title_admin><a href=# onclick=\"showhideclass('#cat_5', 'closed');return false;\">" . t("Author") . "</a></div>";
+				echo "<div>";
+				echo "<select id=author name=author class='' style='width:100%;' onChange=\"var parent = $('#'+$(this).attr('parent'));if(parent.attr('value_') == 'custom'){ $('#customname').show();$('#customname').focus(); }else{ $('#customname').hide(); };\">";
 
-					$result_ = dibi::query('SELECT * FROM :prefix:users ORDER BY id');
-					foreach ($result_ as $n => $row) {
-						echo "<option value='".$row["id"]."' ".(($result["author"] == $row["id"] and !$custom)?"selected":"").">".$row["nick"]."</option>";
-					}
-					echo "</select><input type=text value='".$cname."' style='display:".($custom?"block":"none").";width:100%;padding: 6px 12px;border-top:0px;' placeholder='".t("custom author")."' name=customname id=customname>";
-					echo "<span style='padding:4px;display: inline-block;'><b>".t("original author")."</b>: ".User::get($result["oauthor"])["nick"]."</span>";
-					echo "</div>";
+				$custom = false;
+				$cname = "";
+				if (substr($result["author"], 0, 1) == "@") {
+					$custom = true;
+					$cname = substr($result["author"], 1);
+				}
+				echo "<option value='custom' " . ($custom ? "selected" : "") . ">" . t("Custom") . "</option>";
+
+				$result_ = dibi::query('SELECT * FROM :prefix:users ORDER BY id');
+				foreach ($result_ as $n => $row) {
+					echo "<option value='" . $row["id"] . "' " . (($result["author"] == $row["id"] and !$custom) ? "selected" : "") . ">" . $row["nick"] . "</option>";
+				}
+				echo "</select><input type=text value='" . $cname . "' style='display:" . ($custom ? "block" : "none") . ";width:100%;padding: 6px 12px;border-top:0px;' placeholder='" . t("custom author") . "' name=customname id=customname>";
+				echo "<span style='padding:4px;display: inline-block;'><b>" . t("original author") . "</b>: " . User::get($result["oauthor"])["nick"] . "</span>";
+				echo "</div>";
 				echo "</div>";
 
 				echo "<div class='expandable closed' id='cat_6'>";
-					echo "<div class=title_admin><a href=# onclick=\"showhideclass('#cat_6', 'closed');return false;\">".t("tags")."</a></div>";
-					echo "<div>";
-						echo "<input type=text autocomplete=off onKeyDown=\"if(event.keyCode == 13){ addTags($('#tags').val());$('#tags').val('');return false; }\" name=tag id=tags style='width: 78%;'> <button onClick=\"addTags($('#tags').val());$('#tags').val('');return false;\" class='btn btn-primary' style='padding: 6px;width: 55px;'>".t("add")."</button>";
-						echo "<div id=tagsp style='padding: 6px 0px;border-bottom: 1px solid silver;'>";
+				echo "<div class=title_admin><a href=# onclick=\"showhideclass('#cat_6', 'closed');return false;\">" . t("Tags") . "</a></div>";
+				echo "<div>";
+				echo "<input type=text autocomplete=off onKeyDown=\"if(event.keyCode == 13){ addTags($('#tags').val());$('#tags').val('');return false; }\" name=tag id=tags style='width: 78%;'> <button onClick=\"addTags($('#tags').val());$('#tags').val('');return false;\" class='btn btn-primary' style='padding: 6px;width: 55px;'>" . t("add") . "</button>";
+				echo "<div id=tagsp style='padding: 6px 0px;border-bottom: 1px solid silver;'>";
 
-						echo "</div><span class='info'>".t("more tags separated by commas")."<br>Some special tags: <br><a href=# onClick=\"addTags('form');return false;\">form</a> - hide top and bottom information, autor, tags<br><a href=# onClick=\"addTags('test');return false;\">test</a> - at top add information this article is used for testing<br><a href=# onClick=\"addTags('no-header');return false;\">no-header</a> - hidde header name<br><a href=# onClick=\"addTags('template');return false;\">template</a> - show page as template</span>";
-						echo "<textarea id=tagst name=article_tags style='display:none;'>".$result["tags"]."</textarea>";
-					echo "</div>";
+				echo "</div><span class='info'>" . t("more tags separated by commas") . "<br>Some special tags: <br>";
+				echo "<a href=# onClick=\"addTags('form');return false;\">form</a> - hide top and bottom information, autor, tags<br>";
+				echo "<a href=# onClick=\"addTags('test');return false;\">test</a> - at top add information this article is used for testing<br>";
+				echo "<a href=# onClick=\"addTags('no-header');return false;\">no-header</a> - hidde header name<br>";
+				echo "<a href=# onClick=\"addTags('template');return false;\">template</a> - show page as template<br>";
+				echo "<a href=# onClick=\"addTags('no-comments');return false;\">no-comments</a> - hide comments";
+				echo "</span>";
+				echo "<textarea id=tagst name=article_tags style='display:none;'>" . $result["tags"] . "</textarea>";
 				echo "</div>";
-			echo "</div>";
-			echo "</div>";
+				echo "</div>";
+				//echo "</div>";
+				//echo "</div>";
 
-			if(isset($_GET["html"])){
-				$result["html"]=0;
+			if (isset($_GET["html"])) {
+				$result["html"] = 0;
 			}
-
-			echo "<table class='tabfor poool' style='width:70%;margin:20px 0px;'>";
-			echo "<tr><td width=100><label style='font-size:20px;'>".t("title")."</label></td><td width=430 colspan=2><input type=text style='font-size:20px;' name=title value='".$result["title"]."'></td></tr>";
-			echo "<tr><td></td><td><b>".t("relative address")."</td><td></b>".Router::url()." <input type=text name=alias style='width:250px;padding: 2px 7px;border: 0px;' value='".$result["alias"]."'> /</td></tr>";
-			echo "<tr><td></td><td><b>".t("permanent address")."</td><td></b>".Router::url()."".$result["id"]."/ <a href='".Router::url()."".$result["id"]."/' title='Otevřít na nové stránce' data-title='Otevřít na nové stránce' target=_blank><i class=\"fas fa-external-link-alt\"></i></a></td></tr>";
-			echo "<tr><td height=25></td></tr>";
-			echo "<textarea name=text style='display:none;' id=oldtextsaved>".$result["text"]."</textarea><input type=hidden name=html id=htmlonlyval value='".$result["html"]."'>";
-			echo "<tr><td colspan=3><a name=html></a>";
-				echo "<a href=# class='stb' onClick=\"switchToEditor(".($result["html"]==1?"true":"false").");return false;\">Editor</a>";
-				echo "<a href=# class='stb' onClick=\"switchToHtml();return false;\">HTML</a>";
-				//echo "<a href=# onClick=\"$('#htmlonly').val($('#oldtextsaved').val());return false;\">Load text from save to html</a><br>";
-			echo "<textarea name=text style='width:100%;' class='tinimcenocheck' id=intereditor rows=20>".htmlentities($result["text"])."</textarea>";			
-			//echo "<textarea id=htmlonly name=htmltext style='width: 100%; height: 250px; z-index: 5000; position: relative; border:1px solid silver; border-width: 5px 1px 1px; border-style: solid; border-color: #222;outline:0px;".($result["html"] == 1?"":"display:none;")."'>".$result["text"]."</textarea>";
-			echo "</td></tr>";
-			echo "<tr><td colspan=3>";
-				/*$output = preg_replace_callback('/\[form id=\"(.*?)\"\]/U',function ($matches) use($t) {
-					return _LoadForm($matches, $t);
-				}, $output);*/
-				$result_ = dibi::query('SELECT * FROM :prefix:form');
-				$forms = array();
-				foreach ($result_ as $n => $row) {
-					$forms[$row["id"]] = array("(#".$row["id"].") ".$row["name"], "<a class='btn btn-primary btn-sm' style='font-size: 11px;margin-top: -3px;' href='".$t->router->url_."admin/content/form-answer/".$row["id"]."'>".t("answers")."</a>", "<a class='btn btn-primary btn-sm' style='font-size: 11px;margin-top: -3px;' href='".$t->router->url_."admin/content/form-edit/".$row["id"]."'>".t("edit")."</a>");
-				}
-				preg_match_all('/\[form id=\"(.*?)\"\]/U', $result["text"], $matches, PREG_OFFSET_CAPTURE);
-				for($i=0;$i<count($matches[1]);$i++){
-					$id = $matches[1][$i][0];
-					echo "<div style='padding: 8px;background: #3c3c3c;color: white;border-bottom: 1px solid #505050;'><div style='float:right;'>".$forms[$id][1]." ".$forms[$id][2]."</div><span class=formim><i class=\"fas fa-clipboard-list\"></i> ".$forms[$id][0]."</span></div>";
-				}
-			echo "</td></tr>";
-			echo "</table>";
-
+			echo "</div>";
+		
+		echo "</div>";
 		echo "</form>";
-
-		echo "<div style='border: 1px solid #757575;width: 70%;background: #060606;;'><div style='padding: 4px 10px;background: #1b1b1b;color:white;'>".t("history")."</div><div style='overflow-y: auto;height: 200px;'>";
-		echo "<table class='table table-bordered table-sm tablik' style='margin:0px;' border=0>";
-		echo "<tr><th width=120>".t("edited")."</th><th width=120>".t("when")."</th><th width=90>".t("IP")."</th><th width=70>".t("size")."</th><th width=160>".t("type")."</th><th width=80>".t("action")."</th></tr>";
-		$result_ = dibi::query('SELECT * FROM :prefix:history WHERE `parent`=%s', "article_".$result["id"], " ORDER BY id DESC");
-		foreach ($result_ as $n => $row) {
-			echo "<tr><td>".User::get($row["user"])["nick"]."</td><td style='font-size: 14px;'>".Strings::str_time($row["date"])."</td>";
-			echo "<td><span style='text-overflow: ellipsis;overflow: hidden;width: 95px;display: block;font-size: 14px;' title='".$row["ip"]."'>".$row["ip"]."</span></td>";
-			echo "<td style='color:#807f7f;'>".(strlen(utf8_decode($row["text"]))==0?"---":strlen(utf8_decode($row["text"]))."b")."</td>";
-			if($row["type"] == "article_history"){
-				echo "<td><span style='background: #37ea76;padding: 3px;font-size: 12px;text-transform: uppercase;'>".t("editing article")."</span></td>";
-				echo "<td><a href='".$t->router->url_."adminv2/article/edit/".$result["id"]."?history=".$row["id"]."'>".t("load")."</a> | <a href='#' onClick=\"loadArticle(".$row["id"].");return false;\">O</a></td>";
-			}
-			if($row["type"] == "article_concept"){ //showArticle
-				echo "<td><span style='background: #25aee2;padding: 3px;font-size: 12px;text-transform: uppercase;'>".t("saved draft")."</span></td>";
-				echo "<td><a href='#' onClick=\"loadArticle(".$row["id"].");return false;\">".t("show")."</a></td>";
-			}
-			if($row["type"] == "article_recycled"){
-				echo "<td><span style='background: red;padding: 3px;font-size: 12px;text-transform: uppercase;'>".t("article recycled")."</span></td>";
-				echo "<td></td>";
-			}
-			if($row["type"] == "article_cancel_recycled"){
-				echo "<td><span style='background: orange;padding: 3px;font-size: 12px;text-transform: uppercase;'>".t("recycling is canceled")."</span></td>";
-				echo "<td></td>";
-			}
-			echo "</tr>";
-		}
-		echo "</table></div></div>";
 		if($result["html"] == 1){
 			echo "<script>$(function(){ setTimeout(function(){switchToHtml(true);}, 100); });</script>";
 		}
 		?>
 		<script>
+			$(function(){
+				setTimeout(function(){
+					actionButton.setText("<?php echo t("Save article"); ?>")
+					actionButton.changeIcon("fas fa-save");
+					actionButton.show();
+					actionButton.onclick(function(){
+						$("[name=edit].btn-primary").click();
+					});
+				}, 100);
+			});
 		function beforeSubmit(){
 			
 		}
@@ -865,7 +937,34 @@ else if($action == "edit"){
 		}
 		drawTags();
 
+		$(function(){
+			var textDraft = Cookies.get("article_save_text_<?php echo $result["id"]; ?>");
+			if(textDraft != null && textDraft != "") {
+				$("#state-info").show();
+				$("#state-info").html("<span class='sbox ok'><a href=# onclick='loadConceptFromCookies();return false;'><?php echo t("Load draft from cache") ?></a></span>");
+			}
+		});
+
+		function loadConceptFromCookies(){
+			var textDraft = Cookies.get("article_save_text_<?php echo $result["id"]; ?>");
+
+			if($("#htmlonlyval").val() == 1)
+				$("#intereditor").val(textDraft);
+			else
+				tinymce.activeEditor.setContent(textDraft);
+		}
+
 		//state-info
+		var _text = "";
+		$(function(){
+			setTimeout(function(){
+				if($("#htmlonlyval").val() == 1)
+					_text = $("#intereditor").val();
+				else
+					_text = tinymce.activeEditor.getContent();
+			}, 1000);
+		});
+
 		function callTimer(){
 			setTimeout(function(){ saveConcept(); }, 60000);
 		}
@@ -874,10 +973,17 @@ else if($action == "edit"){
 				_text = $("#intereditor").val();
 			else
 				_text = tinymce.activeEditor.getContent();
+
 			if($("#oldtextfromarticle").val() != _text){
+				Cookies.set("article_save_text_<?php echo $result["id"]; ?>", _text);
+
 				$("#state-info").show();
 				$("#state-info").html("<span class='loading small'></span> <?php echo t("saving")."..."; ?>");
-				ajaxcall_draw("<?php echo $t->router->url_."adminv2/article/edit/".$result["id"]."?__type=ajax&saveConcept"; ?>", {text: _text}, "#state-info", callTimer);
+				ajaxcall_draw("<?php echo $t->router->url_."adminv2/article/edit/".$result["id"]."?__type=ajax&saveConcept"; ?>", {text: _text}, "#state-info", 
+					function(text){
+						Cookies.remove("article_save_text_<?php echo $result["id"]; ?>");
+						callTimer();
+					});
 				$("#oldtextfromarticle").val(_text);
 			}else{
 				callTimer();

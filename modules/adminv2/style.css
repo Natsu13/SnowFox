@@ -2964,3 +2964,538 @@ input[type="progress"] {
 .state-section .status .icon .loading {
     margin-left: 5px;
 }
+
+.gridContainer {
+    flex: 1;
+    display: flex;
+}
+.gridContainer.gridStyle-vertical {
+    flex-direction: column;
+}
+.gridContainer.gridStyle-horizontal {
+    flex-direction: row;
+}
+.gridContainer .gridLast {
+    margin: 2px;
+    padding: 5px;
+    background: white;
+    border: 1px solid #dcdcdc;
+}
+
+.gridWindow {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #e8e8e8;
+    margin: 2px;
+    background: #f9f9f9;
+}
+.gridWindow .gridWindowTitle {
+    background: #f9f9f9;
+    border-bottom: 1px solid #e8e8e8;
+    cursor: move;
+    display: flex;
+}
+.gridWindow .gridWindowSubTitle {
+    background: #fdfdfd;
+    border-bottom: 1px solid #e8e8e8;
+    padding: 2px 10px;
+    font-size: 14px;
+}
+.gridWindow .gridWindowSubTitle input[type=text] {
+    font-size: 11px;
+    margin-left: 11px;
+    margin-right: 11px;
+    border-radius: 2px;
+    padding: 1px;
+}
+.gridWindow .gridWindowSubTitle button {
+    margin-left: 11px;
+    margin-right: 11px;
+    font-size: 12px !important;
+    padding: 1px 7px !important;
+}
+.gridWindow .gridWindowTitle .gridWindowTitleContent {
+    padding: 2px 10px;
+    flex: 1;
+}
+.gridWindow .gridWindowTitle .gridWindowTitleControls .controll-button {
+    background: #f7f7f7;
+    padding: 2px 7px;
+    display: inline-block;
+    color: black;
+    border-left: 1px solid #e8e8e8;
+    text-decoration: none;
+}
+.gridWindow .gridWindowTitle .gridWindowTitleControls .controll-button:hover {
+    background: #efeeee;    
+}
+.gridWindow .gridWindowContent {
+    background-color: white;
+    flex: 1;
+    position: relative;
+}
+.gridWindow.designerWindow .gridWindowContent {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+.gridWindow.designerWindow .gridWindowContent .highlighter {
+    position: absolute;
+    border: 3px solid #2196f3;
+    opacity: 0.8;
+}
+.gridWindow .gridWindowContent.showTrans {
+    background-image: linear-gradient(
+        45deg
+        , #e2e2e2 25%, transparent 25%), linear-gradient(
+        -45deg
+        , #e2e2e2 25%, transparent 25%), linear-gradient(
+        45deg
+        , transparent 75%, #e2e2e2 75%), linear-gradient(
+        -45deg
+        , transparent 75%, #e2e2e2 75%);
+    background-size: 20px 20px;
+    background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+}
+
+.tree .item {
+    position: relative;
+    user-select: none;
+}
+.tree .item .selected {
+    background: #2196f3;
+    color: white;
+    border-radius: 2px;
+    padding: 2px 5px;
+}
+.tree > .item:first-child::after {
+    display:none;
+}
+.tree .item .opener {
+    width: 10px;
+    height: 10px;
+    display: inline-block;
+    background: white;
+    border: 1px solid silver;
+    position: absolute;
+    left: 4px;
+    top: 6px;
+    z-index: 10;
+}
+.tree .item .opener::before {
+    content: "+";
+    position: absolute;
+    top: -5px;
+    left: 0px;
+    font-size: 12px;
+}
+.tree .item.open .opener::before {
+    content: "-";
+    left: 2px;
+}
+
+.item:not(.open) + .childrens {
+    display: none;
+}
+
+.tree .item:hover {
+    text-decoration: underline;
+    cursor: pointer;
+}
+.tree .item::before {
+    content: " ";
+    width: 12px;
+    height: 1px;
+    background: transparent;
+    display: inline-block;
+    position: relative;
+    top: -5px;
+    margin-right: 2px;
+    margin-left: 2px;
+    border-bottom: 1px dashed silver;
+}
+.tree .item::after {
+    content: " ";
+    width: 1px;
+    height: 22px;
+    background: transparent;
+    display: inline-block;
+    position: absolute;
+    top: -11px;
+    left: -1px;
+    margin-right: 2px;
+    margin-left: 2px;
+    border-left: 1px dashed silver;
+}
+.tree .subtree {
+    margin-left: 8px;
+    margin-top: -6px;
+    padding-top: 6px;
+    margin-bottom: -4px;
+    position: relative;
+}
+.tree .subtree::before {
+    content: " ";
+    x-border-left: 1px dashed silver;
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    bottom: 12px;
+}
+.tree .subtree.last::before {
+    bottom: 8px;
+}
+
+#grid {
+    background: white;
+    display: flex;
+    flex-direction: column;
+}
+
+#grid.dark {
+    background: black;
+}
+
+.dark .gridContainer.gridLast {
+    background: #2d2d2d;
+    border: 1px solid #3a3a3a;
+}
+.dark .gridWindow {
+    border: 1px solid #3a3a3a;
+    background: #2d2d2d;
+}
+.dark .gridWindow .gridWindowTitle {
+    background: #3a3a3a;
+    border-bottom: 1px solid #3a3a3a;
+    color: #d4d4d4;
+}
+.dark  .gridWindow .gridWindowContent {
+    background-color: black;
+}
+.dark  .gridWindow .gridWindowContent.showTrans {
+    background-image: linear-gradient(
+        45deg
+        , #808080 25%, transparent 25%), linear-gradient(
+        -45deg
+        , #808080 25%, transparent 25%), linear-gradient(
+        45deg
+        , transparent 75%, #808080 75%), linear-gradient(
+        -45deg
+        , transparent 75%, #808080 75%);
+}
+
+.prop-category {
+    background: #fdfdfd;
+    border-bottom: 1px solid #e8e8e8;
+    padding: 2px 10px;
+    font-size: 14px;
+}
+.prop-text {
+    display: flex;
+    flex-direction: row;
+    border-bottom: 1px solid #efefef;
+    font-size: 14px;
+    background: #f9f9f9;
+}
+.prop-text > div {
+    flex: 50%;
+}
+.prop-text > div:first-child {
+    border-right: 1px solid #efefef;
+    padding: 2px 10px;
+    user-select: none;
+}
+.prop-text .valedit > div:first-child, .prop-text .valtext > div {
+    padding: 2px 10px;
+    user-select: none;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+}
+.prop-text .valedit input {
+    display: none;
+    margin: 0px;
+    padding: 2px 10px;
+    border: 0px;
+    border-radius: 0px;
+    width: 99.6%;
+}
+.prop-text .valedit input:focus {
+    outline: 0px !important;
+    border: 0px !important;
+}
+.prop-text .valedit select {
+    display: none;
+    margin: 0px;
+    padding: 0px 18px;
+    padding-left: 6px !important;
+    border: 0px !important;
+    border-radius: 0px;
+    width: 99.6%;
+    height: 25px !important;
+    box-shadow: none;
+    outline: none !important;
+}
+.prop-text .valedit .textColor .color {
+    width: 13px;
+    height: 13px;
+    display: inline-block;
+    border: 1px solid silver;
+    position: relative;
+    top: 2px;
+    margin-right: 7px;
+}
+.prop-text > div:first-child .opener {
+    width: 10px;
+    height: 10px;
+    display: inline-block;
+    background: white;
+    border: 1px solid silver;
+    position: relative;
+    top: 6px;
+    margin-right: 5px;
+    cursor: pointer;
+}
+.prop-text > div:first-child .opener::before {
+    content: "+";
+    position: relative;
+    font-size: 12px;
+    top: -6px;
+    left: 0px;
+}
+.prop-text.prop-expandable.opened > div:first-child  .opener::before {
+    content: "-";
+    top: -7px;
+    left: 2px;
+}
+
+.prop-text .valedit .empty {
+    color: #adadad;
+    font-style: italic;
+}
+
+.prop-expandable:not(.opened) + div {
+    display: none;
+}
+
+.prop-expandable + div .prop-text > div:first-child {
+    padding-left: 25px;
+}
+
+.propsWindow .gridWindowContent {
+    overflow: auto;
+    max-height: 100%;
+}
+.valtext .centered-value {
+    text-align: center;
+}
+.valtext .centered-value [type="checkbox"] {
+    position: relative;
+    top: 2px;
+}
+
+.selected-resizer {
+    display: none;
+    position: absolute;
+    border: 1px solid #1992f3;
+    cursor: move;
+}
+.selected-resizer .right-resizer {
+    width: 10px;
+    height: 10px;
+    background: #ffffff;
+    position: absolute;
+    right: -6px;
+    top: 45%;
+    border: 1px solid #1992f3;
+    cursor: e-resize;
+    border-radius: 50%;
+}
+.selected-resizer .bottom-resizer {
+    width: 10px;
+    height: 10px;
+    background: #ffffff;
+    position: absolute;
+    left: 45%;
+    bottom: -6px;
+    border: 1px solid #1992f3;
+    cursor: n-resize;
+    border-radius: 50%;
+}
+
+.window-prop-height {
+    overflow: auto;
+}
+.duplicate-icon {
+    float: right;
+    display: inline-block;
+    background: #ececec;
+    padding: 0px 5px;
+    border-radius: 5px;
+}
+
+body h1 .id {
+    border-radius: 5px;
+    background: #c7c7c7;    
+    padding: 2px 7px;
+    position: relative;
+    top: -1px;
+}
+
+@media (max-width: 768px) {
+    .mobile-small {
+        font-size: 18px;
+        margin: 0px;
+        padding: 12px 5px;
+    }
+    body h1 .id {
+        font-size: 13px;
+    }
+    .admin .right-side {
+        margin-top: 25px;
+    }
+    body .admin > h1.fix {
+        margin-bottom: 0px;
+    }
+    .mobile-small .highlight {
+        height: auto;
+        position: initial;
+        display: inline;
+    }
+}
+
+.col-form-bold {font-weight: bold;}
+.btn-full-width {width: 100%;}
+
+body .stb {
+    background: #2196f3;
+}
+.stb:hover {
+    background: #47a0e6;
+    text-decoration: none;
+    color: white;
+}
+
+.verical-full-height {display: flex; flex-direction: row;position: relative;}
+.verical-full-height > div:not(.editor-text) {flex: 1;}
+.verical-full-height > .editor-text { position: absolute;z-index: 10;background: white;left: 0px;right: 0px;top: 0px;bottom: 0px; }
+.box {display: flex;padding: 0px !important;border: 0px !important;}
+.box .column {flex: 1 50%;border-right: 1px solid #a2a2a2;}
+.box .column:last-child {border-right: 0px;}
+.ftp-containter {position: relative;}
+.ftp-containter .ftp-toolbar {margin: 0px;padding: 0px;background: #e2e2e2;list-style: none;}
+.ftp-containter .ftp-toolbar li {display: inline-block;padding: 13px;cursor:pointer;width: 50px;text-align: center;border-right: 1px solid #d8d8d8;user-select: none;}
+.ftp-containter .ftp-toolbar li:last-child {border-right:0px;}
+.ftp-containter .ftp-toolbar li:hover {background: #d2d2d2;}
+.ftp-containter .ftp-toolbar li:active {background: #777;color: #fff;}
+.ftp-containter .address {background: #e2e2e2;border-top: 1px solid #d8d8d8;display: flex;}
+.ftp-containter .address > span {padding: 10px;display: inline-block;}
+.ftp-containter .address > input[type=text] { padding: 5px;border: 1px solid #d6d6d6;border-radius: 2px;transition: all 0.3s;flex: 1; }
+.ftp-containter .address > input[type=text]:focus {border-color: #4dacfd;outline: none;}
+.ftp-containter .address > button {background: #e2e2e2;border: 1px solid #c0c0c0;padding: 5px 9px;border-left: 0px;cursor: pointer;}
+.ftp-containter .status {background: #efeeee;padding: 10px;font-size: 12px;}
+.ftp-containter .file-list {overflow: hidden;overflow-y: scroll;}
+.ftp-containter .header {display: flex;position: sticky;top: 0px;}
+.ftp-containter .header > div {border-right: 1px solid #f5f5f5;padding: 5px;background:#f1f1f1;font-size: 12px;cursor:default;user-select: none; }
+.ftp-containter .header > div:hover { background: #efefef; }
+.ftp-containter .header > div:last-child {border-right: 0px;}
+.ftp-containter .list {padding: 0px;border: 0px;background: white;}
+.ftp-containter .list .ftp-row { display: flex; }
+.ftp-containter .list .ftp-row:hover { background: #f7f7f7; }
+.ftp-containter .list .ftp-row.selected {background: #dcf2ff;}
+.ftp-containter .list .ftp-row > div { padding: 5px;font-size: 12px;cursor:default;user-select: none;text-overflow: ellipsis;white-space: nowrap;overflow: hidden; }
+.ftp-containter .dialog {z-index: 100;position: absolute;top: 0;left: 0;right: 0;background: #fff;border-bottom-left-radius: 10px;border-bottom-right-radius: 10px;box-shadow: 0px 0px 15px #7d7d7d;}
+.ftp-containter .dialog .title {padding: 7px;font-size: 17px;text-transform: uppercase;}
+.ftp-containter .dialog .text {padding: 7px;}
+
+.cp {
+    position: absolute;
+    background: white;
+    -display: none;
+    width: 200px;
+    z-index: 10;
+    padding: 8px;
+    border-radius: 5px;
+    box-shadow: 0px 0px 5px #adadad;
+    border: 1px solid #d9d9d9;
+    transition: opacity 0.3s, visibility 0.3s, margin 0.3s;
+    visibility: hidden;
+    opacity: 0;
+    margin-top: 7px;
+}
+.cp.visible {
+    opacity: 1;
+    margin-top: 0px;
+}
+.cp .cp-section {
+    display: flex;
+    flex-direction: column;
+}
+.cp .cp-palette-container {
+    position: relative;
+    width: 100%;
+    height: 128px;
+    z-index: 1;
+    cursor: -webkit-grab;
+}
+.cp .cp-palette-container .cp-palette {
+    background: linear-gradient(to top, rgb(0, 0, 0), transparent), linear-gradient(to left, var(--color), rgb(255, 255, 255));
+    border-radius: 5px;
+    width: 100%;
+    height: 100%;
+}
+.cp .cp-picker {
+    position: absolute;
+    height: 18px;
+    width: 18px;
+    border: 2px solid #fff;
+    border-radius: 100%;
+    user-select: none;
+    background: var(--color);
+    top: -5px;
+}
+.cp .cp-chooser-container {
+    height: 8px;
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    cursor: -webkit-grab;
+}
+.cp-moving .cp-chooser-container, .cp-moving .cp-palette-container{
+    cursor: grabbing;
+}
+.cp .cp-hue {
+    background: linear-gradient(to right, red, #ff0, lime, cyan, blue, #f0f, red);
+}
+.cp .cp-bar {
+    flex-grow: 1;
+    border-radius: 5px;
+}
+
+.object-picker {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    right: 0px;
+    bottom: 0px;
+    background: #ffffffb5;
+    z-index: 100;
+    padding-top: 5px;
+    overflow: auto;
+    display: none;
+}
+.object-picker > a {
+    display: block;
+    background: white;
+    padding: 5px;
+    border: 1px solid #e3e3e3;
+    margin: 2px 7px;
+    color: #787878;
+}
+.object-picker > a:hover {
+
+}

@@ -9,7 +9,7 @@ class Utilities {
 		$root->getContainer()->set('utilities', $this);
 	}
 
-	public static function moveFilesToDirectory($sourceDir, $destinationDir, $doBackupRestore = true) {
+	public static function moveFilesToDirectory($sourceDir, $destinationDir, $doBackupRestore = true, $recursive = true) {
 		$ignore = array(".", "..");
 		$originalFiles = scandir($sourceDir);
 	
@@ -19,345 +19,85 @@ class Utilities {
 	
 		$backup = [];
 		foreach($originalFiles as $originalFile){
-			if(!in_array($originalFile,$ignore)){			
-				if(!rename($sourceDir."\\".$originalFile, $destinationDir."\\".$originalFile)){
+			if(!in_array($originalFile,$ignore)){								
+				$backup[] = array($destinationDir.DIRECTORY_SEPARATOR.$originalFile, $sourceDir.DIRECTORY_SEPARATOR.$originalFile);
+				if($recursive && is_dir($destinationDir.DIRECTORY_SEPARATOR.$originalFile)) {
+					if(!Utilities::moveFilesToDirectory($sourceDir.DIRECTORY_SEPARATOR.$originalFile, $destinationDir.DIRECTORY_SEPARATOR.$originalFile)) {
+						$doBackup = true;
+					}
+				}else{
+					if(!rename($sourceDir.DIRECTORY_SEPARATOR.$originalFile, $destinationDir.DIRECTORY_SEPARATOR.$originalFile)){
+						$doBackup = true;
+					}
+				}
+
+				if($doBackup) {
 					if($doBackupRestore) {
 						foreach($backup as $back) {
 							rename($back[0], $back[1]);
 						}
 					}
+					unlink($destinationDir);
 					return false;
 				}
-				$backup[] = array($destinationDir."\\".$originalFile, $sourceDir."\\".$originalFile);
 			}
 		}
 
 		return true;
 	}
 
-	public static function SendForm($formName, $customFormHook = false) {
-		$output = array("success" => "", "errors" => array(), "warnings" => array());
-		$result = dibi::query("SELECT * FROM :prefix:form WHERE name=%s", $formName)->fetch();
+	public static function SendForm($formId, $customFormHook = false, $dontAddErrorInFields = false) {
+		$output = array(
+			"submited" => false, 
+			"success" => "",
+			"disableForm" => false,
+			"isMultimedia" => false,
+			"thisFormWasAleradyFilled" => 0,
+			"inputErrors" => [],
+			"errors" => [], 
+			"warnings" => []
+		);
+		$result = dibi::query("SELECT * FROM :prefix:form WHERE id=%i", $formId)->fetch();
 
-		if(isset($_POST["form_id"]) && $_POST["form_id"] == $result['id']){
+		if($result != null) {
 			$datf = Config::sload($result["data"]);
+			$settings = Config::sload($result["settings"]);
+			if(!isset($settings["version"]) || floatVal($settings["version"]) < 2) {
+				$settings = $datf;
+			}
 
-			if($datf["enable"] != 1 && !$customFormHook){
-				$output["warnings"][] = "<b>".t("The form has been disabled!")."</b>";
-			}else{
-
-				$input = null;
-				$submit = "";
-				$result_ = dibi::query('SELECT * FROM :prefix:form_items WHERE `parent`=%s', $result["id"], " ORDER BY position");
-				$i=0;
-				
-				$fvars = Array();
-				foreach ($result_ as $n => $row) {
-					$data = Config::sload($row["data"]);
-					if($row["type"] == "variable"){
-						$v = $row["value"];
-						if($data["list"] == ""){
-							$v = $row["value"];
-						}else{
-							$index = $row["value"];
-							$arra  = explode(",", $data["list"]);
-							foreach($arra as $key => $value){
-								if($index == trim($value)) $v = trim($value);
-								if($index == $key) $v = trim($value);
-							}
-						}
-						$fvars[$row["name"]] = $v;
-					}else if($row["type"] == "submit"){
-						if(isset($_POST["form_input_".$row["id"]])){
-							$submit = $row["name"];
-						}
-					}else{
-						$fvars[$row["name"]] = $row["value"];
-					}
-				}
-				
-				foreach ($result_ as $n => $row) {
-					if($row["type"] == "submit"){
-						if(isset($_POST["form_input_".$row["id"]])){
-							$submit = $row["name"];
-						}
-					}else if($row["type"] == "text"){
-						// text
-					}else{
-						$data = Config::sload($row["data"]);
-						if(!isset($data["state"])) $data["state"] = 0;
-						if(!isset($data["custom"])) $data["custom"] = 0;
-						if(!isset($data["asemail"])) $data["asemail"] = 0;
-						
-						$input[$i] = array(array("form_input_".$row["id"],$row["id"], $row["name"]), $row["type"], $data["state"]);
-						if($row["type"] == "textbox" or $row["type"] == "password" or $row["type"] == "textarea"){
-							if($data["state"] == "2"){
-								$_POST["form_input_".$row["id"]] = preg_replace_callback('/\{#(.*?)\}/U',function ($matches) use($fvars) {
-									return (isset($fvars[$matches[1]])?$fvars[$matches[1]]:"null");
-								}, $row["value"]);
-							}
-							if($data["asemail"] == 1 and isset($_POST["form_input_".$row["id"]])){
-								if(!Utilities::isEmail($_POST["form_input_".$row["id"]]))
-									$errors_input[$row["id"]] = 2;
-							}
-							if(isset($_POST["form_input_".$row["id"]])){
-								if($row["type"] == "password" && $customFormHook)
-									$input[$i][3] = strlen($_POST["form_input_".$row["id"]]);
-								else
-									$input[$i][3] = $_POST["form_input_".$row["id"]];
-							}
-						}else if($row["type"] == "upload"){
-							if(!isset($_FILES["form_input_".$row["id"]])){
-								//$errors_input[$row["id"]] = t("you must upload file");
-							}
-							else if(number_format($_FILES["form_input_".$row["id"]]["size"] / $data["maxsize"], 2) > 1){
-								$errors_input[$row["id"]] = t("File can have only")." ".Utilities::convertBtoMB($data["maxsize"])." MB";
-							}
-							else if($_FILES["form_input_".$row["id"]]["error"] == 0){						
-								$allowed = (preg_match_all('/[^, ]+/', $data["allowed"], $out)? $out[0]: array('gif','png','jpg'));
-								$filename = $_FILES["form_input_".$row["id"]]['name'];
-								$ext = pathinfo($filename, PATHINFO_EXTENSION);
-								if(!in_array($ext,$allowed)) {
-									$errors_input[$row["id"]] = t("File type can be only one of this").": ".implode(", ", $allowed);
-								}else{
-									$newnam = sha1_file($_FILES["form_input_".$row["id"]]['tmp_name']).time();
-									$filene = _ROOT_DIR.'/upload/'.$data["folder"].$newnam.'.'.$ext;
-									
-									if(!move_uploaded_file($_FILES["form_input_".$row["id"]]['tmp_name'], $filene)) {
-										$errors_input[$row["id"]] = t("Upload ERROR");
-									}else{
-										/* TODO: udělat nastavovatelné */
-										$images =  array('gif','png' ,'jpg');
-										if(in_array($ext,$images) && $data["resize"] == 1)
-											Utilities::resizeImage($filene, $data["resizew"], $data["resizeh"]);
-											
-										$input[$i][3] = Router::url()."upload/".$data["folder"].$newnam.'.'.$ext;
-										$_POST["form_input_".$row["id"]] = Router::url()."upload/".$data["folder"].$newnam.'.'.$ext;
-									}
-								}
-							}
-							else{
-								switch ($_FILES["form_input_".$row["id"]]['error']) {
-									case UPLOAD_ERR_OK:
-										break;
-									case UPLOAD_ERR_NO_FILE:
-										//$errors_input[$row["id"]] = t('No file sent');
-										if($data["state"] == "1")
-											$errors_input[$row["id"]] = t("you must upload file");
-										break;
-									case UPLOAD_ERR_INI_SIZE:
-									case UPLOAD_ERR_FORM_SIZE:
-										$errors_input[$row["id"]] = t('exceeded filesize limit on server');
-										break;
-									default:
-										$errors_input[$row["id"]] = t('Unknown errors')." - ".$_FILES["form_input_".$row["id"]]['error'];
-										break;
-								}
-							}
-							if(isset($errors_input[$row["id"]])){
-								$_POST["form_input_".$row["id"]] = "!!no";
-							}
-						}else if($row["type"] == "picker"){	
-							$input[$i][3] = "";
-							if(isset($_POST["form_input_".$row["id"]])){
-								if($data["state"] == "1" and $_POST["form_input_".$row["id"]] == ""){ $errors_input[$row["id"]] = 1; }
-								else if($data["state"] == "2"){ $input[$i][3] = ""; }
-								else{
-									$input[$i][3] = "";
-									$mydat = explode("[;", $_POST["form_input_".$row["id"]]);							
-									$items = explode("[;", $data["items"]);
-									for($l=0;$l<count($items);$l++){
-										$dtvl = explode("[,", $items[$l]);
-										if($l == $mydat[0]){
-											
-											$selected__ = array();
-											$selected__[$l] = 0;
-											$result__ = dibi::query('SELECT * FROM :prefix:form_answer WHERE parent = %i', $result["id"], " ORDER BY id DESC");
-											foreach ($result__ as $_n => $_row) {
-												$_data = Config::sload($_row["data"]);
-												for($gh=0;$gh<count($_data);$gh++){
-													$dtq = $_data[$gh];
-													if($dtq[3] == $row["id"]){
-														$mdq = explode("[;", $dtq[2]);
-														if(!isset($selected__[$mdq[0]])){ $selected__[$mdq[0]] = 1; }
-														else{ $selected__[$mdq[0]]+=1; }
-													}
-												}
-											}									
-											$perm = User::permission($dtvl[2]);
-											if(User::permission(User::current()["permission"])["level"] >= $perm["level"]){
-												if($dtvl[3] == 0 or ($dtvl[3] != 0 and $dtvl[3] - $selected__[$l] > 0)){
-													$input[$i][3] = $l."[;".$items[$l];
-												}else{
-													$errors_input[$row["id"]] = t("capacity has already been reached");
-												}
-											}else
-												$errors_input[$row["id"]] = t("you can not select this, because you need permision same or above")." ".$perm["name"];
-										}	
-									}
-								}
-							}else{
-								if($data["state"] == "2"){ $errors_input[$row["id"]] = 1; }
-							}
-						}else if($row["type"] == "variable" && $submit != ""){
-							$act = 0;$old = $row["value"];$stp = false;
-							$arr = explode(",", $data["list"]);
-							
-							if($data["next"] == 1){
-								$row["value"]+=1;
-							}else if($data["next"] == 2){
-								$row["value"]-=1;
-							}else if($data["next"] == 3){
-								if(isset($arr[$row["value"]+1])) $row["value"]+=1;
-								else{ $row["value"] = 0; $act = 1; }
-							}
-							
-							if($data["stop"] == 1){
-								if($act == 1){ $row["value"] = $old;$stp = true; }
-							}else if($data["stop"] == 2){
-								if($row["value"] >= $data["stopat"]){
-									$row["value"] = $old;
-									$stp = true;
-								}
-							}
-							
-							if($stp && $data["closeatstop"] == 1){
-								$q = dibi::query('UPDATE :prefix:form SET ', array("enable" => 0), 'WHERE `id`=%s', $result["id"]);
-							}
-							$q = dibi::query('UPDATE :prefix:form_items SET ', array("value" => $row["value"]), 'WHERE `id`=%s', $row["id"]);		
-							$input[$i][3] = $row["value"];
-						}else if($row["type"] == "recaptcha"){
-							if(isset($_POST["g-recaptcha-response"])){
-								$data = array(
-									'secret' => $th->root->config->get("recaptcha-secret-key"),
-									'response' => $_POST["g-recaptcha-response"]
-								);
-								$ch = curl_init();
-								curl_setopt($ch, CURLOPT_URL,"https://www.google.com/recaptcha/api/siteverify");
-								curl_setopt($ch, CURLOPT_POST, true);
-								curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
-								curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-								curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-								$server_output = curl_exec ($ch);
-								curl_close ($ch);
-								$check = json_decode($server_output);
-								if($check->success) {
-									//okay
-								}else{
-									$errors_input[$row["id"]] = t("Recaptcha validation failed!");
-								}
-							}elseif($submit != ""){
-								$errors_input[$row["id"]] = 1;
-							}
-						}elseif($row["type"] == "select"){
-							if($data["types"] == "1" or $data["types"] == "4"){
-								$input[$i][3] = "";
-								if(isset($_POST["form_input_".$row["id"]]))
-									$input[$i][3] = $_POST["form_input_".$row["id"]];
-								if($input[$i][3] == "custom" and $_POST["form_input_".$row["id"]."_custom_val"]!="" and $data["custom"] == 1){
-									$input[$i][3] = $_POST["form_input_".$row["id"]."_custom_val"];
-								}
-							}elseif($data["types"] == "2"){
-								$values = "";
-								if(isset($_POST["form_input_".$row["id"]])){
-									foreach ($_POST["form_input_".$row["id"]] as $selectedOption){
-										if($values != "") $values.="[;";
-										$values.=$selectedOption;
-									}
-								}
-								$input[$i][3] = $values;
-							}else{
-								$values = "";
-								$items = explode("[;", $data["items"]);
-								for($l=0;$l<count($items);$l++){
-									if(isset($_POST["form_input_".$row["id"]."_".$l])){
-										if($values != "") $values.="[;";
-										$values.=$_POST["form_input_".$row["id"]."_".$l];
-									}
-								}
-								if(isset($_POST["form_input_".$row["id"]."_custom"]) and $_POST["form_input_".$row["id"]."_custom_val"]!="" and $data["custom"] == 1){
-									if($values != "") $values.="[;";
-									$values.=$_POST["form_input_".$row["id"]."_custom_val"];
-								}
-								$input[$i][3] = $values;
-							}
-						}
-						$i++;
-					}
-				}
-				
-				if($submit != ""){			
-					for($a=0;$a<$i;$a++){
-						if($input[$a][2] == 1){
-							if($input[$a][3] != ""){  }
-							else { if(!isset($errors_input[$input[$a][0][1]])){ $errors_input[$input[$a][0][1]] = 1; } }  
-						}
-					}
-				}
-				
-				$show = true;
-				
-				$errorshowed = false;
-				if(!isset($datf["onetime"])){ $datf["onetime"] = 0; }
-				if($datf["onetime"] == 1){
-					if(User::current() == false){
-						$disabledall = true;
+			$errorshowed = false;
+			if(!isset($settings["onetime"])){ 
+				$settings["onetime"] = 0; 
+			}
+			if($settings["onetime"] == 1){
+				if(User::current() == false){
+					$output["disableForm"] = true;
+					$output["thisFormWasAleradyFilled"] = 2;
+					$errorshowed = true;
+					$submit = "";
+				}else{
+					$re = dibi::query('SELECT * FROM :prefix:form_answer WHERE `parent`=%s', $result['id'], " AND user=%i", User::current()["id"]);
+					if($re->count() > 0){
+						$output["disableForm"] = true;
+						$output["thisFormWasAleradyFilled"] = 1;
 						$errorshowed = true;
 						$submit = "";
-					}else{
-						$re = dibi::query('SELECT * FROM :prefix:form_answer WHERE `parent`=%s', $formID, " AND user=%s", User::current()["id"]);
-						if($re->count() > 0){
-							$disabledall = true;
-							$errorshowed = true;
-							$submit = "";
-						}
 					}
 				}
+			}
 
-				if(!$errorshowed){
-					if($errors_input != null){
-						if(!$customFormHook)
-							$output["errors"][] = t("Please fill all required fields!");
-					}elseif($submit != ""){
-						$pole = null;
-						for($a=0;$a<$i;$a++){
-							if(!isset($input[$a][3])) $input[$a][3] = 0;
-							$pole[$a] = array($input[$a][0][2], $input[$a][1], $input[$a][3], $input[$a][0][1]);
-						}
-						$b = null;
-						$data = array(
-								"parent" 	=> $result["id"],
-								"user"		=> (User::current() != false?(User::current()["id"]):"-1"),
-								"time"		=> time(),
-								"ip"		=> Utilities::ip(),
-								"data"		=> Config::ssave($pole),
-								"browser"	=> $_SERVER['HTTP_USER_AGENT'],
-								"submit"	=> $submit
-							);
-						$result = dibi::query('INSERT INTO :prefix:form_answer', $data);
-						if(!$customFormHook){
-							$show = false;
-							if($datf["redirect"] != "")
-								header("location:".$datf["redirect"]);
-							else{
-								if($datf["succme"] != ""){
-									$datf["succme"] = preg_replace_callback('/\{#(.*?)\}/U',function ($matches) use($fvars) {
-										return (isset($fvars[$matches[1]])?$fvars[$matches[1]]:"null");
-									}, $datf["succme"]);
-									$output["success"] = str_replace("\r\n", "<br>", $datf["succme"]);
-								}else{
-									$output["success"] = t("The form was sent");
-								}
-							}
-						}
-					}
-				}
-
-				$ismultimedia = false;
-				if($show){
-					// Variables load
+			if(isset($_POST["form_id"]) && $_POST["form_id"] == $result['id']){
+				$output["submited"] = true;
+				if($settings["enable"] != 1 && !$customFormHook){
+					$output["warnings"][] = "<b>".t("The form has been disabled!")."</b>";
+				}else{
+					$input = null;
+					$submit = "";
+					$result_ = dibi::query('SELECT * FROM :prefix:form_items WHERE `parent`=%s', $result["id"], " ORDER BY position");
+					$i=0;
+					
 					$fvars = Array();
-					$ftype = Array();
 					foreach ($result_ as $n => $row) {
 						$data = Config::sload($row["data"]);
 						if($row["type"] == "variable"){
@@ -373,53 +113,375 @@ class Utilities {
 								}
 							}
 							$fvars[$row["name"]] = $v;
-							$fvars["id_".$row["name"]] = $v;
-							$ftype[$row["id"]] = "variable";
+						}else if($row["type"] == "submit"){
+							if(isset($_POST["form_input_".$row["id"]])){
+								$submit = $row["name"];
+							}
 						}else{
 							$fvars[$row["name"]] = $row["value"];
-							$fvars["id_".$row["name"]] = $row["value"];
-							$ftype[$row["id"]] = $row["type"];
-							if($row["type"] == "upload"){
-								$ismultimedia = true;
-							}
 						}
 					}
-
-					$disabledall = false;			
-					if($datf["onetime"] == 1){
-						if(User::current() == false){
-							$disabledall = true;
-							$output["errors"][] = t("Please log in to fill out the form");
-						}else{
-							$re = dibi::query('SELECT * FROM :prefix:form_answer WHERE `parent`=%s', $formID, " AND user=%s", User::current()["id"]);
-							if($re->count() > 0){
-								$disabledall = true;
-								$output["errors"][] = t("This form can only be filled in once!");
-							}
-						}
-					}
-
+					
 					foreach ($result_ as $n => $row) {
-						if(isset($errors_input[$row["id"]])){
-							if($errors_input[$row["id"]] == 2) {
-								$_GET["error_form_" + $result["id"]+"_"+$row["id"]] = t("Please enter a valid email!");
-								$output["errors"][] = "<b>".$row["name"]."</b>: ".t("Please enter a valid email!");
+						if($row["type"] == "text"){
+							// text
+						}else{
+							$data = Config::sload($row["data"]);
+							if(!isset($data["state"])) $data["state"] = 0;
+							if(!isset($data["custom"])) $data["custom"] = 0;
+							if(!isset($data["asemail"])) $data["asemail"] = 0;
+							
+							$input[$i] = array(
+								array(
+									"form_input_".$row["id"],
+									$row["id"], 
+									$row["name"]
+								), 
+								$row["type"], 
+								$data["state"]
+							);
+
+							if($row["type"] == "textbox" || $row["type"] == "password" || $row["type"] == "textarea"){
+								if($data["state"] == "2"){
+									$_POST["form_input_".$row["id"]] = preg_replace_callback('/\{#(.*?)\}/U',function ($matches) use($fvars) {
+										return (isset($fvars[$matches[1]])?$fvars[$matches[1]]:"null");
+									}, $row["value"]);
+								}
+								if($data["asemail"] == 1 && isset($_POST["form_input_".$row["id"]])){
+									if(!Utilities::isEmail($_POST["form_input_".$row["id"]]))
+										$errors_input[$row["id"]] = 2;
+								}
+								if(isset($_POST["form_input_".$row["id"]])){
+									if($row["type"] == "password" && $customFormHook)
+										$input[$i][3] = strlen($_POST["form_input_".$row["id"]]);
+									else
+										$input[$i][3] = $_POST["form_input_".$row["id"]];
+								}
+							}else if($row["type"] == "slider"){
+								//$errors_input[$row["id"]] = 0;
+								$input[$i][3] = $_POST["form_input_".$row["id"]];
+							}else if($row["type"] == "upload"){
+								if(!isset($_FILES["form_input_".$row["id"]])){
+									//$errors_input[$row["id"]] = t("you must upload file");
+								}
+								else if(number_format($_FILES["form_input_".$row["id"]]["size"] / $data["maxsize"], 2) > 1){
+									$errors_input[$row["id"]] = t("File can have only")." ".Utilities::convertBtoMB($data["maxsize"])." MB";
+								}
+								else if($_FILES["form_input_".$row["id"]]["error"] == 0){						
+									$allowed = (preg_match_all('/[^, ]+/', $data["allowed"], $out)? $out[0]: array('gif','png','jpg'));
+									$filename = $_FILES["form_input_".$row["id"]]['name'];
+									$ext = pathinfo($filename, PATHINFO_EXTENSION);
+									if(!in_array($ext,$allowed)) {
+										$errors_input[$row["id"]] = t("File type can be only one of this").": ".implode(", ", $allowed);
+									}else{
+										$newnam = sha1_file($_FILES["form_input_".$row["id"]]['tmp_name']).time();
+										$filene = _ROOT_DIR.'/upload/'.$data["folder"].$newnam.'.'.$ext;
+										
+										if(!move_uploaded_file($_FILES["form_input_".$row["id"]]['tmp_name'], $filene)) {
+											$errors_input[$row["id"]] = t("Upload ERROR");
+										}else{
+											/* TODO: udělat nastavovatelné */
+											$images =  array('gif','png' ,'jpg');
+											if(in_array($ext,$images) && $data["resize"] == 1)
+												Utilities::resizeImage($filene, $data["resizew"], $data["resizeh"]);
+												
+											$input[$i][3] = Router::url()."upload/".$data["folder"].$newnam.'.'.$ext;
+											$_POST["form_input_".$row["id"]] = Router::url()."upload/".$data["folder"].$newnam.'.'.$ext;
+										}
+									}
+								}
+								else{
+									switch ($_FILES["form_input_".$row["id"]]['error']) {
+										case UPLOAD_ERR_OK:
+											break;
+										case UPLOAD_ERR_NO_FILE:
+											//$errors_input[$row["id"]] = t('No file sent');
+											if($data["state"] == "1")
+												$errors_input[$row["id"]] = t("You must upload file");
+											break;
+										case UPLOAD_ERR_INI_SIZE:
+										case UPLOAD_ERR_FORM_SIZE:
+											$errors_input[$row["id"]] = t('Exceeded filesize limit on server');
+											break;
+										default:
+											$errors_input[$row["id"]] = t('Unknown errors')." - ".$_FILES["form_input_".$row["id"]]['error'];
+											break;
+									}
+								}
+								if(isset($errors_input[$row["id"]])){
+									$_POST["form_input_".$row["id"]] = "!!no";
+								}
+							}else if($row["type"] == "picker"){
+								$input[$i][3] = "";
+								if(isset($_POST["form_input_".$row["id"]])){
+									if($data["state"] == "1" && $_POST["form_input_".$row["id"]] == ""){ $errors_input[$row["id"]] = 1; }
+									else if($data["state"] == "2"){ $input[$i][3] = ""; }
+									else{
+										$input[$i][3] = "";
+										$mydat = explode("[;", $_POST["form_input_".$row["id"]]);							
+										$items = explode("[;", $data["items"]);
+										for($l=0;$l<count($items);$l++){
+											$dtvl = explode("[,", $items[$l]);
+											if($l == $mydat[0]){
+												
+												$selected__ = array();
+												$selected__[$l] = 0;
+												$result__ = dibi::query('SELECT * FROM :prefix:form_answer WHERE parent = %i', $result["id"], " ORDER BY id DESC");
+												foreach ($result__ as $_n => $_row) {
+													$_data = Config::sload($_row["data"]);
+													for($gh=0;$gh<count($_data);$gh++){
+														$dtq = $_data[$gh];
+														if($dtq[3] == $row["id"]){
+															$mdq = explode("[;", $dtq[2]);
+															if(!isset($selected__[$mdq[0]])){ $selected__[$mdq[0]] = 1; }
+															else{ $selected__[$mdq[0]]+=1; }
+														}
+													}
+												}									
+												$perm = User::permission($dtvl[2]);
+												if(User::permission(User::current()["permission"])["level"] >= $perm["level"]){
+													if($dtvl[3] == 0 or ($dtvl[3] != 0 and $dtvl[3] - $selected__[$l] > 0)){
+														$input[$i][3] = $l."[;".$items[$l];
+													}else{
+														$errors_input[$row["id"]] = t("Capacity has already been reached");
+													}
+												}else
+													$errors_input[$row["id"]] = t("You can not select this, because you need permision same or above")." ".$perm["name"];
+											}	
+										}
+									}
+								}else{
+									if($data["state"] == "2"){ $errors_input[$row["id"]] = 1; }
+								}
+							}else if($row["type"] == "variable" && $submit != ""){
+								$act = 0;
+								$old = $row["value"];
+								$stp = false;
+								$arr = explode(",", $data["list"]);
+								
+								if($data["next"] == 1){
+									$row["value"]+=1;
+								}else if($data["next"] == 2){
+									$row["value"]-=1;
+								}else if($data["next"] == 3){
+									if(isset($arr[$row["value"]+1])) 
+										$row["value"]+=1;
+									else{ 
+										$row["value"] = 0; 
+										$act = 1; 
+									}
+								}
+								
+								if($data["stop"] == 1){
+									if($act == 1){ 
+										$row["value"] = $old;
+										$stp = true; 
+									}
+								}else if($data["stop"] == 2){
+									if($row["value"] >= $data["stopat"]){
+										$row["value"] = $old;
+										$stp = true;
+									}
+								}
+								
+								if($stp && $data["closeatstop"] == 1){
+									$q = dibi::query('UPDATE :prefix:form SET ', array("enable" => 0), 'WHERE `id`=%s', $result["id"]);
+								}
+								$q = dibi::query('UPDATE :prefix:form_items SET ', array("value" => $row["value"]), 'WHERE `id`=%s', $row["id"]);		
+								$input[$i][3] = $row["value"];
+							}else if($row["type"] == "recaptcha"){
+								if(isset($_POST["g-recaptcha-response"])){
+									$data = array(
+										'secret' => Config::getS("recaptcha-secret-key"),
+										'response' => $_POST["g-recaptcha-response"]
+									);
+									$ch = curl_init();
+									curl_setopt($ch, CURLOPT_URL,"https://www.google.com/recaptcha/api/siteverify");
+									curl_setopt($ch, CURLOPT_POST, true);
+									curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+									curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+									curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+									$server_output = curl_exec ($ch);
+									curl_close ($ch);
+									$check = json_decode($server_output);
+									if($check->success) {
+										//okay
+									}else{
+										$errors_input[$row["id"]] = t("Recaptcha validation failed!");
+									}
+								}elseif($submit != ""){
+									$errors_input[$row["id"]] = 1;
+								}
+							}elseif($row["type"] == "select"){
+								if($data["types"] == "1" or $data["types"] == "4"){
+									$input[$i][3] = "";
+									if(isset($_POST["form_input_".$row["id"]]))
+										$input[$i][3] = $_POST["form_input_".$row["id"]];
+									if($input[$i][3] == "custom" and $_POST["form_input_".$row["id"]."_custom_val"]!="" && $data["custom"] == 1){
+										$input[$i][3] = $_POST["form_input_".$row["id"]."_custom_val"];
+									}
+								}elseif($data["types"] == "2"){
+									$values = "";
+									if(isset($_POST["form_input_".$row["id"]])){
+										foreach ($_POST["form_input_".$row["id"]] as $selectedOption){
+											if($values != "") $values.="[;";
+											$values.=$selectedOption;
+										}
+									}
+									$input[$i][3] = $values;
+								}else{
+									$values = "";
+									$items = explode("[;", $data["items"]);
+									for($l=0;$l<count($items);$l++){
+										if(isset($_POST["form_input_".$row["id"]."_".$l])){
+											if($values != "") $values.="[;";
+											$values.=$_POST["form_input_".$row["id"]."_".$l];
+										}
+									}
+									if(isset($_POST["form_input_".$row["id"]."_custom"]) and $_POST["form_input_".$row["id"]."_custom_val"]!="" and $data["custom"] == 1){
+										if($values != "") $values.="[;";
+										$values.=$_POST["form_input_".$row["id"]."_custom_val"];
+									}
+									$input[$i][3] = $values;
+								}
 							}
-							elseif($errors_input[$row["id"]] == 1 or $errors_input[$row["id"]] === true) {
-								$_GET["error_form_" + $result["id"]+"_"+$row["id"]] = t("This field is required!");
-								$output["errors"][] = "<b>".$row["name"]."</b>: ".t("This field is required!");
-							}
-							else {
-								$_GET["error_form_" + $result["id"]+"_"+$row["id"]] = $errors_input[$row["id"]];
-								$output["errors"][] = "<b>".$row["name"]."</b>: ".$errors_input[$row["id"]];
-							}							
+							$i++;
 						}
 					}
-				}
+					
+					if($submit != ""){			
+						for($a=0;$a<$i;$a++){
+							if($input[$a][2] == 1){
+								if($input[$a][3] != ""){ 
+									//idk
+								}
+								else { 
+									if(!isset($errors_input[$input[$a][0][1]])){ 
+										$errors_input[$input[$a][0][1]] = 1; 
+									} 
+								}  
+							}
+						}
+					}
+					
+					$show = true;
 
-			}		
+					if(!$errorshowed){
+						if($errors_input != null){
+							if(!$customFormHook)
+								$output["errors"][] = t("Please fill all required fields!");
+						}elseif($submit != ""){
+							$pole = null;
+							for($a=0;$a<$i;$a++){
+								if(!isset($input[$a][3])) 
+									$input[$a][3] = 0;
+								$pole[$a] = array($input[$a][0][2], $input[$a][1], $input[$a][3], $input[$a][0][1]);
+							}
+							
+							$data = array(
+									"parent" 	=> $result["id"],
+									"user"		=> (User::current() != false?(User::current()["id"]):"-1"),
+									"time"		=> time(),
+									"ip"		=> Utilities::ip(),
+									"data"		=> Config::ssave($pole),
+									"browser"	=> $_SERVER['HTTP_USER_AGENT'],
+									"submit"	=> $submit
+								);
+							$result = dibi::query('INSERT INTO :prefix:form_answer', $data);
+
+							if(!$customFormHook){
+								$show = false;
+								if($settings["redirect"] != "")
+									header("location:".$settings["redirect"]);
+								else{
+									if($settings["succme"] != ""){
+										$settings["succme"] = preg_replace_callback('/\{#(.*?)\}/U',function ($matches) use($fvars) {
+											return (isset($fvars[$matches[1]])?$fvars[$matches[1]]:"null");
+										}, $settings["succme"]);
+										$output["success"] = str_replace("\r\n", "<br>", $settings["succme"]);
+									}else{
+										$output["success"] = t("The form was sent");
+									}
+								}
+							}
+						}
+					}
+
+					if($show){
+						// Variables load
+						$fvars = Array();
+						$ftype = Array();
+						foreach ($result_ as $n => $row) {
+							$data = Config::sload($row["data"]);
+							if($row["type"] == "variable"){
+								$v = $row["value"];
+								if($data["list"] == ""){
+									$v = $row["value"];
+								}else{
+									$index = $row["value"];
+									$arra  = explode(",", $data["list"]);
+									foreach($arra as $key => $value){
+										if($index == trim($value)) $v = trim($value);
+										if($index == $key) $v = trim($value);
+									}
+								}
+								$fvars[$row["name"]] = $v;
+								$fvars["id_".$row["name"]] = $v;
+								$ftype[$row["id"]] = "variable";
+							}else{
+								$fvars[$row["name"]] = $row["value"];
+								$fvars["id_".$row["name"]] = $row["value"];
+								$ftype[$row["id"]] = $row["type"];
+								if($row["type"] == "upload"){
+									$output["isMultimedia"] = true;
+								}
+							}
+						}
+
+						$disabledall = false;			
+						if($settings["onetime"] == 1){
+							if(User::current() == false){
+								$disabledall = true;
+								$output["errors"][] = t("Please log in to fill out the form");
+							}else{
+								$re = dibi::query('SELECT * FROM :prefix:form_answer WHERE `parent`=%s', $result['id'], " AND user=%s", User::current()["id"]);
+								if($re->count() > 0){
+									$disabledall = true;
+									$output["errors"][] = t("This form can only be filled in once!");
+								}
+							}
+						}
+
+						foreach ($result_ as $n => $row) {
+							if(isset($errors_input[$row["id"]])){
+								if($errors_input[$row["id"]] == 2) {
+									$_GET["error_form_" + $result["id"]+"_"+$row["id"]] = t("Please enter a valid email!");
+									if(!$dontAddErrorInFields) {
+										$output["errors"][] = "<b>".$row["name"]."</b>: ".t("Please enter a valid email!");	
+									}
+								}
+								elseif($errors_input[$row["id"]] == 1 or $errors_input[$row["id"]] === true) {
+									$_GET["error_form_" + $result["id"]+"_"+$row["id"]] = t("This field is required!");
+
+									if(!$dontAddErrorInFields) {
+										$output["errors"][] = "<b>".$row["name"]."</b>: ".t("This field is required!");
+									}							
+								}
+								else {
+									$_GET["error_form_" + $result["id"]+"_"+$row["id"]] = $errors_input[$row["id"]];
+									if(!$dontAddErrorInFields) {
+										$output["errors"][] = "<b>".$row["name"]."</b>: ".$errors_input[$row["id"]];
+									}
+								}							
+							}
+						}
+					}
+
+				}		
+				$output["inputErrors"] = $errors_input;
+			}
 		}
-
+	
 		return $output;
 	}
 
@@ -560,6 +622,7 @@ class Utilities {
 	}
 
 	/** @Deprecated */
+	/*
 	public static function DropZoneUpload($url, $name, $image, $classes = "", $callbackjs = ""){
 		$result = "";
 		$result.= "<div class=upload-view id='".$name."-img-view' style='display:".($image == ""?"none":"block").";'>";
@@ -577,6 +640,7 @@ class Utilities {
         $result.= "</script>";
 		return $result;
 	}
+	*/
 
 	public static function isErrorPage(){
 		if(file_exists(_ROOT_DIR."/templates/".Database::getConfig("style")."/error404.php")){
@@ -587,6 +651,7 @@ class Utilities {
 	}
 
 	/** @Deprecated */
+	/*
 	public static function DropZoneUploadPost($name = "file", $allowed = null){
 		if($allowed == null){
 			$allowed =  array('gif','png' ,'jpg');
@@ -628,6 +693,7 @@ class Utilities {
 
 		return $status;
 	}
+	*/
 
 	public static function processUploadFile($file, $dir = "", $newname = null, $allowedext = null){
         $error = [];
@@ -877,6 +943,8 @@ class Utilities {
 			$split1 =explode('/',$domain);
 			$split =explode(' ',$split1[1]);
 			$browser['version'] = $split[0];
+		}else {
+			return false;	
 		}
 		return $browser;
 	}
@@ -1019,7 +1087,7 @@ class Utilities {
 		return json_decode($result);
 	}
 
-	public static function ip(){
+	public static function ip($notFancy = false){
 		if(defined("CUSTOM_IP")){
 			return CUSTOM_IP;
 		}
@@ -1031,11 +1099,15 @@ class Utilities {
 		}else{
 			$ip = $_SERVER["REMOTE_ADDR"];
 		}
+		if($notFancy) return $ip;
+
 		if($ip == "::1"){ $ip = "127.0.0.1"; }
 		if(strpos($ip, ",") !== false){
 			$ip = explode(",", $ip);
 			return trim($ip[0]);
-		}else return $ip;
+		}
+		
+		return $ip;
 	}
 
 	public static function isEmail($email){
@@ -1118,7 +1190,7 @@ class Utilities {
 					"data" 	=> ($data==""?"":Config::ssave($data))
 				);
 		dibi::query('INSERT INTO :prefix:log', $data);
-		return dibi::InsertId();
+		return dibi::getInsertId();
 	}
 
 	public static function select($data, $sel = "", $name = "", $style = "", $id = "", $class = "", $justone = false){
@@ -1169,7 +1241,7 @@ class Utilities {
 			$message = $plugin["output"];
 		}
 		if($sendfrom){
-			$message.="<br><span style='font-size:11px;'>".t("this email was sent from the site")." <b>".$this->root->page->config["Title"]."</b> - ".$this->root->router->url."</span>";
+			$message.="<br><span style='font-size:11px;'>".t("This email was sent from the site")." <b>".$this->root->page->config["Title"]."</b> - ".$this->root->router->url."</span>";
 		}
 
 		if($this->root->config->getD("email-enable", "1") == 1){
@@ -1219,6 +1291,25 @@ class Utilities {
 			$first = false;
 		}
 		return array("html" => "<span class=pager>".$output."</span>", "orderby" => $orderby);
+	}
+
+	public static function getCategoryArticles($id, $limit = 10){
+		$level = User::permission(User::currentOrNull(false, "permission"))["level"];
+		$result = dibi::query("SELECT * FROM :prefix:category WHERE alias=%s", $id, "OR id=%i", $id)->fetch();
+		$paginator = new Paginator($limit, Router::url().$result["alias"]."/?page=(:page)");
+		$paginator->queryCount("SELECT count(*) FROM :prefix:article WHERE category = %i", $result["id"], " AND state = 0 AND tags NOT LIKE %~like~ ", "template"," AND visiblity = %s", "", "AND language = %s", _LANGUAGE);
+		
+		$model = array(
+			"items" => $paginator->query('SELECT * FROM :prefix:article WHERE category = %i', $result["id"], " AND state = 0 AND tags NOT LIKE %~like~ ", "template"," AND visiblity = %s", "", "AND language = %s", _LANGUAGE),
+			"itemsCount" => $paginator->getCount(),
+			"page" => $paginator->getPage(),
+			"limit" => 10
+		);
+
+		$model["description"] = $result["description"];
+		$model["level"] = $result["minlevel"];
+		$model["canshow"] = !($level < $result["minlevel"]);
+		return $model;
 	}
 
 	public static function getArticle($t, $id, $lang = ""){
@@ -1626,38 +1717,506 @@ class Utilities {
 	} 
 
 	public static $price = array (
-								'AUD' => 'Australia Dollar',
-								'BGN' => 'Bulgaria Lev',
-								'BRL' => 'Brazil Real',
-								'CAD' => 'Canada Dollar',
-								'CNY' => 'China Yuan Renminbi',
-								'HRK' => 'Croatia Kuna',
-								'CZK' => 'Czech Republic Koruna',
-								'DKK' => 'Denmark Krone',
-								'EUR' => 'Euro Member Countries',
-								'HKD' => 'Hong Kong Dollar',
-								'HUF' => 'Hungary Forint',
-								'INR' => 'India Rupee',
-								'IDR' => 'Indonesia Rupiah',
-								'ILS' => 'Israel Shekel',
-								'JPY' => 'Japan Yen',
-								'MYR' => 'Malaysia Ringgit',
-								'MXN' => 'Mexico Peso',
-								'NZD' => 'New Zealand Dollar',
-								'PHP' => 'Philippines Peso',
-								'PLN' => 'Poland Zloty',
-								'RON' => 'Romania New Leu',
-								'RUB' => 'Russia Ruble',
-								'SGD' => 'Singapore Dollar',
-								'ZAR' => 'South Africa Rand',
-								'SEK' => 'Sweden Krona',
-								'CHF' => 'Switzerland Franc',
-								'THB' => 'Thailand Baht',
-								'TRY' => 'Turkey Lira',
-								'GBP' => 'United Kingdom Pound',
-								'USD' => 'United States Dollar',
-								'UYU' => 'Uruguay Peso'
-							);
+		'AUD' => 'Australia Dollar',
+		'BGN' => 'Bulgaria Lev',
+		'BRL' => 'Brazil Real',
+		'CAD' => 'Canada Dollar',
+		'CNY' => 'China Yuan Renminbi',
+		'HRK' => 'Croatia Kuna',
+		'CZK' => 'Czech Republic Koruna',
+		'DKK' => 'Denmark Krone',
+		'EUR' => 'Euro Member Countries',
+		'HKD' => 'Hong Kong Dollar',
+		'HUF' => 'Hungary Forint',
+		'INR' => 'India Rupee',
+		'IDR' => 'Indonesia Rupiah',
+		'ILS' => 'Israel Shekel',
+		'JPY' => 'Japan Yen',
+		'MYR' => 'Malaysia Ringgit',
+		'MXN' => 'Mexico Peso',
+		'NZD' => 'New Zealand Dollar',
+		'PHP' => 'Philippines Peso',
+		'PLN' => 'Poland Zloty',
+		'RON' => 'Romania New Leu',
+		'RUB' => 'Russia Ruble',
+		'SGD' => 'Singapore Dollar',
+		'ZAR' => 'South Africa Rand',
+		'SEK' => 'Sweden Krona',
+		'CHF' => 'Switzerland Franc',
+		'THB' => 'Thailand Baht',
+		'TRY' => 'Turkey Lira',
+		'GBP' => 'United Kingdom Pound',
+		'USD' => 'United States Dollar',
+		'UYU' => 'Uruguay Peso'
+	);
+
+	public static $timezones = array(
+		"America/Adak",
+		"America/Argentina/Buenos_Aires",
+		"America/Argentina/La_Rioja",
+		"America/Argentina/San_Luis",
+		"America/Atikokan",
+		"America/Belem",
+		"America/Boise",
+		"America/Caracas",
+		"America/Chihuahua",
+		"America/Cuiaba",
+		"America/Denver",
+		"America/El_Salvador",
+		"America/Godthab",
+		"America/Guatemala",
+		"America/Hermosillo",
+		"America/Indiana/Tell_City",
+		"America/Inuvik",
+		"America/Kentucky/Louisville",
+		"America/Lima",
+		"America/Managua",
+		"America/Mazatlan",
+		"America/Mexico_City",
+		"America/Montreal",
+		"America/Nome",
+		"America/Ojinaga",
+		"America/Port-au-Prince",
+		"America/Rainy_River",
+		"America/Rio_Branco",
+		"America/Santo_Domingo",
+		"America/St_Barthelemy",
+		"America/St_Vincent",
+		"America/Tijuana",
+		"America/Whitehorse",
+		"America/Anchorage",
+		"America/Argentina/Catamarca",
+		"America/Argentina/Mendoza",
+		"America/Argentina/Tucuman",
+		"America/Atka",
+		"America/Belize",
+		"America/Buenos_Aires",
+		"America/Catamarca",
+		"America/Coral_Harbour",
+		"America/Curacao",
+		"America/Detroit",
+		"America/Ensenada",
+		"America/Goose_Bay",
+		"America/Guayaquil",
+		"America/Indiana/Indianapolis",
+		"America/Indiana/Vevay",
+		"America/Iqaluit",
+		"America/Kentucky/Monticello",
+		"America/Los_Angeles",
+		"America/Manaus",
+		"America/Mendoza",
+		"America/Miquelon",
+		"America/Montserrat",
+		"America/Noronha",
+		"America/Panama",
+		"America/Port_of_Spain",
+		"America/Rankin_Inlet",
+		"America/Rosario",
+		"America/Sao_Paulo",
+		"America/St_Johns",
+		"America/Swift_Current",
+		"America/Toronto",
+		"America/Winnipeg",
+		"America/Anguilla",
+		"America/Argentina/ComodRivadavia",
+		"America/Argentina/Rio_Gallegos",
+		"America/Argentina/Ushuaia",
+		"America/Bahia",
+		"America/Blanc-Sablon",
+		"America/Cambridge_Bay",
+		"America/Cayenne",
+		"America/Cordoba",
+		"America/Danmarkshavn",
+		"America/Dominica",
+		"America/Fort_Wayne",
+		"America/Grand_Turk",
+		"America/Guyana",
+		"America/Indiana/Knox",
+		"America/Indiana/Vincennes",
+		"America/Jamaica",
+		"America/Knox_IN",
+		"America/Louisville",
+		"America/Marigot",
+		"America/Menominee",
+		"America/Moncton",
+		"America/Nassau",
+		"America/North_Dakota/Beulah",
+		"America/Pangnirtung",
+		"America/Porto_Acre",
+		"America/Recife",
+		"America/Santa_Isabel",
+		"America/Scoresbysund",
+		"America/St_Kitts",
+		"America/Tegucigalpa",
+		"America/Tortola",
+		"America/Yakutat",
+		"America/Antigua",
+		"America/Argentina/Cordoba",
+		"America/Argentina/Salta",
+		"America/Aruba",
+		"America/Bahia_Banderas",
+		"America/Boa_Vista",
+		"America/Campo_Grande",
+		"America/Cayman",
+		"America/Costa_Rica",
+		"America/Dawson",
+		"America/Edmonton",
+		"America/Fortaleza",
+		"America/Grenada",
+		"America/Halifax",
+		"America/Indiana/Marengo",
+		"America/Indiana/Winamac",
+		"America/Jujuy",
+		"America/Kralendijk",
+		"America/Lower_Princes",
+		"America/Martinique",
+		"America/Merida",
+		"America/Monterrey",
+		"America/New_York",
+		"America/North_Dakota/Center",
+		"America/Paramaribo",
+		"America/Porto_Velho",
+		"America/Regina",
+		"America/Santarem",
+		"America/Shiprock",
+		"America/St_Lucia",
+		"America/Thule",
+		"America/Vancouver",
+		"America/Yellowknife",
+		"America/Araguaina",
+		"America/Argentina/Jujuy",
+		"America/Argentina/San_Juan",
+		"America/Asuncion",
+		"America/Barbados",
+		"America/Bogota",
+		"America/Cancun",
+		"America/Chicago",
+		"America/Creston",
+		"America/Dawson_Creek",
+		"America/Eirunepe",
+		"America/Glace_Bay",
+		"America/Guadeloupe",
+		"America/Havana",
+		"America/Indiana/Petersburg",
+		"America/Indianapolis",
+		"America/Juneau",
+		"America/La_Paz",
+		"America/Maceio",
+		"America/Matamoros",
+		"America/Metlakatla",
+		"America/Montevideo",
+		"America/Nipigon",
+		"America/North_Dakota/New_Salem",
+		"America/Phoenix",
+		"America/Puerto_Rico",
+		"America/Resolute",
+		"America/Santiago",
+		"America/Sitka",
+		"America/St_Thomas",
+		"America/Thunder_Bay",
+		"America/Virgin",
+		"Indian/Antananarivo",
+		"Indian/Kerguelen",
+		"Indian/Reunion",
+		"Australia/ACT",
+		"Australia/Currie",
+		"Australia/Lindeman",
+		"Australia/Perth",
+		"Australia/Victoria",
+		"Europe/Amsterdam",
+		"Europe/Berlin",
+		"Europe/Chisinau",
+		"Europe/Helsinki",
+		"Europe/Kiev",
+		"Europe/Madrid",
+		"Europe/Moscow",
+		"Europe/Prague",
+		"Europe/Sarajevo",
+		"Europe/Tallinn",
+		"Europe/Vatican",
+		"Europe/Zagreb",
+		"Pacific/Apia",
+		"Pacific/Efate",
+		"Pacific/Galapagos",
+		"Pacific/Johnston",
+		"Pacific/Marquesas",
+		"Pacific/Noumea",
+		"Pacific/Ponape",
+		"Pacific/Tahiti",
+		"Pacific/Wallis",
+		"Indian/Chagos",
+		"Indian/Mahe",
+		"Australia/Adelaide",
+		"Australia/Darwin",
+		"Australia/Lord_Howe",
+		"Australia/Queensland",
+		"Australia/West",
+		"Europe/Andorra",
+		"Europe/Bratislava",
+		"Europe/Copenhagen",
+		"Europe/Isle_of_Man",
+		"Europe/Lisbon",
+		"Europe/Malta",
+		"Europe/Nicosia",
+		"Europe/Riga",
+		"Europe/Simferopol",
+		"Europe/Tirane",
+		"Europe/Vienna",
+		"Europe/Zaporozhye",
+		"Pacific/Auckland",
+		"Pacific/Enderbury",
+		"Pacific/Gambier",
+		"Pacific/Kiritimati",
+		"Pacific/Midway",
+		"Pacific/Pago_Pago",
+		"Pacific/Port_Moresby",
+		"Pacific/Tarawa",
+		"Pacific/Yap",
+		"Africa/Abidjan",
+		"Africa/Asmera",
+		"Africa/Blantyre",
+		"Africa/Ceuta",
+		"Africa/Douala",
+		"Africa/Johannesburg",
+		"Africa/Kinshasa",
+		"Africa/Lubumbashi",
+		"Africa/Mbabane",
+		"Africa/Niamey",
+		"Africa/Timbuktu",
+		"Africa/Accra",
+		"Africa/Bamako",
+		"Africa/Brazzaville",
+		"Africa/Conakry",
+		"Africa/El_Aaiun",
+		"Africa/Juba",
+		"Africa/Lagos",
+		"Africa/Lusaka",
+		"Africa/Mogadishu",
+		"Africa/Nouakchott",
+		"Africa/Tripoli",
+		"Africa/Addis_Ababa",
+		"Africa/Bangui",
+		"Africa/Bujumbura",
+		"Africa/Dakar",
+		"Africa/Freetown",
+		"Africa/Kampala",
+		"Africa/Libreville",
+		"Africa/Malabo",
+		"Africa/Monrovia",
+		"Africa/Ouagadougou",
+		"Africa/Tunis",
+		"Africa/Algiers",
+		"Africa/Banjul",
+		"Africa/Cairo",
+		"Africa/Dar_es_Salaam",
+		"Africa/Gaborone",
+		"Africa/Khartoum",
+		"Africa/Lome",
+		"Africa/Maputo",
+		"Africa/Nairobi",
+		"Africa/Porto-Novo",
+		"Africa/Windhoek",
+		"Africa/Asmara",
+		"Africa/Bissau",
+		"Africa/Casablanca",
+		"Africa/Djibouti",
+		"Africa/Harare",
+		"Africa/Kigali",
+		"Africa/Luanda",
+		"Africa/Maseru",
+		"Africa/Ndjamena",
+		"Africa/Sao_Tome",
+		"Atlantic/Azores",
+		"Atlantic/Faroe",
+		"Atlantic/St_Helena",
+		"Atlantic/Bermuda",
+		"Atlantic/Jan_Mayen",
+		"Atlantic/Stanley",
+		"Atlantic/Canary",
+		"Atlantic/Madeira",
+		"Atlantic/Cape_Verde",
+		"Atlantic/Reykjavik",
+		"Atlantic/Faeroe",
+		"Atlantic/South_Georgia",
+		"Asia/Aden",
+		"Asia/Aqtobe",
+		"Asia/Baku",
+		"Asia/Calcutta",
+		"Asia/Dacca",
+		"Asia/Dushanbe",
+		"Asia/Hong_Kong",
+		"Asia/Jayapura",
+		"Asia/Kashgar",
+		"Asia/Kuala_Lumpur",
+		"Asia/Magadan",
+		"Asia/Novokuznetsk",
+		"Asia/Pontianak",
+		"Asia/Riyadh",
+		"Asia/Shanghai",
+		"Asia/Tehran",
+		"Asia/Ujung_Pandang",
+		"Asia/Vladivostok",
+		"Asia/Almaty",
+		"Asia/Ashgabat",
+		"Asia/Bangkok",
+		"Asia/Choibalsan",
+		"Asia/Damascus",
+		"Asia/Gaza",
+		"Asia/Hovd",
+		"Asia/Jerusalem",
+		"Asia/Kathmandu",
+		"Asia/Kuching",
+		"Asia/Makassar",
+		"Asia/Novosibirsk",
+		"Asia/Pyongyang",
+		"Asia/Saigon",
+		"Asia/Singapore",
+		"Asia/Tel_Aviv",
+		"Asia/Ulaanbaatar",
+		"Asia/Yakutsk",
+		"Asia/Amman",
+		"Asia/Ashkhabad",
+		"Asia/Beirut",
+		"Asia/Chongqing",
+		"Asia/Dhaka",
+		"Asia/Harbin",
+		"Asia/Irkutsk",
+		"Asia/Kabul",
+		"Asia/Katmandu",
+		"Asia/Kuwait",
+		"Asia/Manila",
+		"Asia/Omsk",
+		"Asia/Qatar",
+		"Asia/Sakhalin",
+		"Asia/Taipei",
+		"Asia/Thimbu",
+		"Asia/Ulan_Bator",
+		"Asia/Yekaterinburg",
+		"Asia/Anadyr",
+		"Asia/Baghdad",
+		"Asia/Bishkek",
+		"Asia/Chungking",
+		"Asia/Dili",
+		"Asia/Hebron",
+		"Asia/Istanbul",
+		"Asia/Kamchatka",
+		"Asia/Kolkata",
+		"Asia/Macao",
+		"Asia/Muscat",
+		"Asia/Oral",
+		"Asia/Qyzylorda",
+		"Asia/Samarkand",
+		"Asia/Tashkent",
+		"Asia/Thimphu",
+		"Asia/Urumqi",
+		"Asia/Yerevan",
+		"Asia/Aqtau",
+		"Asia/Bahrain",
+		"Asia/Brunei",
+		"Asia/Colombo",
+		"Asia/Dubai",
+		"Asia/Ho_Chi_Minh",
+		"Asia/Jakarta",
+		"Asia/Karachi",
+		"Asia/Krasnoyarsk",
+		"Asia/Macau",
+		"Asia/Nicosia",
+		"Asia/Phnom_Penh",
+		"Asia/Rangoon",
+		"Asia/Seoul",
+		"Asia/Tbilisi",
+		"Asia/Tokyo",
+		"Asia/Vientiane",
+		"Australia/Canberra",
+		"Australia/LHI",
+		"Australia/NSW",
+		"Australia/Tasmania",
+		"Australia/Broken_Hill",
+		"Australia/Hobart",
+		"Australia/North",
+		"Australia/Sydney",
+		"Pacific/Chuuk",
+		"Pacific/Fiji",
+		"Pacific/Guam",
+		"Pacific/Kwajalein",
+		"Pacific/Niue",
+		"Pacific/Pitcairn",
+		"Pacific/Saipan",
+		"Pacific/Truk",
+		"Pacific/Chatham",
+		"Pacific/Fakaofo",
+		"Pacific/Guadalcanal",
+		"Pacific/Kosrae",
+		"Pacific/Nauru",
+		"Pacific/Palau",
+		"Pacific/Rarotonga",
+		"Pacific/Tongatapu",
+		"Pacific/Easter",
+		"Pacific/Funafuti",
+		"Pacific/Honolulu",
+		"Pacific/Majuro",
+		"Pacific/Norfolk",
+		"Pacific/Pohnpei",
+		"Pacific/Samoa",
+		"Pacific/Wake",
+		"Antarctica/Casey",
+		"Antarctica/McMurdo",
+		"Antarctica/Vostok",
+		"Antarctica/Davis",
+		"Antarctica/Palmer",
+		"Antarctica/DumontDUrville",
+		"Antarctica/Rothera",
+		"Antarctica/Macquarie",
+		"Antarctica/South_Pole",
+		"Antarctica/Mawson",
+		"Antarctica/Syowa",
+		"Arctic/Longyearbyen",
+		"Europe/Athens",
+		"Europe/Brussels",
+		"Europe/Dublin",
+		"Europe/Istanbul",
+		"Europe/Ljubljana",
+		"Europe/Mariehamn",
+		"Europe/Oslo",
+		"Europe/Rome",
+		"Europe/Skopje",
+		"Europe/Tiraspol",
+		"Europe/Vilnius",
+		"Europe/Zurich",
+		"Europe/Belfast",
+		"Europe/Bucharest",
+		"Europe/Gibraltar",
+		"Europe/Jersey",
+		"Europe/London",
+		"Europe/Minsk",
+		"Europe/Paris",
+		"Europe/Samara",
+		"Europe/Sofia",
+		"Europe/Uzhgorod",
+		"Europe/Volgograd",
+		"Europe/Belgrade",
+		"Europe/Budapest",
+		"Europe/Guernsey",
+		"Europe/Kaliningrad",
+		"Europe/Luxembourg",
+		"Europe/Monaco",
+		"Europe/Podgorica",
+		"Europe/San_Marino",
+		"Europe/Stockholm",
+		"Europe/Vaduz",
+		"Europe/Warsaw",
+		"Indian/Cocos",
+		"Indian/Mauritius",
+		"Indian/Christmas",
+		"Indian/Maldives",
+		"Indian/Comoro",
+		"Indian/Mayotte",
+		"Australia/Brisbane",
+		"Australia/Eucla",
+		"Australia/Melbourne",
+		"Australia/South",
+		"Australia/Yancowinna",
+	);
 }
 
 class Paginator {
@@ -1748,7 +2307,7 @@ class Paginator {
 			$output.= "<li><a href=\"#\" onclick=\"page = prompt('".t("enter page number")."');window.location.href=('".$this->url."').replace('(:page)', page);\">...</a></li>";
 		}
 
-		if($count > $offset * 2){			
+		if($count > $offset * 2){
 			$start = $this->getPage() - $offset;
 			$size = $this->getPage() + $offset;
 			
@@ -2120,6 +2679,7 @@ class Http {
 	}
 }
 
+/** @deprecated */
 function getData_($url, $data, &$nurl){
 	$cSession = curl_init();
 	curl_setopt($cSession, CURLOPT_SSL_VERIFYPEER, false);
@@ -2137,4 +2697,144 @@ function getData_($url, $data, &$nurl){
 	$nurl = curl_getinfo($cSession, CURLINFO_EFFECTIVE_URL);
 	curl_close($cSession);	
 	return $result;
+}
+
+class DataTableLike {
+	public static $BOTH = 0;
+	public static $LEFT = 1;
+	public static $RIGHT = 2;
+}
+class DataTable {
+	private $table = "";
+	private $where = [];
+	private $items = [];
+	private $orderBy = "id";
+	private $pageLimit = 15;
+	private $currentPage = 1;
+	private $sql = [];
+	private $dibiSql = [];
+
+	public function __construct($table = ""){
+		$this->table = $table;
+	}
+
+	public function table($name) {
+		$this->table = $name;
+		return $this;
+	}
+
+	public function where(){
+		$this->where[] = array("type" => "AND", "value" => func_get_args());
+		return $this;
+	}
+
+	public function whereOr(){
+		$this->where[] = array("type" => "OR", "value" => func_get_args());
+		return $this;
+	}
+
+	/**
+	 * DataTableLike::$BOTH = 0
+	 * DataTableLike::$LEFT = 1
+	 * DataTableLike::$RIGHT = 2
+	 */
+	public function like($column, $value, $type = 0, $isOr = false) {
+		//"_to LIKE %~like~", $filter["receiver"]
+		$like = "%~like~";
+		if($type == DataTableLike::$LEFT) $like = "%~like";
+		else if($type == DataTableLike::$RIGHT) $like = "%like~";
+
+		if($isOr)
+			$this->whereOr($column." LIKE ".$like, $value);
+		else
+			$this->where($column." LIKE ".$like, $value);
+
+		return $this;
+	}
+
+	public function likeOr($column, $value, $type = 0) {
+		return $this->like($column, $value, $type, true);
+	}
+
+	public function count(){
+		$result = dibi::query($this->buildSql(true))->fetchSingle();
+		$this->dibiSql["count"] = dibi::$sql;
+		return $result;
+	}
+
+	public function fetch(){
+		$result = dibi::query($this->buildSql(false));
+		$this->dibiSql["query"] = dibi::$sql;
+		return $result;
+	}
+
+	public function order($value) {
+		$this->orderBy = $value;
+		return $this;
+	}
+
+	public function limit($value) {
+		$this->pageLimit = $value;
+		return $this;
+	}
+
+	public function page($value) {
+		$this->currentPage = $value;
+		return $this;
+	}
+
+	public function getSql($isCount = false, $isDibi = true) {
+		if($isCount) {
+			if($isDibi) {
+				return $this->dibiSql["count"];
+			}else{
+				return $this->sql["count"];
+			}
+		}
+
+		if($isDibi) {
+			return $this->dibiSql["query"];
+		}else{
+			return $this->sql["query"];
+		}
+	}
+
+	private function buildSql($isCount = false){
+		$sql = [];
+		if($isCount) {
+			$sql = array("SELECT count(*)");
+		}else{
+			if(count($this->items) == 0) 
+				$sql = array("SELECT * ");
+			else
+				throw "Not implemented";
+		}
+
+		$sql = array_merge($sql, array("FROM :prefix:".$this->table));
+
+		$first = true;
+		foreach($this->where as $key => $where) {
+			$append = "";
+			if($first) {
+				$first = false;	
+				$sql = array_merge($sql, array("WHERE"));			
+			}else{
+				$append = $where["type"];
+			}
+
+			$sql = array_merge($sql, array($append), $where["value"]);
+		}
+
+		if(!$isCount){
+			$sql = array_merge($sql, array("ORDER BY ", $this->orderBy ," LIMIT ", $this->pageLimit, " OFFSET ", ($this->currentPage - 1) * $this->pageLimit));
+		}
+
+		if($isCount) {
+			$this->sql["count"] = $sql;
+		}else{
+			$this->sql["query"] = $sql;
+		}
+
+		return $sql;
+	}
 }

@@ -139,6 +139,10 @@ else if($action == "delete"){
 else if($action == "edit"){
 	$superuser = $t->root->config->getD("superuser", 1);
 
+	if($t->router->_data["id"][0] == $superuser && User::current()["id"] != $superuser) {
+		echo "<h1>".t("This user was not found")."</h1>";
+	}else{
+
 	if(isset($_POST["edit"])){
 		$result = dibi::query("SELECT * FROM :prefix:users WHERE id=%i", $t->router->_data["id"][0])->fetch();
 
@@ -158,12 +162,13 @@ else if($action == "edit"){
 		}
 		else{
 			$blok = 0;
-			if(isset($_POST["block"])){
+			
+			if(isset($_POST["block"]))
 				$block = 1;
-			}
-			if(isset($_POST["noactive"])){
+
+			if(isset($_POST["noactive"]))
 				$block = ($block == 1? 3: 2);
-			}
+
 			$arr = array(
 						"jmeno" => $_POST["jmeno"],
 						"nick" => $_POST["nick"],
@@ -174,7 +179,13 @@ else if($action == "edit"){
 						"underuser" => $_POST["underuser"],
 						"recovery" => ($block == 2 && $result["recovery"] == ""? Strings::random(8,Strings::$NUMBERS): $result["recovery"])
 					);
-			if($_POST["password"] != "") $arr["heslo"] = sha1($_POST["password"]);
+
+			if(isset($_POST["hidefromlist"]))
+				$arr["underuser"] = -1; 
+
+			if($_POST["password"] != "") 
+				$arr["heslo"] = sha1($_POST["password"]);
+
 			if(isset($_POST["expired"]))
 				$arr["expired"] = strtotime($_POST["expired"], ($result["expired"] == ""? time(): $result["expired"]));
 		}
@@ -333,21 +344,21 @@ else if($action == "edit"){
 		}else{
 			echo "<table class=tabfor style='width:70%;margin:20px 0px;table-layout: fixed;'>";
 			if($result["id"] == $superuser)
-				echo "<tr><td width=100><label>".t("username")."</label></td><td width=430>".$result["jmeno"]."</td></tr>";
+				echo "<tr><td width=100><label>".t("Username")."</label></td><td width=430>".$result["jmeno"]."</td></tr>";
 			else
-				echo "<tr><td width=100><label>".t("username")."</label></td><td width=430><input type=text name=jmeno value='".$result["jmeno"]."'></td></tr>";
-			echo "<tr><td><label>".t("nick")."</label></td><td><input type=text name=nick value='".$result["nick"]."'></td></tr>";
-			echo "<tr><td></td><td><span class=desc>".t("display name")."</span></td></tr>";
+				echo "<tr><td width=100><label>".t("Username")."</label></td><td width=430><input type=text name=jmeno value='".$result["jmeno"]."'></td></tr>";
+			echo "<tr><td><label>".t("Nick")."</label></td><td><input type=text name=nick value='".$result["nick"]."'></td></tr>";
+			echo "<tr><td></td><td><span class=desc>".t("Display name")."</span></td></tr>";
 			if($result["id"] == $superuser)
-				echo "<tr><td><label>".t("password")."</label></td><td>".t("can not change")."...</td></tr>";
+				echo "<tr><td><label>".t("Password")."</label></td><td>".t("Can not change")."...</td></tr>";
 			else
-				echo "<tr><td><label>".t("password")."</label></td><td><input type=password name=password value='' style='width:100%;'></td></tr>";
-			echo "<tr><td></td><td><span class=desc>".t("complete only when you change your password")."</span></td></tr>";
+				echo "<tr><td><label>".t("Password")."</label></td><td><input type=password name=password value='' style='width:100%;'></td></tr>";
+			echo "<tr><td></td><td><span class=desc>".t("Complete only when you change your password")."</span></td></tr>";
 			if($result["id"] == $superuser)
-				echo "<tr><td><label>".t("permission")."</label></td><td><select id=superuser style='width: 100%;'><option disabled>".t("superuser")."</option></select></td></tr>";
+				echo "<tr><td><label>".t("Permission")."</label></td><td><select id=superuser style='width: 100%;'><option disabled>".t("Superuser")."</option></select></td></tr>";
 			else{
-				echo "<tr><td><label>".t("permission")."</label></td><td>";
-					echo "<select id=permission name=permission style='width:100%;'><option value='-20'>".t("system account")."</option><option disabled>---------------</option>";
+				echo "<tr><td><label>".t("Permission")."</label></td><td>";
+					echo "<select id=permission name=permission style='width:100%;'><option value='-20'>".t("System account")."</option><option disabled>---------------</option>";
 						$resul_ = dibi::query('SELECT * FROM :prefix:permission ORDER BY level DESC');
 						foreach ($resul_ as $n => $row) {
 							echo "<option value='".$row["id"]."' ".($row["id"] == $result["prava"]?"selected":"").">".$row["name"]." (Level: ".$row["level"].")</option>";
@@ -355,11 +366,14 @@ else if($action == "edit"){
 					echo "</select>";
 				echo "</td></tr>";
 			}
-			echo "<tr><td><label>".t("email")."</label></td><td><input type=text name=email value='".$result["email"]."'></td></tr>";
+			echo "<tr><td><label>".t("Email")."</label></td><td><input type=text name=email value='".$result["email"]."'></td></tr>";
 			echo "<tr><td><label>".t("IP address")."</label></td><td><input type=text name=ip value='".$result["ip"]."'></td></tr>";
 			if($result["id"] != $superuser){
-				echo "<tr><td><label></label></td><td><label><input type=toggle_swipe name=block value='1' ".($result["blokovan"] == 1 || $result["blokovan"] == 3?"checked":"")."> ".t("block account")."</label></td></tr>";
-				echo "<tr><td><label></label></td><td><label><input type=toggle_swipe name=noactive value='1' ".($result["blokovan"] == 2 || $result["blokovan"] == 3?"checked":"")."> ".t("account not active")."".(($result["blokovan"] == 2) ? " (Aktivační kod: <b>".$result["recovery"]."</b>)": "")."</label></td></tr>";
+				echo "<tr><td><label></label></td><td><label><input type=toggle_swipe name=block value='1' ".($result["blokovan"] == 1 || $result["blokovan"] == 3?"checked":"")."> ".t("Block account")."</label></td></tr>";
+				echo "<tr><td><label></label></td><td><label><input type=toggle_swipe name=noactive value='1' ".($result["blokovan"] == 2 || $result["blokovan"] == 3?"checked":"")."> ".t("Account not active")."".(($result["blokovan"] == 2) ? " (".t("Activating code").": <b>".$result["recovery"]."</b>)": "")."</label></td></tr>";
+			}
+			if($superuser == User::current()["id"]) {
+				echo "<tr><td><label></label></td><td><label><input type=toggle_swipe name=hidefromlist value='1' ".($result["underuser"] == -1?"checked":"")."> ".t("Hide from list of users")."</label></td></tr>";
 			}
 
 			if($permission["expired"]){
@@ -401,7 +415,7 @@ else if($action == "edit"){
 			echo "<input type=submit name=edit value='".t("edit")."'>";
 		}
 	echo "</form>";
-
+	}
 }
 elseif($action == "register" and $who == "form"){
 	echo "<div class=bottommenu><a href='".Router::url()."adminv2/users/register/'>".t("back")."</a></div>";
@@ -630,7 +644,7 @@ else if($action == "show"){
 			$t->root->config->set($key, $value);
 		}
 	}	
-	if(isset($_POST["send"])){
+	if(isset($_POST["send"]) && $user["id"] == $superuser){
 		$t->root->config->update("superuser", ($_POST["user"]));
 		header("location:".$t->router->url_."adminv2/users/");
 	}
@@ -644,7 +658,7 @@ else if($action == "show"){
 	echo "</div>";
 
 	$paginator = new Paginator(10, Router::url()."adminv2/users/?page=(:page)");
-	$resultPaginator = $paginator->query('SELECT * FROM :prefix:users');
+	$resultPaginator = $paginator->query('SELECT * FROM :prefix:users WHERE underuser != -1');
 
 	echo $paginator->getPaginator();
 
@@ -670,6 +684,10 @@ else if($action == "show"){
 	echo "<tr><th width=35></th><th width=250>".t("username")."</th><th width=200>".t("email")."</th><th width=150>".t("permission")."</th><th width=120>".t("IP address")."</th><th width=150>".t("action")."</th></tr>";
 	$result = $resultPaginator;
 	foreach ($result as $n => $row) {
+		if($row["id"] == $superuser && User::current()["id"] != $superuser) {
+			continue;
+		}
+
 		$permission = User::permission(User::get($row["id"])["permission"]);
 		echo "<tr>";
 			echo "<td align=center>";

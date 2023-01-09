@@ -13,7 +13,7 @@ class Cookies {
 		Cookies::set( array("name", "permision"), "admin", "+24 hour" );
 		Cookies::set( "name", "test", "+24 hour" );
 	*/
-	public static function set($name, $value = 1, $time = "+1 hour"){		
+	public static function set($name, $value = 1, $time = "+1 hour"){
 		if($time == false){
 			if($value == 1){ $value = "+1 hour"; } 
 			foreach($name as $key => $val){
@@ -33,7 +33,8 @@ class Cookies {
 			}else{
 				unset($_COOKIE[$name]);
 			}
-			$cookie = setcookie($name, $value, strtotime($time), "/");		
+			$cookie = setcookie($name, $value, strtotime($time), "/");					
+
 			if(substr($time, 0, 1)!="-"){				
 				$hash = sha1($name.$value);
 				$time = strtotime($time);
@@ -42,6 +43,16 @@ class Cookies {
 			}else{				
 				setcookie("SECURITY_".$name, "", strtotime("-1 hour"), "/");
 				return false;
+			}
+
+			$result = dibi::query('SELECT * FROM :prefix:cookies WHERE name = %s', $name);
+			if(count($result) == 0) {
+				$loc = Utilities::getCallerInfo(1, true);
+				dibi::query('INSERT INTO :prefix:cookies', array(
+					"name" => $name,
+					"created" => time(),
+					"location" => $loc["file"].":".$loc["line"]
+				));
 			}
 		}
 	}
