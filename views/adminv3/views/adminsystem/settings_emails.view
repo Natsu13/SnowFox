@@ -1,0 +1,30 @@
+<div class="row">
+    <div class="col-xl-9 col-lg-12">
+        <div class="card">
+            <form id="emails-setting" method="post" action="{~/adminv3/system/update_emails/}">
+                <div class="row">
+                    <div class="col-md-3 static-text">{t("Master email")}</div>
+                    <div class="col-md-9">
+                        <input type="text" value="{$model['masterEmail']}" name="masterEmail" />
+                        <div class="help-text">{t("The email address from which emails will be sent from the website")}</div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3 static-text"></div>
+                    <div class="col-md-9">
+                        <label>
+                            <input type="toggle_swipe" value="1" name="enable_email" checked="{$model['enableEmail']}"/> 
+                            {t("Enable sending emails (else it will be saved only on web)")}
+                        </label>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3"></div>
+                    <div class="col-md-9">
+                        <button type="submit" class="submit button button-primary" name="save">{t('Save')}</button> 
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

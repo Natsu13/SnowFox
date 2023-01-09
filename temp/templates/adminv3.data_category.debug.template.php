@@ -1,0 +1,4 @@
+<?php foreach($model["rows"] as $key => $row) { ?><tr><td> #<?php echo $row["id"]; ?></td><td> <?php echo $row["name"]; ?></td><td> <?php echo $row["alias"]; ?></td><td><span  style="color:<?php echo $row['perm']['color']; ?>;"><?php echo $row["perm"]["name"]; ?></span> </td><td><a  href="<?php echo Router::url(); ?>adminv3/article/edit_category/<?php echo $row['id']; ?>"  class="button"><span  class="material-symbols-outlined">edit</span>   <?php echo t("Edit"); ?></a>   <?php if($row["id"] != 1) { ?><a  href="#"  onclick="deleteCategory(<?php echo $row['id']; ?>);return false;"  class="button"><span  class="material-symbols-outlined"  title="<?php echo t('Delete category'); ?>">delete</span> </a> <?php } ?></td></tr> <?php } ?><script> var total_rows = <?php echo $model['total']; ?>;
+    var page = <?php echo $model['page']; ?>;
+    table_category.pushInfo({total: total_rows, page: page });
+</script>

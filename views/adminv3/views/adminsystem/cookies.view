@@ -1,0 +1,88 @@
+<div class="row">
+    <div class="col-xl-9 col-lg-12">
+        <div class="card">
+            <form id="cookies-setting" method="post" action="{~/adminv3/system/update_cookies/}">
+                <div class="row">
+                    <div class="col-md-3 static-text"></div>
+                    <div class="col-md-9">
+                        <label><input type=radio name="cookie-accept-show" value='1' checked="{$model['cookieAcceptShow'] == 1}"> {t("Show the bar with the consent of cookies, and must be accepted")}</label><br/>
+						<label><input type=radio name="cookie-accept-show" value='2' checked="{$model['cookieAcceptShow'] == 2}"> {t("Display a panel with information about cookies")}</label><br/>
+						<label><input type=radio name="cookie-accept-show" value='0' checked="{$model['cookieAcceptShow'] == 0}"> {t("Don't show the cookie bar")}</label>
+                    </div>
+                </div>
+                {if $model['cookieAcceptShow'] != 0}
+                    <div class="row">
+                        <div class="col-md-3 static-text">{t("Text for cookie")}</div>
+                        <div class="col-md-9">
+                            <textarea rows="2" name="cookie-text">{$model["cookieText"]}</textarea>
+                        </div>
+                    </div>
+                    {if $model['cookieAcceptShow'] == 1}
+                        <div class="row">
+                            <div class="col-md-3 static-text">{t("Accept button text")}</div>
+                            <div class="col-md-9">
+                                <input type="text" value="{$model['cookieAccept']}" name="accept-text"/>
+                            </div>
+                        </div>
+                    {/if}
+                    <div class="row">
+                        <div class="col-md-3 static-text">{t("More button link")}</div>
+                        <div class="col-md-9">
+                            <input type="text" value="{$model['cookieMore']}" name="cookie-more"/>
+                        </div>
+                    </div>
+                    {if $model['cookieAcceptShow'] == 1}
+                        <div class="row">
+                            <div class="col-md-3 -static-text">{t("Javascript code that will be executed without consent")}</div>
+                            <div class="col-md-9">
+                                <textarea rows="3" name="cookie-no-js">{$model["cookieNoJs"]}</textarea>
+                            </div>
+                        </div>
+                    {/if}
+                    <div class="row">
+                        <div class="col-md-3 -static-text">{t("Javascript code that will be executed with consent")}</div>
+                        <div class="col-md-9">
+                            <textarea rows="3" name="cookie-js">{$model["cookieJs"]}</textarea>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-3 -static-text">{t("The name of cookies what will be created after accept")}</div>
+                        <div class="col-md-9">
+                            <input type="text" value="cookieAccept" readonly/>
+                        </div>
+                    </div>
+                {/if}
+                <div class="row">
+                    <div class="col-md-3"></div>
+                    <div class="col-md-9">
+                        <button type="submit" class="submit button button-primary" name="save">{t('Save')}</button> 
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="col-xl-3 col-lg-12">
+        <div class="card">
+            <div class="card-title">{t("Found cookies")}</div>
+            <div class="card-content">
+                <ul class="card-list">
+                    {for $model["cookiesList"] as $id => $cookie}
+                        <li>
+                            <div class="right-text">{Strings::str_time($cookie["created"])}</div>
+                            <span class="material-symbols-outlined small">cookie</span> <b>{$cookie["name"]}</b>
+                            <div class="small">
+                                <i>{$cookie["location"]}</i>
+                            </div>
+                        </li>
+                    {/for}
+                </ul>
+            </div>            
+        </div>
+    </div>
+</div>
+
+<script>
+    $("[name=cookie-accept-show]").on("change", function(){
+        manager.submitForm($("#cookies-setting").find("[type=submit]"));
+    });
+</script>

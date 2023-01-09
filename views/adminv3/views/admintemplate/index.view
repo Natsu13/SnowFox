@@ -1,0 +1,44 @@
+<div class="row">
+    <div class="col-md-12">
+        <div class="tools">
+            <button class="button" onclick="createTemplate();return false;"><span class="material-symbols-outlined">add</span>{t("New template")}</button>
+        </div>
+        <div class="card">
+            {table("templates", Router::url()."adminv3/templates/data/", [
+                "id" => ["name" => "Id", "width" => 70], 
+                "state" => ["width" => 5],
+                "name" => ["name" => "Name"],
+                "code" => ["name" => "Code"],
+                "author" => ["name" => "Author", "width" => 250],
+                "created" => ["name" => "Created", "width" => 250],
+                "action" => ["name" => "Action", "width" => 250]
+            ])}
+        </div>
+        <div class="card">
+            {tablePaginator("templates")}
+        </div>
+    </div>
+</div>
+<script>
+    function createTemplate(){
+        inputBox("{t('New template')}", "{t('Enter name for new template')}", "{t('New template')}", function(value){
+            manager.get("{~/adminv3/templates/create/}", { name: value },  function (data, isSuccess) {
+                if(isSuccess) {
+                    manager.loadPage("{~/adminv3/templates/edit/}" + data.id, null);
+                }
+            });
+        }, function(){
+
+        });
+    }
+
+    function deleteTemplate(id){
+        confirmBox("{t('Remove template')}", "{t('Are you sure you want to remove this template?')}", function(){
+            manager.get("{~/adminv3/templates/delete/}"+id, { },  function (data, isSuccess) {
+                if(isSuccess) {
+                    table_templates.reload();
+                }
+            });
+        }, function(){ });
+    }
+</script>

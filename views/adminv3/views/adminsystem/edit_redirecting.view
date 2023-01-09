@@ -1,0 +1,61 @@
+<div class="row">
+    <div class="col-xl-9 col-lg-12">
+        <div class="card">
+            <form id="redirecting-edit" method="post" action="{~/adminv3/system/update_redirecting/}{$model['id']}">
+                <div class="row">
+                    <div class="col-md-3 static-text">{t("Name")}</div>
+                    <div class="col-md-9">
+                        <input type="text" value="{$model['name']}" name="name" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3 static-text">{t("From")}</div>
+                    <div class="col-md-9">
+                        <input type="text" value="{$model['from']}" name="from" />                        
+                        <div class="help-text">{t("For example")}: <i>{htmlentities("<module>[/<id>][/<page=1>]")}</i></div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3 static-text">{t("To")}</div>
+                    <div class="col-md-9">
+                        <input type="text" value="{$model['to']}" name="to" />
+                        <div class="help-text">{t("For example")}: <i>{htmlentities("module=<module>&id=<id>&page=<page>")}</i></div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3 static-text">{t("Minimal permission")}</div>
+                    <div class="col-md-9">
+                        <select name="minop" style="width: 100%;">
+                            {for $model["permissionList"] as $key => $perm}
+                                <option value="{$perm['id']}" selected="{$model['permission'] == $perm['id']}">{$perm["name"]} (Level: {$perm["level"]})</option>
+                            {/for}
+                            <option value="0" selected="{$model['permission'] == 0}">{t("Unregistered user")}</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3 static-text"></div>
+                    <div class="col-md-9">
+                        <label>
+                            <input type="toggle_swipe" value="1" name="redirect" checked="{$model['isRedirect']}"/> {t("Redirect")}
+                        </label>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3 static-text"></div>
+                    <div class="col-md-9">
+                        <label>
+                            <input type="toggle_swipe" value="1" name="active" checked="{$model['isActive']}"/> {t("Active")}
+                        </label>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3"></div>
+                    <div class="col-md-9">
+                        <button type="submit" class="submit button button-primary" name="save">{t('Save')}</button> 
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

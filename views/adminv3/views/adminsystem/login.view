@@ -1,0 +1,35 @@
+<div class="row">
+    <div class="col-xl-9 col-lg-12">
+        <div class="card">
+            <form id="login-setting" method="post" action="{~/adminv3/system/update_login/}">
+                <div class="row">
+                    <div class="col-md-3 static-text">{t("Time of long login")}</div>
+                    <div class="col-md-9">
+                        <input type="text" value="{$model['timeLongLogin']}" name="timeLong" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3 static-text">{t("Time of short login")}</div>
+                    <div class="col-md-9">
+                        <input type="text" value="{$model['timeShortLogin']}" name="timeShort"/>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3 static-text"></div>
+                    <div class="col-md-9">
+                        <label>
+                            <input type="toggle_swipe" name="onlyLongLogin" value="1" checked="{$model['onlyLongLogin']}"/> 
+                            {t("Only ttl")}
+                        </label>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3"></div>
+                    <div class="col-md-9">
+                        <button type="submit" class="submit button button-primary" name="save">{t('Save')}</button> 
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

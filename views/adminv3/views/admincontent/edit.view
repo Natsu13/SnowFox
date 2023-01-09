@@ -1,0 +1,522 @@
+<div class="row">
+    <div class="col-xl-9 col-lg-12">
+        <div class="card" data-collapsable="1" data-id="settings">
+            <div class="card-title">
+                {t("Settings")}
+            </div>
+            <div class="card-content">
+                <form id="formedit" method="post" action="{~/adminv3/content/update/}{$model['id']}">
+                    <div class="row">
+                        <div class="col-md-3 static-text">{t("Name")}</div>
+                        <div class="col-md-9">
+                            <input type="text" value="{$model['name']}" name="name" />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-3 static-text">{t("After submitting to redirect") }</div>
+                        <div class="col-md-9">
+                            <input type="text" value="{$model['redirect']}" name="redirect"
+                                placeholder="{t('inactive')}" />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-3 static-text">{t("Resend to email") }</div>
+                        <div class="col-md-9">
+                            <input type="text" value="{$model['resend']}" name="resend" placeholder="{t('inactive')}" />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-3 static-text">{t("Success message") }</div>
+                        <div class="col-md-9">
+                            <textarea name="succes_message" class="tinimce_mini"
+                                rows="2">{$model["succes_message"]}</textarea>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-3 static-text"></div>
+                        <div class="col-md-9">
+                            <label>
+                                <input type=toggle_swipe name=enable value='1' checked="{$model['isEnabled']}">
+                                {t("Enable form")}
+                            </label>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-3 static-text"></div>
+                        <div class="col-md-9">
+                            <label>
+                                <input type=toggle_swipe name=onetime value='1' checked="{$model['isOneTime']}">
+                                {t("The form can only be filled in once")}
+                            </label>
+                            <div class="help-text">{t("Only logged-in users can fill in")}</div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-3 static-text">{t("Code for insert in article")}</div>
+                        <div class="col-md-9">
+                            <input type="text" onClick="$(this).select();" value="[form id=&#x22;{$model["id"]}&#x22;]"
+                                readonly />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-3 static-text">{t("Version")}</div>
+                        <div class="col-md-9 static-text">
+                            {$model["version"]}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-3"></div>
+                        <div class="col-md-9">
+                            <button type="submit" class="submit button button-primary" name="save">{t('Save')}</button>
+                            <a href="{~/adminv3/content/answers/}{$model['id']}" class="button button-secondary"><span
+                                    class="material-symbols-outlined">visibility</span> {t('Answers')}</a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-title">
+                {t("Editor")}
+            </div>
+            <div class="card-content">
+                <div class="text-right mb-2 fix-select overflow-hide">                    
+                    <div id="actions-editor" style="display: inline-block;" class="overflow-initial-important">
+                        <select id=whoadd name=whatadd style='width:230px;text-align: left;'>
+                            <option value='textbox'>Textbox</option>
+                            <option value='password'>Password</option>
+                            <option value='submit'>Submit</option>
+                            <option value='text'>HTML Text</option>
+                            <option value='textarea'>Textarea</option>
+                            <option value='select'>Select</option>
+                            <option value='recaptcha'>ReCaptcha</option>
+                            <option value='variable'>Variable</option>
+                            <option value='picker'>Picker</option>
+                            <option value='slider'>Slider</option>
+                            <option value='upload'>Upload</option>
+                        </select>
+                        <button class="button" onclick="builder.addItem();return false;"><span
+                                class="material-symbols-outlined">add</span> {t("Add item")}</button>
+                        <button class="button"
+                            onclick="$('.editor-items').toggleClass('item-preview'); $(this).toggleClass('toggle'); return false;"><span
+                                class="material-symbols-outlined">grid_view</span> {t('Toggle preview')}</button>
+                    </div>
+                    <div id="smart-editor" style="display: none;" class="overflow-initial-important">
+                        <button class="button" onclick="builder.saveSmartActions();return false;"><span
+                            class="material-symbols-outlined">save</span> {t("Save")}</button>
+                    </div>
+                    <button class="button"
+                        onclick="$(this).toggleClass('toggle'); builder.toggleSmartActions(); return false;"><span
+                            class="material-symbols-outlined">data_object</span> {t('Smart actions')}</button>
+                </div>
+                <div id="elements-editor">
+                    <div class="editor-items">
+                        {for $model["itemList"] as $key => $item}
+                        <div data-id="{$item['id']}" class="item-edit-box">
+                            <div class="title">
+                                <ul>
+                                    <li class="text">{$item["type"]}</li>
+                                    <li class="text">#{$item["id"]}</li>
+                                    <li>
+                                        <a href="#" onclick="builder.openEdit('{$item['id']}');return false;">
+                                            <span class="material-symbols-outlined item-edit">edit</span> {t("Edit")}
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="#" title="{t('Reload')}"
+                                            onclick="builder.loadItem('{$item['id']}');return false;">
+                                            <span class="material-symbols-outlined item-reload">refresh</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="#" title="{t('Delete')}"
+                                            onclick="builder.deleteItem('{$item['id']}');return false;">
+                                            <span class="material-symbols-outlined item-delete">delete</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <span class="material-symbols-outlined item-mover">drag_indicator</span>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="content" id="form-item-{$item['id']}">
+                                <div class="animated-background anim-text">Loading...</div>
+                            </div>
+                        </div>
+                        {/for}
+                    </div>
+                </div>
+                <div id="smart-actions-editor" style="display: none;">
+                    <div id="smart-actions-content">
+                        smart actions
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(function () {
+        $(".editor-items").sortable({
+            handle: ".item-mover",
+            axis: "y",
+            animation: 150,
+            stop: function (event, ui) {
+                var ids = "";
+                $(".item-edit-box").each(function () {
+                    if (ids != "") {
+                        ids += ";"
+                    }
+                    ids += $(this).data("id");
+                });
+                manager.get("{~/adminv3/content/order_items/}{$model['id']}", { ids: ids }, function (data) {
+
+                });
+            }
+        });
+    });
+
+    var FormBuilder = function () {
+        this.lastOpen = -1;
+        this.loaded = false;
+        this.isSmartActionsOpen = false;
+        this.elements = {};
+        this.smartData = {};
+    };
+    FormBuilder.prototype.setSmartData = function(data) {
+        this.smartData = data;
+    };
+    FormBuilder.prototype.loadElementsDefinition = function(callback){
+        var self = this;
+        manager.get("{~/adminv3/content/get_elements_definition/}{$model['id']}", {}, function (data) {
+            self.elements = data;
+            if(callback != undefined)
+                callback();
+        });
+    };
+    FormBuilder.prototype.editSmartDataFieldById = function(id, name, value) {
+        for(var key in this.smartData) {
+            var data = this.smartData[key];
+            if(data.id == id) {
+                data[name] = value;
+                return true;
+            }
+        }
+        console.warn("[SmartData]", "Element with id '" + id + "'', not found!");
+        return false;
+    }
+    FormBuilder.prototype.buildSmartActions = function(callback){
+        var callback = callback;
+        var self = this;
+        this.loadElementsDefinition(function(){
+            self._buildSmartActionsRoot(callback);
+            afterPageLoad();
+        });
+    };
+    FormBuilder.prototype._buildSmartActionsRoot = function(callback){
+        var parents = [];
+        var root = [];
+
+        for(var key in this.smartData) {
+            var current = this.smartData[key];
+
+            if(current.parent != undefined) {
+                if(parents[current.parent] == undefined)
+                    parents[current.parent] = {};
+                    
+                parents[current.parent][current.id] = current;
+            }else{                
+                root[current.id] = current;
+            }
+        }
+
+        var content = $("#smart-actions-content");
+        content.html("");
+
+        var data = { root, parents };
+
+        for(var key in root) {
+            var current = root[key];
+            content.append(this._buildSmartActionItem(data, current));
+        }
+
+        if(callback != undefined) callback();
+    }
+
+    FormBuilder.prototype._buildSmartActionChildrens = function(data, id){
+        var parents = data.parents[id];
+        
+        var output = $("<div></div>");
+        for(var key in parents) {
+            var parent = parents[key];
+            output.append(this._buildSmartActionItem(data, parent));
+        }
+        return output;
+    }
+
+    FormBuilder.prototype._buildSmartActionItem = function(data, item){
+        var item = item;
+        var type = item.type;
+        var html = null;
+        var self = this;
+
+        function makeLiveTag(){
+            var tag = $("<div></div>");
+            tag.text("Live");
+            tag.addClass("smart-tag smart-tag-live");
+            return tag;
+        }
+        function makeServerTag(){
+            var tag = $("<div></div>");
+            tag.text("Server");
+            tag.addClass("smart-tag smart-tag-server");
+            return tag;
+        }
+
+        function makeElementSelector(selected){
+            var html = $("<select></select>");
+            html.css("width", "200px");
+            for(var key in self.elements) {
+                var element = self.elements[key];
+                var option = $("<option></option>");
+                var val = "#"+element.id;
+                option.text("#"+element.id+" - "+element.name);
+                option.val(val);
+                if(selected == val) {
+                    option.prop("selected", true);
+                }
+                html.append(option);
+            }            
+            return html;
+        }
+
+        function makeBasicEvent(titleText, type, isLive, isServer) {
+            var html = $("<div></div>");
+            html.addClass("smart-event");
+            html.addClass("smart-type-"+type);
+            var title = $("<div class=title></div>");
+
+            var text = $("<span class=title-text></span>");
+            text.text(titleText);
+            title.append(text);
+            if(isLive)
+                title.append(makeLiveTag());
+            if(isServer)
+                title.append(makeServerTag());
+
+            var content = $("<div class=content></div>");            
+
+            html.append(title);
+            html.append(content);
+
+            return { output: html, content };
+        }
+
+        function makeLabel(name, element) {
+            var labelInput = $("<label class=flex></label>");
+            var spanElementValue = $("<span></span>");
+            spanElementValue.text(name);
+            labelInput.append(spanElementValue);
+            labelInput.append(element);
+            return labelInput;
+        }
+
+        if(type == "on.update") {
+            var result = makeBasicEvent("Update event", "basic", true, true);
+            result.content.append(this._buildSmartActionChildrens(data, item.id));
+            html = result.output;
+        }else if(type == "set.value") {
+            var result = makeBasicEvent("Set value", "manipulation", true, true);
+            var content = $("<div></div>");//$("<div>element "+item.target+" value "+item.value+"</div>");
+
+            var elementSelector = makeElementSelector(item.target);
+            elementSelector.data("item", item);            
+            elementSelector.on("change", function(){
+                var item = $(this).data("item");
+                builder.editSmartDataFieldById(item.id, "target", $(this).val());
+            });
+            var labelElement = makeLabel("Element", elementSelector);
+            content.append(labelElement);
+
+            var inputValue = $("<input type=text />");
+            inputValue.val(item.value);
+            inputValue.data("item", item);            
+            inputValue.on("change", function(){
+                var item = $(this).data("item");
+                builder.editSmartDataFieldById(item.id, "value", $(this).val());
+            });
+
+            var labelInput = makeLabel("Value", inputValue);
+            content.append(labelInput);
+
+            result.content.append(content);
+            html = result.output;
+        }else{
+            html = $("<div>Element "+type+" is unkown type!</div>");
+        }
+
+        return html;
+    }
+    FormBuilder.prototype.toggleSmartActions = function () {
+        var self = this;
+        var isOpen = this.isSmartActionsOpen;
+        this.isSmartActionsOpen = !this.isSmartActionsOpen;
+
+        if (!isOpen) {
+            $("#actions-editor").hide();
+            $("#smart-editor").css("display", "inline-block");
+           
+            //$("#smart-actions-editor").show();
+            //var height = $("#smart-actions-editor").outerHeight();
+            //$("#smart-actions-editor").css("height", "0").css("opacity", "0");
+            $("#elements-editor").stop();
+            $("#smart-actions-editor").stop();
+            $("#elements-editor").animate({ height: 0, opacity: 0 }, 500, function () {
+                $("#elements-editor").css("height", "").hide();
+            });
+            self.buildSmartActions(function(){
+                $("#smart-actions-editor").show();
+                var height = $("#smart-actions-editor").outerHeight();
+                $("#smart-actions-editor").css("height", "0").css("opacity", "0");
+                $("#smart-actions-editor").animate({ height: height, opacity: 1 }, 500, function () {
+                    $("#smart-actions-editor").css("height", "");
+                });
+            });
+        } else {
+            $("#actions-editor").css("display", "inline-block");
+            $("#smart-editor").hide();
+
+            $("#elements-editor").show();
+            var height = $("#elements-editor").outerHeight();
+            $("#elements-editor").css("height", "0").css("opacity", "0");
+            $("#smart-actions-editor").stop();
+            $("#elements-editor").stop();
+            $("#smart-actions-editor").animate({ height: 0, opacity: 0 }, 500, function () {
+                $("#smart-actions-editor").css("height", "").hide();
+            });
+            $("#elements-editor").animate({ height: height, opacity: 1 }, 500, function () {
+                $("#elements-editor").css("height", "");
+            });
+        }
+
+    };
+    FormBuilder.prototype.addItem = function () {
+        var type = $("#whoadd").val();
+        manager.get("{~/adminv3/content/add_item/}{$model['id']}", { type: type }, function (data) {
+            var box = $("<div class='item-edit-box'></div>");
+            box.data("id", data.id);
+            var title = $("<div class=title></div>");
+            var ul = $("<ul></ul>");
+            var li1 = $("<li class=text></li>"); li1.html(data.type); ul.append(li1);
+            var li2 = $("<li class=text></li>"); li2.html("#" + data.id); ul.append(li2);
+            var li3 = $("<li class=text></li>");
+            var li3a = $("<a href=#></a>");
+            li3a.data("id", data.id);
+            li3a.on("click", function () { builder.openEdit($(this).data("id")); });
+            li3a.html("<span class='material-symbols-outlined item-edit'>edit</span> {t("Edit")}");
+            li3.append(li3a);
+            ul.append(li3);
+            var li4 = $("<li class=text></li>");
+            var li4a = $("<a href=# title='{t('Reload')}'></a>");
+            li4a.data("id", data.id);
+            li4a.on("click", function () { builder.loadItem($(this).data("id")); });
+            li4a.html("<span class='material-symbols-outlined item-delete'>refresh</span>");
+            li4.append(li4a);
+            ul.append(li4);
+            var li5 = $("<li class=text></li>");
+            var li5a = $("<a href=# title='{t('Delete')}'></a>");
+            li5a.data("id", data.id);
+            li5a.on("click", function () { builder.deleteItem($(this).data("id")); });
+            li5a.html("<span class='material-symbols-outlined item-delete'>delete</span>");
+            li5.append(li5a);
+            ul.append(li5);
+            var li6 = $("<li class=text></li>"); li6.html("<span class='material-symbols-outlined item-mover'>drag_indicator</span>"); ul.append(li6);
+            title.append(ul);
+            box.append(title);
+            var content = $("<div class='content'></div>");
+            content.attr("id", "form-item-" + data.id);
+            var animated = $("<div class='animated-background anim-text'>Loading...</div>");
+            content.append(animated);
+            box.append(content);
+            $(".editor-items").append(box);
+            builder.loadItem(data.id);
+        });
+    };
+    FormBuilder.prototype.deleteItem = function (id) {
+        var id = id;
+        confirmBox("{t('Really?')}", "{t('Are you sure you want to delete this item?')}", function () {
+            $("#form-item-" + id).css("opacity", 0.5);
+            manager.get("{~/adminv3/content/delete_item/}" + id, {}, function (data) {
+                $("#form-item-" + id).parent().remove();
+            });
+        }, function () { });
+    };
+    FormBuilder.prototype.loadItem = function (id, openEdit) {
+        if (openEdit == undefined)
+            openEdit = (this.lastOpen == id);
+
+        var id = id;
+        var self = this;
+
+        $("#form-item-" + id).css("opacity", 0.5);
+        manager.get("{~/adminv3/content/load_item/}" + id, { editing: openEdit }, function (data) {
+            $("#form-item-" + id).html(data.content);
+            $("#form-item-" + id).css("opacity", 1);
+
+            if (self.loaded) {
+                afterPageLoad();
+            }
+        });
+    };
+    FormBuilder.prototype.closeEdit = function (id) {
+        if (id == -1) return;
+
+        var element = $("#editing-form-item-" + id);
+        element.animate({ height: 0, opacity: 0 }, 200, function () {
+            $(this).hide();
+        });
+    };
+    FormBuilder.prototype.openEdit = function (id) {
+        this.closeEdit(this.lastOpen);
+
+        if (this.lastOpen == id) {
+            this.lastOpen = -1;
+            return;
+        }
+
+        var element = $("#editing-form-item-" + id);
+        element.removeClass("hidden").css("height", "auto").show();
+        var height = element.outerHeight();
+        element.css({ "height": 0, "opacity": 0 });
+        element.animate({ height: height, opacity: 1 }, 200, function () {
+            $(this).css("height", "auto");
+        });
+
+        this.lastOpen = id;
+    };
+    FormBuilder.prototype.submitItemEdit = function (btn, id) {
+        this.loaded = true;
+        $("#form-item-" + id).css("opacity", 0.5);
+        var id = id;
+        manager.submitForm($(btn), function () {
+            builder.loadItem(id, true);
+            $("#form-item-" + id).css("opacity", 1);
+        });
+    };
+    FormBuilder.prototype.addItemFromTemplate = function (template, destionation) {
+        var html = $(template.html());
+        destionation.append(html);
+    };
+
+    setTimeout(function () {
+        afterPageLoad();
+        builder.loaded = true;
+    }, 1000);
+
+    var builder = new FormBuilder();
+    {for $model["itemList"] as $key => $item}
+    builder.loadItem("{$item['id']}");
+    {/for}
+    builder.setSmartData(JSON.parse("{$model['strData']}"));
+</script>

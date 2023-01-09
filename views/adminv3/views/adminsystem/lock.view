@@ -1,0 +1,67 @@
+<div class="row">
+    <div class="col-xl-9 col-lg-12">
+        <div class="card">
+            <div class="card-title">
+                {t("Maintenance")}
+            </div>
+            <div class="card-content">
+                {if $model["maintenanceModeEnable"]}
+                    <div class="alert alert-warning">
+                        {t("Maintance mode is enabled!")}
+                    </div>
+                    <div class="alert alert-warning">
+                        {t("If you stuck at maintance mode remove .htaccess file and replace it with original.htaccess")}
+                    </div>
+                {/if}
+                <button class="button button-danger" id="maintenance" data-state="{$model['maintenanceModeEnable']?1:0}">{t($model["maintenanceModeEnable"]?"Turn off maintenance mode":"Turn on maintenance mode")}</button>
+                <div class="help-text">
+                    {t("Maintenance mode turns on a special mode where when the page is turned off, you will still see it.")}<br/>
+                    {t("The special maintenance htaccess is located in the includes/maintenance.htaccess folder")}<br/>
+                    {t("The maintenance mode fallback page is located in include/maintenance.html")}<br/>
+                    {t("If you want you can create a page in the views/content/maintenance.view folder and replace the standard html page with maintenance mode")}
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-title">
+                {t("Lock")}
+            </div>
+            <div class="card-content">
+                <form id="login-setting" method="post" action="{~/adminv3/system/update_lock/}">
+                    <div class="row">
+                        <div class="col-md-3 static-text">{t("Password")}</div>
+                        <div class="col-md-9">
+                            <input type="text" value="{$model['password']}" name="password" />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-3 static-text"></div>
+                        <div class="col-md-9">
+                            <label>
+                                <input type="toggle_swipe" name="pageLock" value="1" checked="{$model['lockEnable']}"/> 
+                                {t("Enable page lock")}
+                            </label>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-3"></div>
+                        <div class="col-md-9">
+                            <button type="submit" class="submit button button-primary" name="save">{t('Save')}</button> 
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    $("#maintenance").on("click", function(){
+        var state = $(this).data("state");
+        btnLoading($(this), true);
+        manager.get("{~/adminv3/system/update_maintenance/}", { state: state == 0? 1: 0 }, function (data, isSuccess) {
+            if(isSuccess) {
+                manager.reload();
+            }
+        });
+    })
+</script>

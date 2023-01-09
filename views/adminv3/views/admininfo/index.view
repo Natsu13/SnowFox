@@ -1,0 +1,188 @@
+<div class="row">
+    <div class="col-xl-9 col-lg-12">
+        <div class="card">
+            <div class="alert alert-warning" id="updatebox" style='display:none;'>
+                <a href='{~/adminv3/info/update/}' class='btn btn-primary float-right btn-sm'>{t("Go to update")}</a>
+                <div>{t("There is new version avalible")}</div>                
+            </div>
+            <div class="alert alert-warning" id="info-update" style="display: none;"></div>
+            <form id="infosetting" method="post" action="{~/adminv3/info/update/}">
+                <div class="row">
+                    <div class="col-md-3 static-text">{t("Title")}</div>
+                    <div class="col-md-9">
+                        <input type="text" value="{$model['title']}" name="title" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3 static-text">{t("Title separator")}</div>
+                    <div class="col-md-9">
+                        <input type="text" value="{$model['separator']}" name="titleSeparator" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3 static-text">{t("Title position")}</div>
+                    <div class="col-md-9">
+                        <select name="titleFirst" style='width:100%;'>
+                            <option value=2 selected="{$model['titleFirst'] == 2}">
+                                Pre-Title{$model["separator"]}{$model["title"]}</option>
+                            <option value=1 selected="{$model['titleFirst'] == 1}">
+                                {$model["title"]}{$model["separator"]}Pre-Title</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3 static-text">{t("Logo")}</div>
+                    <div class="col-md-9">
+                        <input type="file" value="{$model['logo']}" name="logo" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3 static-text">{t("Keywords")}</div>
+                    <div class="col-md-9">
+                        <input type="text" value="{$model['keywords']}" name="keywords" />
+                        <div class="help-text">{t("A few words describing the page, separated by commas")}</div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3 static-text">{t("Description")}</div>
+                    <div class="col-md-9">
+                        <input type="text" value="{$model['description']}" name="description" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3 static-text">{t("Author")}</div>
+                    <div class="col-md-9">
+                        <input type="text" value="{$model['autor']}" name="autor" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3 static-text">{t("Time zone")}</div>
+                    <div class="col-md-9">
+                        <select name="utc" style='width:100%;' data-search="true">
+                            {for Utilities::$timezones as $key => $value}
+                                <option value="{$value}" selected="{$model['utc'] == $value}">{$value}</option>
+                            {/for}
+                        </select>
+                        <div class="help-text">{t("Time with timezone")}&nbsp;<b>{$model['utc']}</b>&nbsp;{t("is")}&nbsp;<b>{date(Utilities::getTimeFormat(), time())}</b></div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3 static-text">{t("Time format")}</div>
+                    <div class="col-md-9">
+                        <input type="text" value="{Utilities::getTimeFormat()}" name="timeformat" />
+                        <div class="help-text">{t("For more information go")}&nbsp;<a href='https://www.php.net/manual/en/function.date.php#format' target=_blank>{t("there")}</a></div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3"></div>
+                    <div class="col-md-9">
+                        <button type="submit" class="submit button button-primary" name="save">{t('Save')}</button> 
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="col-xl-3 col-lg-12">
+        <div class="card" data-collapsable="1" data-id="language">
+            <div class="card-title">
+                {t("Languages")}
+            </div>
+            <div class="card-content">
+                <form id="langsettings" method="post" action="{~/adminv3/info/update_language/}">
+                    <ul class="card-list">
+                        {for $model["languages"] as $key => $lang}
+                            <li onclick="$('#lng-{$lang}').prop('checked', true);">
+                                <div class="right-text text-bold"><input type="radio" checked="{$model['default-languge'] == $lang}" name="lang" id="lng-{$lang}" value="{$lang}"></div>
+                                {t($lang)}
+                            </li>
+                        {/for}
+                        <li class="text-right">
+                            <button type="submit" class="submit button button-primary">{t("Save")}</button>
+                        </li>
+                    </ul>
+                </form>
+            </div>
+        </div>
+
+        <div class="card" data-collapsable="1" data-id="information">
+            <div class="card-title">
+                {t("Information")}
+            </div>
+            <div class="card-content">
+                <ul class="card-list">
+                    <li>
+                        <div class="right-text text-bold" style="color:{$model['permission']['color']};">{$model["permission"]["name"]}</div>
+                        {t("Permission")}
+                    </li>
+                    <li>
+                        <div class="right-text">{Utilities::ip()}</div>
+                        {t("IP address")}
+                    </li>
+                    <li>
+                        <div class="right-text">{phpversion()}</div>
+                        {t("Version")} PHP
+                    </li>
+                    <li>
+                        <div class="right-text">{$model["dbprefix"]==""?t("without prefix"):$model["dbprefix"]}</div>
+                        {t("Prefix")}
+                    </li>
+                    <li>
+                        <div class="right-text">{$model["database"]}</div>
+                        {t("Database")}
+                    </li>
+                    <li>
+                        <div class="right-text">{Bootstrap::$version}</div>
+                        {t("System version")}
+                    </li>
+                    <li>
+                        <div class="right-text"><span id='actualver'><i class="fas fa-circle-notch fa-spin"></i></span></div>
+                        {t("Latest version")}
+                    </li>
+                    <li>
+                        <div class="right-text">{$model["dbversion"]}</div>
+                        {t("Dabatase version")}
+                    </li>
+                    {if $model["compress"] != "FALSE"}
+                        <li>
+                            <div class="right-text">{t("Size")}:&nbsp;{Utilities::convertBtoMB($model["compress_size"], "MB")}</div>
+                            {t("Compression")}
+                        </li>
+                    {/if}
+                    <li>
+                        <div class="right-text">{$model["dblog"] == "FALSE"?t("No"):t("Yes")}</div>
+                        {t("MySQL Log")}
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    var server = "{getUpdateServer()}";
+    var upload = null;
+    var version = "{Bootstrap::$version}";
+
+    $.getJSON(server+"apigetplugin/?code=core", function(data) {
+        $("#actualver").html(data.version);
+        var v = cmpVersions(data.version, version);
+        if(v < 0) {
+            $("#info-update").show().html("{t('Your curent version is ahead of latest version')}");
+        }else if(v > 0) {
+            $("#info-update").show().html("{t('There is new version avalible')}");
+            $("#updatebox").show();
+        }
+    });
+
+    upload = new Uploader(
+        "{~/adminv2/info/?__type=ajax}",
+        $("#infosetting"),
+        $("[name='logo']"), {
+            autosubmit: false,
+            maxfiles: 1
+        }   
+    );
+    upload.AfterUpload(function (data) {
+        window.location.reload();
+    });
+</script>

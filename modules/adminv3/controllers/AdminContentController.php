@@ -15,6 +15,16 @@ class AdminContentController extends AdminController {
     /**
      * @method POST
      */
+    public function delete($id){
+        dibi::query('DELETE FROM :prefix:form_answer WHERE `parent`=%s', $id);
+        dibi::query('DELETE FROM :prefix:form_items WHERE `parent`=%s', $id);
+        dibi::query('DELETE FROM :prefix:form WHERE `id`=%s', $id);
+        return $this->Success();
+    }
+
+    /**
+     * @method POST
+     */
     function create($name){
         $data = array(
             "name" 		=> $name,

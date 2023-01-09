@@ -1,0 +1,82 @@
+<div class="sort-title">{$model["box"]}</div>
+<div class="sort-list" id="select-items-{$model['box']}" data-box="{$model['box']}">
+    <div class="empty" style="display:{count($model['items']) == 0?'block':'none'};">{t("No items")}</div>
+    {var $index = 0}
+    {for $model["items"] as $key => $item}
+    <div class="sort-list-item {$item['isVisible']?'':'not-active'}" id="list-item-{$model['box']}-{$index}" title="{t($item['type'])}">
+        <input type="hidden" class="value-item item-id" data-name="item_id" value="{$item['id']}">
+        <div class="mover">
+            <span class="material-symbols-outlined select-item-mover">drag_indicator</span>
+        </div>
+        <div class="item-name">
+            <span class="menu-icon menu-icon-{$item['type']}"></span>
+            {$item['title']}
+        </div>
+        <div class="mini">
+            <a href="#" class="button button-visibility" data-index="{$index}"
+                onclick="menuManager.visibleItem('{$model['box']}', $(this).data('index')); return false;" title="{t('Visibility')}"><span class="icon"></span></a>
+        </div>
+        <div class="mini">
+            <a href="#" class="button button-copy" data-index="{$index}"
+                onclick="menuManager.copyItem('{$model['box']}',$(this).data('index')); return false;" title="{t('Copy')}"><span
+                    class="material-symbols-outlined">content_copy</span></a>
+        </div>
+        <div class="mini">
+            <a href="#" class="button button-edit" data-index="{$index}"
+                onclick="menuManager.editItem('{$model['box']}',$(this).data('index')); return false;" title="{t('Edit')}"><span
+                    class="material-symbols-outlined">edit</span></a>
+        </div>
+        <div class="mini">
+            <a href="#" class="button button-delete" data-index="{$index}"
+                onclick="menuManager.removeItem('{$model['box']}',$(this).data('index')); return false;" title="{t('Delete')}"><span
+                    class="material-symbols-outlined">delete</span></a>
+        </div>
+    </div>
+    {var $index++}
+    {/for}
+</div>
+<script>
+    $(function () {
+        $("#select-items-{$model['box']}").sortable({
+            handle: ".mover",
+            //axis: "y",
+            connectWith: ".sort-list",
+            animation: 150,
+            stop: function(event, ui){
+				if(notupdate){
+					notupdate = false;
+					return;
+				}
+                var sort = $.map($(this).find(".sort-list-item"), function(e,i){ return $(e).find(".item-id").val(); });                                 
+                //console.log("stop", sort, $(this).data("box"));
+
+                manager.get("{~/adminv3/menu/menu_update_positions/}", { sort: sort, language: $("#language-selector a.toggle").data("lang") }, function (data) {
+                    if(data.ok) {
+                        manager.notification("{t('Saved')}", "success");
+                    }else{
+                        manager.notification(data.error, "error");
+                    }
+                });
+            },
+			receive: function(event, ui){
+				notupdate = true;
+                var sort = $.map($(this).find(".sort-list-item"), function(e,i){ return $(e).find(".item-id").val(); });
+                //console.log(sort, $(this), $(this).parent());
+				if(sort == "" || sort.length == 0 || sort == undefined){
+					$(this).parent().find(".empty").show();
+				}else {
+                    $(this).parent().find(".empty").hide(); 
+                }                
+                
+                manager.get("{~/adminv3/menu/menu_update_positions/}", { sort: sort, box: $(this).data("box"), language: $("#language-selector a.toggle").data("lang") }, function (data) {
+                    if(data.ok) {
+                        manager.notification("{t('Saved')}", "success");
+                        menuManager.refreshIfEmpty();
+                    }else{
+                        manager.notification(data.error, "error");
+                    }
+                });
+            }
+        });
+    });
+</script>

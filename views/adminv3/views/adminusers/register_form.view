@@ -1,0 +1,77 @@
+<ul class="card-menu">
+    <li><a href="{~/adminv3/users/register/}" data-animation="false">{t("Settings")}</a></li>
+    <li class="selected"><a href="#">{t("Registration form")}</a></li>
+</ul>
+<div class="row">
+    <div class="col-xl-9 col-lg-12">
+        <div class="card">
+            <form id="register_form_edit" method="post" action="{~/adminv3/users/update_form_register_form/}">
+                <div class="row">
+                    <div class="col-md-3 static-text">{t("Use your own form for registration")}</div>
+                    <div class="col-md-9 form-select">
+                        <select id="regfrom" name="regform" style="width: 100%;" onchange="manager.submitForm($(this));">
+                            <option value="-1"> - {t("Don't use")} - </option>
+                            {for $model["formList"] as $key => $form}
+                                <option value="{$form['id']}" selected="{$form['id'] == $model['customForm']}">{$form["name"]}</option>
+                            {/for}
+                        </select>
+                        {if $model["isCustomForm"]}
+                            <div class="help-text"><a href="{~/adminv3/content/edit/}{$model['customForm']}">{t("Edit register form")}</a></div>
+                        {/if}
+                    </div>                    
+                </div>
+            </form>
+            {if $model["isCustomForm"]}
+                <hr/>
+                <form id="register_edit" method="post" action="{~/adminv3/users/update_register_form/}">
+                    <div class="row">
+                        <div class="col-md-3"></div>
+                        <div class="col-md-9 static-text text-bold">{t("Form settings")}</div>
+                    </div>
+                    <div class="row hide-mobile">
+                        <div class="col-md-3 static-text">{t("Name of item in form")}</div>
+                        <div class="col-md-9 static-text">{t("Type of item in register form")}</div>
+                    </div>
+                    {for $model["formItems"] as $key => $item}
+                        <div class="row">
+                            <div class="col-md-3 static-text text-bold">{$item["name"]}</div>
+                            <div class="col-md-9 form-select">                            
+                                <select style='width:100%;' name='funct_{$item["id"]}' id='funct_{$item["id"]}'>
+                                    <option value=''>- nic -</option>
+                                    {if $item["type"] == "password"}
+                                        <option value='password' selected="{$model['formSettings'][$item['id']] == 'password'}">{t("Password")}</option>
+                                        <option value='password2' selected="{$model['formSettings'][$item['id']] == 'password2'}">{t("Password for review")}</option>
+                                    {elseif $item["type"] == "select"}
+                                        <option value='regaccept' selected="{$model['formSettings'][$item['id']] == 'regaccept'}">{t("Confirmation of terms")}</option>
+                                    {else}
+                                        <option value='jmeno' selected="{$model['formSettings'][$item['id']] == 'jmeno'}">{t("Name")}</option>
+                                        <option value='email' selected="{$model['formSettings'][$item['id']] == 'email'}">{t("Email")}</option>
+                                        <option value='register' selected="{$model['formSettings'][$item['id']] == 'register'}">{t("Registration button")}</option>
+                                    {/if}
+                                </select>
+                            </div>
+                        </div>
+                    {/for}                
+                    <div class="row">
+                        <div class="col-md-3"></div>
+                        <div class="col-md-9">
+                            <div class="help-text">{t("The form will also be saved to the data in the form (the password will be deleted!)")}</div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-3"></div>
+                        <div class="col-md-9">
+                            <button type="submit" class="submit button button-primary" name="save">{t('Save')}</button> 
+                        </div>
+                    </div>
+                </form>
+            {/if}
+        </div>
+    </div>
+    <div class="col-xl-3 col-lg-12">
+        <div class="card">
+            {t("Register_form_info")}
+        </div>
+    </div>
+</div>
+

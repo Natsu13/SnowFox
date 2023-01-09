@@ -1,0 +1,677 @@
+{var $leftClass = ($model["position"] == 1?"col-md-3":"col-md-12")}
+{var $rightClass = ($model["position"] == 1?"col-md-9":"col-md-12")}
+<div class="row" style="{$model['state'] == 3? 'opacity: 0.5;': ''}">
+    <div class="static-text {$leftClass} {$model['position'] == 5?'hidden':''}">
+        {if $model["type"] != "variable" && $model["type"] != "submit"}
+            {$model["name"]}{if $model["state"] == 1}<span class="required">*</span>{/if}
+        {/if}
+    </div>
+    {if $model["type"] == "textbox"}
+        <div class="{$rightClass}">
+            <input type="text" value="{$model['value']}" placeholder="{$model['placeholder']}" autocomplete="off" disabled="{$model['state'] == 2}"/>
+        </div>
+    {elseif $model["type"] == "password"}
+        <div class="{$rightClass}">
+            <input type="password" value="{$model['value']}" placeholder="{$model['placeholder']}" autocomplete="off" disabled="{$model['state'] == 2}"/>
+        </div>
+    {elseif $model["type"] == "text"}
+        <div class="static-text {$rightClass}">
+            {$model["value"]}
+        </div>
+    {elseif $model["type"] == "textarea"}
+        <div class="{$rightClass}">
+            <textarea rows="{$model['rows']}" placeholder="{$model['placeholder']}" disabled="{$model['state'] == 2}">{$model['value']}</textarea>
+        </div>
+    {elseif $model["type"] == "select"}
+        <div class="{$rightClass . ' ' . ($model['select_type'] == 3 || $model['select_type'] == 4? 'static-text': '')}">
+            {if $model["select_type"] == 1 || $model["select_type"] == 2}
+                <select style="width: 100%;">
+                    {for $model["items"] as $key => $value}
+                        <option value="{$value['value']}" selected="{$value['checked']}">{$value['name']}</option>
+                    {/for}
+                    {if $model["enableCustom"]}
+                        <option value="-1">- {t("Custom value")} -</option>
+                    {/if}
+                </select>
+            {elseif $model["select_type"] == 3 || $model["select_type"] == 4}
+                {var $type = $model["select_type"] == 3? "checkbox": "radio"}
+                {for $model["items"] as $key => $value}
+                    <label><input type="{$type}" name="checkbox_{$model['id']}" value="{$value['value']}" checked="{$value['checked']}"/> {$value['name']}</label>
+                    {if $model["variety"] == 2}<br/>{/if}
+                {/for}
+                {if $model["enableCustom"]}
+                    <label><input type="{$type}" name="checkbox_{$model['id']}" value="-1"/> {t("Custom value")}...</label>
+                {/if}
+            {/if}
+        </div>
+    {elseif $model["type"] == "recaptcha"}
+        <div class="static-text {$rightClass}">
+            <span class="material-symbols-outlined">smart_toy</span> {t("It's recaptcha from google version 2")}
+        </div>
+    {elseif $model["type"] == "upload"}
+        <div class="static-text {$rightClass}">
+            <input type="file" />
+        </div>
+    {elseif $model["type"] == "variable"}
+        <div class="static-text {$rightClass}">
+            <span class="variable">
+                <span class="material-symbols-outlined">attach_money</span>{$model["name"]}
+            </span>
+        </div>        
+    {elseif $model["type"] == "submit"}
+        <div class="{$rightClass}">
+            <input type="submit" class="button" value="{$model['name']}"/>
+        </div>   
+    {elseif $model["type"] == "slider"}
+        <div class="{$rightClass}">
+            <input type="slider" value="{$model['value']}" disabled="{$model['state'] == 2}" data-formater="{$model['title']}" data-min="{$model['value_min']}" data-max="{$model['value_max']}" data-step="{$model['step']}"/>
+        </div>
+    {elseif $model["type"] == "picker"}
+        <div class="{$rightClass}">            
+            <div class="picker">
+                {var $index = 0}
+                {for $model["items"] as $item}
+                    {var $color = $model['permList'][$item['minperm']]['color']}
+                    {if $color == ""}{var $color = "black"}{/if}
+                    {if $model["displayas"] == "cells"}
+                        <div data-index="{$index}" class="picker-cells" title="{$item['description']}" style="font-size: {$model['fontsize']}px; width: {$model['size']}px; height: {$model['size']}px; color:{$color};">{$item["name"]}</div>
+                    {else}  
+                        <div class="picker-{$model['displayas']}" style="color:{$color};">
+                            {$item["name"]}
+                            <div class="desc">
+                                {$item['description']}
+                            </div>
+                        </div>                    
+                    {/if}
+                    {if intval($model["online"]) > 0 && $index >= intval($model["online"]) - 1}
+                        <br/>
+                        {var $index = 0}
+                    {else}
+                        {var $index++}
+                    {/if}
+                {/for}
+            </div>
+        </div>
+    {else}
+        <div class="static-text {$rightClass}">
+            <span class="material-symbols-outlined" title="{t('Unknown element')}">warning</span> {$model["id"]} / {$model["name"]}
+        </div>
+    {/if}
+</div>
+<div class="{!$model['isEditing']?'hidden':''} item-edit" id="editing-form-item-{$model['id']}">
+    <hr/>
+    <div class="row">
+        <div class="col-md-3 static-text"></div>
+        <div class="col-md-9 static-text">
+            <b>{t("Editing")}</b>
+        </div>     
+    </div>
+    <form id="formedit-item-{$model['id']}" method="post" action="{~/adminv3/content/update_item/}{$model['id']}">
+        <div class="row">
+            <div class="col-md-3 static-text">{t("Name")}</div>
+            <div class="col-md-6">
+                <input type="text" value="{$model['name']}" name="name" />
+            </div>     
+            {if $model["type"] != "variable"}
+                <div class="col-md-1 static-text text-right">{t("Position")}</div>
+                <div class="col-md-2">
+                    <select name="position" style="width: 100%;">
+                        <option value="1" selected="{$model['position'] == 1}">{t("Left")}</option>
+                        <option value="2" selected="{$model['position'] == 2}">{t("Top")}</option>
+                        <option value="5" selected="{$model['position'] == 5}">{t("Hidden")}</option>
+                    </select>
+                </div>
+            {/if}
+        </div>
+        {if $model["type"] == "textbox" || $model["type"] == "password" || $model["type"] == "variable" || $model["type"] == "slider"}
+            <div class="row">
+                <div class="col-md-3 static-text">{t("Value")}</div>
+                <div class="col-md-9">
+                    <input type="text" value="{$model['value']}" name="value" />
+                </div>     
+            </div>
+        {/if}
+        {if $model["type"] == "slider"}
+            <div class="row">
+                <div class="col-md-3 static-text">{t("Min value")}</div>
+                <div class="col-md-9">
+                    <input type="text" value="{$model['value_min']}" name="value_min" />
+                </div>     
+            </div>
+            <div class="row">
+                <div class="col-md-3 static-text">{t("Max value")}</div>
+                <div class="col-md-9">
+                    <input type="text" value="{$model['value_max']}" name="value_max" />
+                </div>     
+            </div>
+            <div class="row">
+                <div class="col-md-3 static-text">{t("Step")}</div>
+                <div class="col-md-9">
+                    <input type="text" value="{$model['step']}" name="step" />
+                </div>     
+            </div>
+            <div class="row">
+                <div class="col-md-3 static-text">{t("Title")}</div>
+                <div class="col-md-9">
+                    <input type="text" value="{$model['title']}" name="title" />
+                    <div class="help-text">{t('You can use "$value" as placeholder for value')}</div>
+                </div>     
+            </div>
+        {/if}
+        {if $model["type"] == "textbox" || $model["type"] == "password"}            
+            <div class="row">
+                <div class="col-md-3 static-text">{t("Placeholder")}</div>
+                <div class="col-md-9">
+                    <input type="text" value="{$model['placeholder']}" name="placeholder" />
+                </div>     
+            </div>
+            {if $model["type"] == "textbox"}
+                <div class="row">
+                    <div class="col-md-3 static-text"></div>
+                    <div class="col-md-9 static-text">
+                        <label>
+                            <input type=toggle_swipe name=isEmail value='1' checked="{$model['isEmail']}">
+                            {t("This field is for email")}
+                        </label>                    
+                    </div>     
+                </div>
+            {/if}
+        {/if}
+        {if $model["type"] == "variable"}
+            <div class="row">
+                <div class="col-md-3 static-text">{t("List")}</div>
+                <div class="col-md-9">
+                    <input type="text" value="{$model['list']}" name="list" />
+                    <div class="help-text">
+                        {t("Here put list exploded by")} ,
+                    </div>
+                </div>     
+            </div>
+            <div class="row">
+                <div class="col-md-3 static-text">{t("Usage in text")}</div>
+                <div class="col-md-9">
+                    <input type="text" value="{'{#'.$model['name'].'}'}" onclick="$(this).select();" readonly />
+                </div>     
+            </div>
+            <hr/>
+            <div class="row">
+                <div class="col-md-3 static-text">{t("Next")}</div>
+                <div class="col-md-9 static-text">
+                    <label>
+                        <input type="radio" value="1" name="next" checked="{$model['next'] == 1}"/> 
+                        {t("Increment by")} 1
+                    </label><br/>
+                    <label>
+                        <input type="radio" value="2" name="next" checked="{$model['next'] == 2}"/> 
+                        {t("Decrement by")} 1
+                    </label><br/>
+                    <label>
+                        <input type="radio" value="3" name="next" checked="{$model['next'] == 3}"/> 
+                        {t("Next in list")} <span class="help-text"> {t("After end start from first")}</span>
+                    </label><br/>
+                    <label>
+                        <input type="radio" value="4" name="next" checked="{$model['next'] == 4}"/> 
+                        {t("Nothing")}
+                    </label>
+                </div>     
+            </div>
+            <hr/>
+            <div class="row">
+                <div class="col-md-3 static-text">{t("Stop")}</div>
+                <div class="col-md-9 static-text">
+                    <label>
+                        <input type="radio" value="1" name="stop" checked="{$model['stop'] == 1}"/> 
+                        {t("Stop at end of list")}
+                    </label><br/>
+                    <label>
+                        <input type="radio" value="2" name="stop" checked="{$model['stop'] == 2}"/> 
+                        {t("Stop at number")} <input type=text name=stopat value='{$model["stopat"]}'/>
+                    </label><br/>
+                    <label>
+                        <input type="radio" value="3" name="stop" checked="{$model['stop'] == 3}"/> 
+                        {t("Never")}
+                    </label>
+                </div>     
+            </div>
+            <hr/>
+            <div class="row">
+                <div class="col-md-3 static-text"></div>
+                <div class="col-md-9 static-text">
+                    <label>
+                        <input type=toggle_swipe name=closeatstop value='1' checked="{$model['closeatstop']}">
+                        {t("When stoped close the form")}
+                    </label>                    
+                </div>     
+            </div>
+        {/if}
+        {if $model["type"] == "text"}
+            <div class="row">
+                <div class="col-md-3 static-text">{t("Text")}</div>
+                <div class="col-md-9">
+                    <textarea class="tinimce_mini" name="text">{$model['value']}</textarea>
+                </div>     
+            </div>
+        {/if}
+        {if $model["type"] == "upload"}
+            <div class="row">
+                <div class="col-md-3 static-text">{t("Folder")}</div>
+                <div class="col-md-9">
+                    <input type="text" value="{$model['folder']}" name="folder" />
+                </div>     
+            </div>
+            <div class="row">
+                <div class="col-md-3 static-text">{t("Max size")}</div>
+                <div class="col-md-9">
+                    <input type="text" value="{$model['maxsize']}" class="text-right" name="maxsize" data-postfix="B" />
+                    <div class="help-text">{t("In bites, 1048576 B is 1 MB")}, {t("actually is it")} {Utilities::convertBtoMB($model["maxsize"])} MB</div>
+                </div>     
+            </div>
+            <div class="row">
+                <div class="col-md-3 static-text">{t("Allowed extensions")}</div>
+                <div class="col-md-9">
+                    <input type="text" value="{$model['allowed']}" name="allowed" />
+                    <div class="help-text">{t("separated by ,")}</div>
+                </div>     
+            </div>
+            <div class="row">
+                <div class="col-md-3 static-text"></div>
+                <div class="col-md-9">
+                    <label>
+                        <input type=toggle_swipe name=resize value='1' checked="{$model['resize']}">
+                        {t("Allow image resize")}
+                    </label>
+                    <div class="help-text">{t("Works only for gif, png, jpg")}</div>
+                </div>     
+            </div>
+            <div class="row">
+                <div class="col-md-3 static-text">{t("Resize size")}</div>
+                <div class="col-md-4">
+                    <input type="text" value="{$model['resizew']}" name="resizew" />                    
+                </div>    
+                <div class="col-md-1 text-center">
+                    x                   
+                </div>   
+                <div class="col-md-4">
+                    <input type="text" value="{$model['resizeh']}" name="resizeh" />                    
+                </div>     
+            </div>
+        {/if}
+        {if $model["type"] == "textarea"}
+            <div class="row">
+                <div class="col-md-3 static-text">{t("Text")}</div>
+                <div class="col-md-9">
+                    <textarea rows="2" name="value">{$model['value']}</textarea>
+                </div>     
+            </div>
+            <div class="row">
+                <div class="col-md-3 static-text">{t("Placeholder")}</div>
+                <div class="col-md-9">
+                    <textarea rows="2" name="placeholder">{$model['placeholder']}</textarea>
+                </div>     
+            </div>
+            <div class="row">
+                <div class="col-md-3 static-text">{t("Rows")}</div>
+                <div class="col-md-9">
+                    <input type="text" value="{$model['rows']}" name="rows" />
+                </div>     
+            </div>
+        {/if}
+        {if $model["type"] == "picker"}
+            <div class="row">
+                <div class="col-md-3 static-text">{t("Display as")}</div>
+                <div class="col-md-9 static-text">
+                    <label>
+                        <input type="radio" value="row" name="displayas" checked="{$model['displayas'] == 'row'}"/> 
+                        {t("Rows")}
+                    </label><br/>
+                    <label>
+                        <input type="radio" value="cells" name="displayas" checked="{$model['displayas'] == 'cells'}"/> 
+                        {t("Cells")}, 
+                        {t("Size")}&nbsp;<input type=text name=size class="mini text-right" value='{$model["size"]}' data-postfix="px"/>, 
+                        {t("Font size")}&nbsp;<input type=text name=fontsize class="mini text-right" value='{$model["fontsize"]}' data-postfix="px"/>, 
+                        {t("On line")}&nbsp;<input type=text name=online class="mini" value='{$model["online"]}'/>
+                    </label>
+                    <div class="help-text">
+                        {t("Enter 0 for on line to put all on one line")}
+                    </div>
+                </div>     
+            </div>
+            <div class="row">
+                <div class="col-md-3 static-text">{t("Values")}</div>
+                <div class="col-md-9">
+                    <div id="editor-for-{$model['id']}" style="display: none;" class="edit-box">
+                        <input type="hidden" value="" class="item-edit-index" />
+                        <div class="row">
+                            <div class="col-md-3 static-text">{t("Name")}</div>
+                            <div class="col-md-9">
+                                <input type="text" value="" class="item-edit-name" />
+                            </div>     
+                        </div>
+                        <div class="row">
+                            <div class="col-md-3 static-text">{t("Description")}</div>
+                            <div class="col-md-9">
+                                <input type="text" value="" class="item-edit-desc" />
+                            </div>     
+                        </div>
+                        <div class="row">
+                            <div class="col-md-3 static-text">{t("Minimal permission")}</div>
+                            <div class="col-md-9">
+                                <select class="item-edit-minperm" style="width: 100%;">
+                                    {for $model["permList"] as $key => $perm}
+                                        <option value="{$key}">{$perm['name']}</option>
+                                    {/for}
+                                    <option value=0>{t("Unregistered user")}</option>
+                                </select>
+                            </div>     
+                        </div>
+                        <div class="row">
+                            <div class="col-md-3 static-text">{t("Maximal usage")}</div>
+                            <div class="col-md-9">
+                                <input type="text" value="" class="item-edit-maxusage" />
+                                <div class="help-text">
+                                    {t("Enter 0 for unlimited usage")}
+                                </div>
+                            </div>     
+                        </div>
+                        <div class="row">
+                            <div class="col-md-3"></div>
+                            <div class="col-md-9">
+                                <button class="button" onclick="saveCallback_{$model['id']}(); return false;" name="save">{t('Save')}</button> 
+                                <button class="button button-secondary" onclick="closeEditorCallback_{$model['id']}(); return false;" name="save">{t('Close')}</button> 
+                            </div>
+                        </div>
+                    </div>
+                    <div class="sort-list-item" id="sort-list-noitem-{$model['id']}">
+                        <div><span class="material-symbols-outlined">sms_failed</span> {t("No item found")}</div>
+                    </div>
+                    <div class="sort-list" id="select-items-{$model['id']}">
+                        {var $index = 0}
+                        {var $type = ($model["select_type"] == 2 || $model["select_type"] == 3? "toggle_swipe": "radio")}
+                        {for $model["items"] as $key => $value}
+                            <div class="sort-list-item" id="list-item-{$model['id']}-{$index}">
+                                <input type="hidden" class="value-item val-name" data-name="item_name" name="item_name[{$index}]" value="{$value['name']}">
+                                <input type="hidden" class="value-item val-description" data-name="item_description" name="item_description[{$index}]" value="{$value['description']}">
+                                <input type="hidden" class="value-item val-minperm" data-name="item_minperm" name="item_minperm[{$index}]" value="{$value['minperm']}">
+                                <input type="hidden" class="value-item val-maxusage" data-name="item_maxusage" name="item_maxusage[{$index}]" value="{$value['maxusage']}">
+                                <div class="mover">
+                                    <span class="material-symbols-outlined select-item-mover">drag_indicator</span>
+                                </div>
+                                <div class="item-name">
+                                    {$value['name']}
+                                </div>
+                                <div class="mini">
+                                    <a href="#" class="button button-edit" data-index="{$index}" onclick="var fun = editCallback_{$model['id']}; fun($(this).data('index')); return false;" title="{t('Edit')}"><span class="material-symbols-outlined">edit</span></a>
+                                </div>
+                                <div class="mini">
+                                    <a href="#" class="button button-delete" data-index="{$index}" onclick="var fun = orderCallback_{$model['id']}; $('#list-item-'+$(this).data('index')).remove(); fun(); return false;" title="{t('Delete')}"><span class="material-symbols-outlined">delete</span></a>
+                                </div>
+                            </div>
+                            {var $index++}
+                        {/for}
+                    </div>
+                    <button onclick="var fun = orderCallback_{$model['id']}; builder.addItemFromTemplate($('.template-item-{$model['id']}'), $('#select-items-{$model['id']}')); fun(); return false;" class="button mb-1"><span class="material-symbols-outlined">add</span> {t("Add item")}</button>
+                    <div class="template template-item-{$model['id']}">
+                        <div class="sort-list-item" id="list-item-{$model['id']}-{$index}">
+                            <input type="hidden" class="value-item val-name" data-name="item_name">
+                            <input type="hidden" class="value-item val-description" data-name="item_description">
+                            <input type="hidden" class="value-item val-minperm" data-name="item_minperm" value="0">
+                            <input type="hidden" class="value-item val-maxusage" data-name="item_maxusage" value="0">
+                            <div class="mover">
+                                <span class="material-symbols-outlined select-item-mover">drag_indicator</span>
+                            </div>
+                            <div class="item-name">
+                                <i>{t('New item')}</i>
+                            </div>
+                            <div class="mini">
+                                <a href="#" class="button button-edit" data-index="{$index}" onclick="var fun = editCallback_{$model['id']}; fun($(this).data('index')); return false;" title="{t('Edit')}"><span class="material-symbols-outlined">edit</span></a>
+                            </div>
+                            <div class="mini">
+                                <a href="#" class="button button-delete" onclick="var fun = orderCallback_{$model['id']}; $('#list-item-'+$(this).data('index')).remove(); fun(); return false;" title="{t('Delete')}"><span class="material-symbols-outlined">delete</span></a>
+                            </div>
+                        </div>
+                    </div>
+                    <script>                        
+                        function editCallback_{$model['id']}(index){
+                            var editor = $("#editor-for-{$model['id']}");
+                            editor.show();
+                            var items = $("#list-item-{$model['id']}-" + index);                            
+                            editor.find(".item-edit-index").val(index);
+                            editor.find(".item-edit-name").val(items.find(".val-name").val());
+                            editor.find(".item-edit-desc").val(items.find(".val-description").val());
+                            var minperm = items.find(".val-minperm").val(); if(minperm == "") { minperm = 0; }
+                            editor.find(".item-edit-minperm").val(minperm).trigger("change");
+                            var maxusage = items.find(".val-maxusage").val(); if(maxusage == "") { maxusage = 0; }
+                            editor.find(".item-edit-maxusage").val(maxusage);
+                        }
+
+                        function saveCallback_{$model['id']}(){
+                            var editor = $("#editor-for-{$model['id']}");
+                            var index = editor.find(".item-edit-index").val();
+                            var items = $("#list-item-{$model['id']}-" + index);                            
+                            //editor.find(".item-edit-index").val(index);
+                            items.find(".val-name").val(editor.find(".item-edit-name").val());
+                            items.find(".val-description").val(editor.find(".item-edit-desc").val());
+                            items.find(".val-minperm").val(editor.find(".item-edit-minperm").val());
+                            items.find(".val-maxusage").val(editor.find(".item-edit-maxusage").val());
+                            closeEditorCallback_{$model['id']}();
+                            orderCallback_{$model['id']}();
+                        }
+
+                        function closeEditorCallback_{$model['id']}(){
+                            $("#editor-for-{$model['id']}").hide();
+                        }
+
+                        function orderCallback_{$model['id']}(){
+                            var index = 0;
+
+                            if($("#select-items-{$model['id']} > .sort-list-item").length == 0){
+                                $("#sort-list-noitem-{$model['id']}").show();
+                            }else{
+                                $("#sort-list-noitem-{$model['id']}").hide();
+                            }
+
+                            index = 0;
+                            $("#select-items-{$model['id']} > .sort-list-item").each(function(){
+                                $(this).attr("id", "list-item-{$model['id']}-" + (index++));
+                            });
+                        
+                            index = 0;
+                            $("#select-items-{$model['id']} > .sort-list-item").each(function(){
+                                var name = "";
+                                var desc = "";
+                                $(this).find(".value-item").each(function(){
+                                    $(this).attr("name", $(this).data("name")+"["+(index)+"]");
+                                    if($(this).data("name") == "item_name") name = $(this).val();
+                                    if($(this).data("name") == "item_description") desc = $(this).val();
+                                });    
+                                if(name == "") {
+                                    $(this).find(".item-name").html("<i>{t('New item')}</i>");
+                                }else{
+                                    $(this).find(".item-name").html(name+" <i>"+desc+"</i>");
+                                }
+                                $(this).find(".button-delete").data("index", index);
+                                $(this).find(".button-edit").data("index", index);                     
+                                index++;
+                            });
+                        }
+
+                        orderCallback_{$model['id']}();
+
+                        $(function() {
+                            $("#select-items-{$model['id']}").sortable({
+                                handle: ".mover",
+                                axis: "y",
+                                animation: 150,
+                                stop: function(event, ui){
+                                    orderCallback_{$model['id']}();
+                                }
+                            });
+                        });
+                    </script>
+                </div>     
+            </div>
+        {/if}
+        {if $model["type"] == "select"}
+            <div class="row">
+                <div class="col-md-3 static-text">{t("Type")}</div>
+                <div class="col-md-6">
+                    <select name="select_type" style="width: 100%;">
+                        <option value="1" selected="{$model['select_type'] == 1}">Select</option>
+                        <option value="2" selected="{$model['select_type'] == 2}">Multi-select</option>
+                        <option value="3" selected="{$model['select_type'] == 3}">Checkbox</option>
+                        <option value="4" selected="{$model['select_type'] == 4}">Radio</option>
+                    </select>
+                </div>     
+                {if $model["select_type"] == 3 || $model["select_type"] == 4}
+                    <div class="col-md-1 static-text text-right">{t("Variety")}</div>
+                    <div class="col-md-2">
+                        <select name="variety" style="width: 100%;">
+                            <option value="1" selected="{$model['variety'] == 1}">{t("One line")}</option>
+                            <option value="2" selected="{$model['variety'] == 2}">{t("Multi line")}</option>
+                        </select>
+                    </div>
+                {/if}
+            </div>
+            <div class="row">
+                <div class="col-md-3 static-text">{t("Values")}</div>
+                <div class="col-md-9">
+                    <div class="sort-list-item" id="sort-list-noitem-{$model['id']}">
+                        <div><span class="material-symbols-outlined">sms_failed</span> {t("No item found")}</div>
+                    </div>
+                    <div class="sort-list" id="select-items-{$model['id']}">
+                        {var $index = 0}
+                        {var $type = ($model["select_type"] == 2 || $model["select_type"] == 3? "toggle_swipe": "radio")}
+                        {for $model["items"] as $key => $value}
+                            <div class="sort-list-item" id="list-item-{$model['id']}-{$index}">
+                                <div class="mover">
+                                    <span class="material-symbols-outlined select-item-mover">drag_indicator</span>
+                                </div>
+                                <div class="mini">
+                                    {if $type == "radio"}
+                                        <input type="radio" class="item-select" checked="{$value['checked']}" name="select_item_selected" value="{$index}"/>
+                                    {else}
+                                        <input type="toggle_swipe" class="item-select" checked="{$value['checked']}" name="select_item_selected[{$index}]" value="1"/>
+                                    {/if}
+                                </div>
+                                <div>
+                                    <input type="text" class="item-name" name="select_item_name[{$index}]" title="{t('Name')}" placeholder="{t('Name')}" value="{$value['name']}"/>
+                                </div>
+                                <div>
+                                    <input type="text" class="item-value" name="select_item_value[{$index}]" title="{t('Value')}" placeholder="{t('Value')}" value="{$value['value']}"/>
+                                </div>
+                                <div class="mini">
+                                    <a href="#" class="button button-delete" data-index="{$index}" onclick="var fun = orderCallback_{$model['id']}; $('#list-item-'+$(this).data('index')).remove(); fun(); return false;" title="{t('Delete')}"><span class="material-symbols-outlined">delete</span></a>
+                                </div>
+                            </div>
+                            {var $index++}
+                        {/for}
+                    </div>
+                    <button onclick="var fun = orderCallback_{$model['id']}; builder.addItemFromTemplate($('.template-item-{$model['id']}'), $('#select-items-{$model['id']}')); fun(); return false;" class="button mb-1"><span class="material-symbols-outlined">add</span> {t("Add item")}</button>
+                    <div class="template template-item-{$model['id']}">
+                        <div class="sort-list-item">
+                            <div class="mover">
+                                <span class="material-symbols-outlined select-item-mover">drag_indicator</span>
+                            </div>
+                            <div class="mini">
+                                {if $type == "radio"}
+                                    <input type="radio" class="item-select" name="select_item_selected"/>
+                                {else}
+                                    <input type="toggle_swipe" class="item-select" value="1"/>
+                                {/if}
+                            </div>
+                            <div>
+                                <input type="text" class="item-name" title="{t('Name')}" placeholder="{t('Name')}" value=""/>
+                            </div>
+                            <div>
+                                <input type="text" class="item-value" title="{t('Value')}" placeholder="{t('Value')}" value=""/>
+                            </div>
+                            <div class="mini">
+                                <a href="#" class="button button-delete" onclick="var fun = orderCallback_{$model['id']}; $('#list-item-'+$(this).data('index')).remove(); fun(); return false;" title="{t('Delete')}"><span class="material-symbols-outlined">delete</span></a>
+                            </div>
+                        </div>
+                    </div>
+                    <script>
+                        function orderCallback_{$model['id']}(){
+                            var index = 0;
+
+                            if($("#select-items-{$model['id']} > .sort-list-item").length == 0){
+                                $("#sort-list-noitem-{$model['id']}").show();
+                            }else{
+                                $("#sort-list-noitem-{$model['id']}").hide();
+                            }
+
+                            $("#select-items-{$model['id']} > .sort-list-item").each(function(){
+                                $(this).attr("id", "list-item-{$model['id']}-" + (index++));
+                            });
+
+                            index = 0;
+                            if("{$type}" != "radio") {
+                                $("#select-items-{$model['id']} > .sort-list-item .item-select").each(function(){
+                                    $(this).attr("name", "select_item_selected["+(index++)+"]");
+                                });
+                            }else{
+                                $("#select-items-{$model['id']} > .sort-list-item .item-select").each(function(){
+                                    $(this).attr("value", index++);
+                                });
+                            }
+                                    
+                            index = 0;
+                            $("#select-items-{$model['id']} > .sort-list-item .item-name").each(function(){
+                                $(this).attr("name", "select_item_name["+(index)+"]");
+                                $(this).parent().parent().find(".button-delete").data("index", index);
+                                index++;
+                            });
+                                                                   
+                            index = 0;
+                            $("#select-items-{$model['id']} > .sort-list-item .item-value").each(function(){
+                                   $(this).attr("name", "select_item_value["+(index++)+"]");
+                            });
+                        }
+
+                        orderCallback_{$model['id']}();
+
+                        $(function() {
+                            $("#select-items-{$model['id']}").sortable({
+                                handle: ".mover",
+                                axis: "y",
+                                animation: 150,
+                                stop: function(event, ui){
+                                    orderCallback_{$model['id']}();
+                                }
+                            });
+                        });
+                    </script>
+                </div>     
+            </div>
+            <div class="row">
+                <div class="col-md-3 static-text"></div>
+                <div class="col-md-9 static-text">
+                    <label>
+                        <input type=toggle_swipe name=enableCustom value='1' checked="{$model['enableCustom']}">
+                        {t("Allow custom entry")}
+                    </label>                    
+                </div>     
+            </div>
+        {/if}
+        <hr/>
+        {if $model["type"] != "text" && $model["type"] != "submit" && $model["type"] != "variable" && $model["type"] != "recaptcha"}
+            <div class="row">
+                <div class="col-md-3 static-text">{t("State")}</div>
+                <div class="col-md-9">
+                    <select name="state" style="width: 100%;">
+                        <option value="0" selected="{$model['state'] == 0}">{t("Default")}</option>
+                        <option value="1" selected="{$model['state'] == 1}">{t("Required")}</option>
+                        <option value="2" selected="{$model['state'] == 2}">{t("Disabled")}</option>
+                        <option value="3" selected="{$model['state'] == 3}">{t("Hidden")}</option>
+                    </select>
+                </div>     
+            </div>
+        {/if}
+        <div class="row">
+            <div class="col-md-3"></div>
+            <div class="col-md-9">
+                <button class="button-save button button-primary" onclick="builder.submitItemEdit(this, '{$model['id']}');return false;" name="save">{t('Save')}</button> 
+            </div>
+        </div>
+    </form>
+</div>

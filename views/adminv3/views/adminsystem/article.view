@@ -1,0 +1,44 @@
+<div class="row">
+    <div class="col-xl-9 col-lg-12">
+        <div class="card">
+            <form id="article-setting" method="post" action="{~/adminv3/system/update_article/}">
+                <div class="row">
+                    <div class="col-md-3 static-text"></div>
+                    <div class="col-md-9 text-bold">
+                        {t("Comments")}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3 static-text">{t("Maximum number of links")}</div>
+                    <div class="col-md-9">
+                        <input type="text" value="{$model['commentMaxUrl']}" name="maxurl" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3 static-text">{t("Timeout in posting comments")}</div>
+                    <div class="col-md-9">
+                        <input type="text" value="{$model['commentTimeout']}" name="timeout" data-postfix='{t("second")}'/>
+                        <div class="help-text">{t("Only for not loget users")}</div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3 static-text">{t("The length of ban")}</div>
+                    <div class="col-md-9">
+                        <input type="text" value="{$model['commentBanLength']}" name="banlength" data-postfix='{t("hours")}'/>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3"></div>
+                    <div class="col-md-9">
+                        <button type="submit" class="submit button button-primary" name="save">{t('Save')}</button> 
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="col-xl-3 col-lg-12">
+        <div class="card">
+            {str_replace("$1", $model['commentBanLength'], t("The not logged user will be banned for 5 minutes after he continue doing it he will be ban for $1 hour when he dont fix the issuse like write more link in comment then you set"))}
+        </div>
+    </div>
+</div>

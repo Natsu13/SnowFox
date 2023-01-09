@@ -129,7 +129,7 @@ elseif($action == "new"){
 	echo "</form>";
 }
 else if($action == "delete"){
-	if($t->router->_data["id"][0] < 2){
+	if($t->router->_data["id"][0] == $superuser){
 		$t->root->page->error_box(t("this user has permission <b>superuser</b> and therefore it can not be deleted"), "error");
 	}else{
 		dibi::query('DELETE FROM :prefix:users WHERE `id`=%s', $t->router->_data["id"][0]);

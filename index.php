@@ -5,7 +5,7 @@ error_reporting(E_ERROR | E_PARSE);
 
 define("_ROOT_DIR", str_replace("\\", "/", getcwd()));
 define("_ENVIROMENT", "dev"); //prod
-//define("CUSTOM_IP", "48.24.245.200");
+//define("CUSTOM_IP", "127.0.0.1");
 
 //Override wedost shit! Only with htaccess
 //header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");

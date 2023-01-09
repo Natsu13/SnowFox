@@ -1,0 +1,161 @@
+<div class="row">
+    <div class="col-md-12">
+        <form method="post" action="{~/adminv3/menu/update/}{$model['id']}">
+            <div class="row">
+                <div class="col-md-3 static-text">{t("Title")}</div>
+                <div class="col-md-9">
+                    <input type="text" value="{$model['title']}" name="title" />
+                </div>     
+            </div>   
+            <div class="row">
+                <div class="col-md-3 static-text no-align">{t("Box")}</div>
+                <div class="col-md-9">
+                    <input type="text" value="{$model['box']}" name="box" data-list="{join(';', $model['menus'])}" />
+                    <div class="help-text">{t("Type new box name if you want create new box")}</div>
+                </div>     
+            </div> 
+            <div class="row">
+                <div class="col-md-3 static-text">{t("Type")}</div>
+                <div class="col-md-9">
+                    <select name="type" style="width: 100%;" onChange="$('#'+lastSettMen+'-set').hide(); lastSettMen = $($(this).find('option:selected')).val(); $('#'+lastSettMen+'-set').show();">
+                        {for $model["types"] as $type}
+                            <option value="{$type[0]}" selected="{$type[0] == $model['type']}">{t($type[1])}</option>
+                        {/for}
+                    </select>
+                </div>     
+            </div> 
+            <div class="form-group row mb-2">
+                <label class="col-sm-3"></label>
+                <div class="col-sm-9">
+                    <label><input type=toggle_swipe checked="{$model['isVisible']}" name=visible value='1'> {t("Visible")}</label>
+                </div>
+            </div>
+            <div class="form-group row mb-2">
+                <label class="col-sm-3 static-text">{t("Accessibility")}</label>
+                <div class="col-sm-9">
+                    <select name=permission style='width:100%;' onchange="if($($(this).find('option:selected')).val()=='-1,-1'){ $('#customlevel').css('display','block'); }else{ $('#customlevel').hide(); };">
+                        {var $perms = array(
+                            [0, 10000, "Anyone"], 
+                            [0, 0, "Only not loged"], 
+                            [1, 10000, "Only loged"], 
+                            [5000, 10000, "Only admin"], 
+                            [-1, -1, "Custom"]
+                        )}
+                        {var $hasSelected = false}
+                        {var $hasCustom = false}
+
+                        {for $perms as $key => $perm}
+                            {var $level = "Level: ".$perm[0]." >< ".$perm[1]}
+                            {var $selected = $model["levelRange"][0] == $perm[0] && $model["levelRange"][1] == $perm[1]}
+                            {if !$hasSelected} 
+                                {var $hasSelected = $selected}
+                                {if $perm[0] == -1 && $perm[1] == -1}
+                                    {var $selected = true}
+                                    {var $hasCustom = true}
+                                {/if}
+                            {/if}		
+                            {if $perm[0] == -1 && $perm[1] == -1}
+                                {var $level = $model["levelRange"][0]." >< " . $model["levelRange"][1]}
+                            {/if}
+                            <option value='{$perm[0].",".$perm[1]}' selected="{$selected}">{t($perm[2])} ({$level})</option>
+                        {/for}
+                    </select>                    
+                </div>                
+            </div>
+            <div id=customlevel style='display:{$hasCustom?"block":"none"}'>
+                <hr/>
+                <div class="row" style="margin-top: 5px;margin-bottom: 15px;">
+                    <div class="col-sm-12">
+                        <div style="margin-top: 8px; font-weight: bold;">{t("Custom")}</div>
+                        <div style="display: flex;">
+                            {Utilities::permissionSelect($model["milevel"], "permMin", "width:50%", "form-control", "level", true)}
+                            {Utilities::permissionSelect($model["malevel"], "permMax", "width:50%", "form-control", "level", true)}
+                        </div>  
+                    </div>
+                </div>                
+            </div>
+            <hr/><br/>
+            <div class="row">
+                <div class="col-md-3"></div>
+                <div class="col-md-9">
+                    <b>{t("Menu type setting")}</b>
+                </div>
+            </div>
+
+            <div id="article-set" style='display:{$model["type"] == "article"?"block":"none"}'>
+                <div class="form-group row mb-2">
+                    <label class="col-sm-3 col-form-label">{t("Article")}</label>
+                    <div class="col-sm-9">
+                        <select name=article_id style='width:100%;'>                            
+                            {for $model['articleList'] as $n => $row}
+                                <option value='{$row["id"].", ".$row["alias"]}' selected="{$model['data']['alias'] == $row['alias']}">{$row["title"]}</option>
+                            {/for}
+                        </select>
+                    </div>
+                </div>				
+            </div>
+
+            <div id="index-set" style='display:{$model["type"] == "index"?"block":"none"}'>
+                <div class="form-group row mb-2">
+                    <label class="col-sm-3 col-form-label"></label>
+                    <div class="col-sm-9 col-form-label">
+                        <div><b>{t("Link to main page")}</b></div>
+                        <i>{Router::url()}</i>
+                    </div>
+                </div>
+            </div>
+
+            <div id="separator-set" style='display:{$model["type"] == "separator"?"block":"none"}'>
+                <div class="form-group row mb-2">
+                    <label class="col-sm-3 col-form-label"></label>
+                    <div class="col-sm-9 col-form-label">
+                        {t("Separated from each item")}
+                    </div>
+                </div>
+            </div>
+
+            <div id="category-set" style='display:{$model["type"] == "category"?"block":"none"}'>
+                <div class="form-group row mb-2">
+                    <label class="col-sm-3 col-form-label">{t("Category")}</label>
+                    <div class="col-sm-9">
+                        <select name=category_id style='width:100%;'>                            
+                            {for $model['categoryList'] as $n => $row}
+                                <option value='{$row["id"].",".$row["alias"]}' selected="{$model['data']['id'] == $row['id']}">{$row["name"]}</option>
+                            {/for}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div id="login-set" style='display:{$model["type"] == "login"?"block":"none"}'>
+                <div class="form-group row mb-2">
+                    <label class="col-sm-3 col-form-label"></label>
+                    <div class="col-sm-9">
+                        <label>
+                            <input type="toggle_swipe" checked="{$model['data']['register'] == 1}" name=register value='1'> {t("Show register button")}
+                        </label>
+                    </div>
+                </div>					
+            </div>
+
+            <div id="url-set" style='display:{$model["type"] == "url"?"block":"none"}'>
+                <div class="form-group row mb-2">
+                    <label class="col-sm-3 col-form-label">{t("Link")}</label>
+                    <div class="col-sm-9">
+                        <input type=text class=form-control name=link value="{$model['data']['url']}">
+                    </div>
+                </div>
+            </div>
+
+            <div class="row" style="display:none;">
+                <div class="col-md-3"></div>
+                <div class="col-md-9">
+                    <button type="submit" id="submit-edit-menu-form-button" class="submit button button-primary" name="save">{t('Save')}</button> 
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+    var lastSettMen = "{$model['type']}";
+</script>

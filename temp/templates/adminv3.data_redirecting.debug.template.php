@@ -1,0 +1,5 @@
+<?php foreach($model["rows"] as $key => $row) { ?><tr><td>#<?php echo $row["id"]; ?></td><td> <?php if(!$row["isActive"]) { ?><span  class="material-symbols-outlined"  title="<?php echo t('Not active'); ?>"> visibility_off
+            </span>  <?php } ?></td><td> <?php echo $row["name"]; ?></td><td> <?php echo $row["from"]; ?></td><td> <?php echo $row["to"]; ?></td><td><a  href="<?php echo Router::url(); ?>adminv3/system/edit_redirecting/<?php echo $row['id']; ?>"  class="button"><span  class="material-symbols-outlined">edit</span>   <?php echo t("Edit"); ?></a>  <a  href="#"  onclick="deleteRedirect(this, '<?php echo $row['id']; ?>');return false;"  class="button"><span  class="material-symbols-outlined">delete</span>   <?php echo t("Delete"); ?></a> </td></tr> <?php } ?><script> var total_rows = <?php echo $model['total']; ?>;
+    var page = <?php echo $model['page']; ?>;
+    table_redirecting.pushInfo({total: total_rows, page: page });
+</script>

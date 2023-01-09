@@ -1,0 +1,95 @@
+<div class="row">
+    <div class="col-md-12">
+        <div class="tools">
+            <button class="button" onclick="createArticle();return false;"><span class="material-symbols-outlined">add</span>{t("Write new")}</button>
+            <button class="button" onclick="recycleTrash();return false;"><span class="material-symbols-outlined">delete</span> {t("Recycle trash")}</button>
+            <a href="{~/adminv3/system/article/}" class="button"><span class="material-symbols-outlined">settings</span> {t("Settings")}</a>
+        </div>
+        <div class="card tools">
+            <label>
+                {t("Filter by category")}: 
+                <select id="category" data-search="true">
+                    <option value=''>{t("All categories")}</option>
+                    {for $model["categoryList"] as $key => $cat}
+                        <option value="{$cat['id']}">{$cat['name']}</option>
+                    {/for}
+                </select>
+            </label>
+            <label>
+                <input type="checkbox" value="1" id="activeOnly"/> {t("Only active")}
+            </label>
+        </div>
+        <div class="card">
+            {table("articles", Router::url()."adminv3/article/data/", [
+                "id" => ["name" => "Id", "width" => 70], 
+                "state" => ["width" => 50],
+                "title" => ["name" => "Title"],
+                "author" => ["name" => "Author"],
+                "alias" => ["name" => "Alias"],
+                "release" => ["name" => "Release date", "width" => 200],
+                "action" => ["name" => "Action", "width" => 250]
+            ])}
+        </div>
+        <div class="card">
+            {tablePaginator("articles")}
+        </div>
+    </div>
+</div>
+<script>
+    $(function(){
+        $("#category").on("change", function(){
+            table_articles.filter("category", $(this).find("option:selected").val());
+            table_articles.reload();
+        });
+        $("#activeOnly").on("change", function(){
+            table_articles.filter("active", $(this).is(":checked")?1:0);
+            table_articles.reload();
+        });
+    });
+
+    function createArticle(){
+        inputBox("{t('New article')}", "{t('Enter name for new article')}", "{t('New article')}", function(value){
+            manager.get("{~/adminv3/article/create/}", { name: value },  function (data, isSuccess) {
+                if(isSuccess) {
+                    manager.loadPage("{~/adminv3/article/edit/}" + data.id, null);
+                }
+            });
+        }, function(){
+
+        });
+    }
+
+    function deleteArticle(id){
+        manager.get("{~/adminv3/article/delete/}"+id, { },  function (data, isSuccess) {
+            if(isSuccess) {
+                table_articles.reload();
+            }
+        });
+    }
+
+    function undeleteArticle(id){
+        manager.get("{~/adminv3/article/undelete/}"+id, { },  function (data, isSuccess) {
+            if(isSuccess) {
+                table_articles.reload();
+            }
+        });
+    }
+
+    function stopPublishArticle(id){
+        manager.get("{~/adminv3/article/stoppublish/}"+id, { },  function (data, isSuccess) {
+            if(isSuccess) {
+                table_articles.reload();
+            }
+        });
+    }
+
+    function recycleTrash(){
+        confirmBox("{t('Recycle trash')}", "{t('Are you sure you want to delete all articles in trash?')}", function(){
+            manager.get("{~/adminv3/article/recycle/}", { },  function (data, isSuccess) {
+                if(isSuccess) {
+                    table_articles.reload();
+                }
+            });
+        }, function(){ });
+    }
+</script>

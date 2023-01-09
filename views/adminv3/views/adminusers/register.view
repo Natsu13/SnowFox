@@ -1,0 +1,59 @@
+<ul class="card-menu">
+    <li class="selected"><a href="#">{t("Settings")}</a></li>
+    <li><a href="{~/adminv3/users/register_form/}" data-animation="false">{t("Registration form")}</a></li>
+</ul>
+<div class="row">
+    <div class="col-xl-9 col-lg-12">
+        <div class="card">
+            <form id="register_edit" method="post" action="{~/adminv3/users/update_register/}">
+                <div class="row">
+                    <div class="col-md-3 static-text">{t("After registration, assign permission")}</div>
+                    <div class="col-md-9 form-select">
+                        <select id="permission" name="default_permission" style="width: 100%;">
+                            {for $model["permissionList"] as $key => $perm}
+                                {continueif $perm['level'] == 10000}
+                                <option value="{$perm['id']}" selected="{$model['defaultPermission']['id'] == $perm['id']}">{$perm["name"]} ({t("Level")}: {$perm["level"]})</option>
+                            {/for}
+                        </select>
+                        {if $model['defaultPermission']['level'] >= 5000}
+                            <div class="help-text help-text-error">{t("It's a big risk giving the user after registering role of level higher than 5000")}</div>
+                        {/if}
+                        <div class="help-text"><a href="{~/adminv3/users/edit_permission/}{$model['defaultPermission']['id']}">{t("Edit default permission settings")}</a></div>
+                    </div>     
+                </div>  
+                <div class="row">
+                    <div class="col-md-3 static-text"></div>
+                    <div class="col-md-9">
+                        <label>
+                            <input type=toggle_swipe name="enable_registration" value='1' checked="{$model['isRegistrationEnabled']}"> 
+                            {t("Enable registraion")}          
+                        </label>
+                    </div>     
+                </div> 
+                <div class="row">
+                    <div class="col-md-3 static-text"></div>
+                    <div class="col-md-9">
+                        <label>
+                            <input type=toggle_swipe name="enable_activation" value='1' checked="{$model['isEmailActivationRequired']}"> 
+                            {t("Require e-mail activation")}          
+                        </label>
+                    </div>     
+                </div> 
+                <div class="row">
+                    <div class="col-md-3 static-text">{t("Registration conditions")}</div>
+                    <div class="col-md-9">
+                        <textarea rows="4" id="registration_condition" name="registration_condition" class="tinimce_mini">{$model['description']}</textarea>
+                        <div class="help-text">{t("Leave blank for shutdown")}</div>                        
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3"></div>
+                    <div class="col-md-9">
+                        <button type="submit" class="submit button button-primary" name="save">{t('Save')}</button> 
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+

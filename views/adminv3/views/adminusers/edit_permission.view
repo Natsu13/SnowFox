@@ -1,0 +1,88 @@
+<div class="row">
+    <div class="col-xl-9 col-lg-12">
+        <div class="card">
+            <form id="useredit" method="post" action="{~/adminv3/users/update_permission/}{$model['id']}">
+                {if $model["isSystemPermission"]}
+                    <div class="alert alert-warning">
+                        <div>{t("This is system permission")}</div>
+                    </div>
+                {/if}
+                <div class="row">
+                    <div class="col-md-3 static-text">{t("Name")}</div>
+                    <div class="col-md-9">
+                        <input type="text" value="{$model['name']}" name="name" />
+                    </div>     
+                </div>  
+                <div class="row">
+                    <div class="col-md-3 static-text">{t("Color")}</div>
+                    <div class="col-md-9">
+                        <span class="color-picker-input">
+                            <span class="color" id="color-picker" style="background-color: {$model['color']};"></span>
+                            <input type="text" value="{$model['color']}" name="color" />
+                        </span>                        
+                    </div>     
+                </div>
+                <div class="row">
+                    <div class="col-md-3 static-text">{t("Level")}</div>
+                    {if $model["isSystemPermission"]}
+                        <div class="col-md-9 static-text">{$model['level']}</div>
+                    {else}
+                        <div class="col-md-9">
+                            <input type="text" value="{$model['level']}" name="level" />
+                        </div>
+                    {/if}
+                </div>
+                {if !$model["isSystemPermission"]}
+                    <div class="row">
+                        <div class="col-md-3 static-text"></div>
+                        <div class="col-md-9">
+                            <label>
+                                <input type=toggle_swipe name="expired" value='1' checked="{$model['isExpired']}"> 
+                                {t("Expired permission?")}          
+                            </label>
+                        </div>     
+                    </div>  
+                    <div class="row">
+                        <div class="col-md-3 static-text">{t("Expired time")}</div>
+                        <div class="col-md-9">
+                            <input type="text" value="{$model['expired_register']}" name="expired_register" />
+                            <div class="help-text">{t("Expiration time after registration")}, {t("for example")} <i> +1 month</i></div>
+                        </div>     
+                    </div>  
+                {/if}
+                <div class="row">
+                    <div class="col-md-3"></div>
+                    <div class="col-md-9">
+                        <b>{t("Permissions")}</b>
+                    </div>
+                </div>
+                {for $model["permissionList"] as $key => $perm}
+                    {var $granted = (!isset($model["data"][$perm])? false: $model["data"][$perm] == 1)}
+                    {var $disabled = $model["level"] == 10000 && ($perm == "admin" || $perm == "users" || $perm == "system")}
+                    <div class="row">
+                        <div class="col-md-3"></div>
+                        <div class="col-md-9">
+                            <label>
+                                <input type=toggle_swipe name="{$perm}" value='1' disabled="{$disabled}" checked="{$granted}" data-icon-on="check" data-icon-off="close"> 
+                                {t("Role_".$perm)}                                
+                            </label>
+                        </div>
+                    </div>
+                {/for}
+                <div class="row">
+                    <div class="col-md-3"></div>
+                    <div class="col-md-9">
+                        <button type="submit" class="submit button button-primary" name="save">{t('Save')}</button> 
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+    $(function(){
+        $("#color-picker").on("click", function(){
+            new ColorPicker().popup($(this), $('[name=color]'));
+        });
+    });
+</script>

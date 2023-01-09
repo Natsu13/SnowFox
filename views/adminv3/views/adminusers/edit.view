@@ -1,0 +1,280 @@
+<div class="row">
+    <div class="col-xl-9 col-lg-12">
+        <div class="card">
+            {if $model["isSuperUser"]}
+                <div class="alert alert-warning">
+                    <div>{t("This user has permission <b>superuser</b> and therefore it can not be fully updated")}</div>
+                </div>
+            {/if}  
+            {if $model["isSystem"]}
+                <div class="alert alert-warning">
+                    <div>{t("This is system account soo options is reduced")}</div>
+                </div>
+            {/if}            
+            <form id="useredit" method="post" action="{~/adminv3/users/update/}{$model['id']}">                
+                {if $model["isSystem"]}
+                    <div class="row">
+                        <div class="col-md-3 static-text">{t("Name")}</div>
+                        <div class="col-md-9">
+                            <input type="text" value="{$model['name']}" name="name" />
+                        </div>     
+                    </div>   
+                    <div class="row">
+                        <div class="col-md-3 static-text">{t("Permission")}</div>
+                        {if $model["isSuperUser"]}
+                            <div class="col-md-9 static-text"><b>{t("Superuser")}</b></div>
+                        {else}
+                            <div class="col-md-9">
+                                <select name="permission" style="width: 100%;">
+                                    <option value='-20' selected>{t("System account")}</option>
+                                    <option disabled>---------------</option>
+                                    {for $model["permissions"] as $key => $perm}
+                                        <option value="{$perm['id']}">{$perm['name']} ({t("Level")}: {$perm["level"]})</option>
+                                    {/for}
+                                </select>
+                            </div> 
+                        {/if} 
+                    </div>
+                    <div class="row">
+                        <div class="col-md-3 static-text">{t("Description")}</div>
+                        <div class="col-md-9">
+                            <input type="text" value="{$model['data']['desc']}" name="desc" />
+                        </div>     
+                    </div>  
+                {else}
+                    <div class="row">
+                        <div class="col-md-3 static-text">{t("Name")}</div>
+                        {if $model["isSuperUser"]}
+                            <div class="col-md-9 static-text">{$model['name']}</div>
+                        {else}
+                            <div class="col-md-9">
+                                <input type="text" value="{$model['name']}" name="name" />
+                            </div>                                
+                        {/if}
+                    </div>   
+                    <div class="row">
+                        <div class="col-md-3 static-text">{t("Nick")}</div>
+                        <div class="col-md-9">
+                            <input type="text" value="{$model['nick']}" name="nick" />
+                            <div class="help-text">{t("Display name")}</div>
+                        </div> 
+                    </div>  
+                    <div class="row">
+                        <div class="col-md-3 static-text">{t("Password")}</div>
+                        {if $model["isSuperUser"]}
+                            <div class="col-md-9 static-text"><i>{t("Can not change")}</i></div>
+                        {else}
+                            <div class="col-md-9">
+                                <input type="password" value="" name="password" />
+                                <div class="help-text">{t("Complete only when you change your password")}</div>
+                            </div>
+                        {/if} 
+                    </div>     
+                    <div class="row">
+                        <div class="col-md-3 static-text">{t("Permission")}</div>
+                        {if $model["isSuperUser"]}
+                            <div class="col-md-9 static-text"><b>{t("Superuser")}</b></div>
+                        {else}
+                            <div class="col-md-9">
+                                <select name="permission" style="width: 100%;">
+                                    <option value='-20'>{t("System account")}</option>
+                                    <option disabled>---------------</option>
+                                    {for $model["permissions"] as $key => $perm}
+                                        <option value="{$perm['id']}" selected="{$perm['id'] == $model['permission']}">{$perm['name']} ({t("Level")}: {$perm["level"]})</option>
+                                    {/for}
+                                </select>
+                            </div> 
+                        {/if} 
+                    </div>     
+                    <div class="row">
+                        <div class="col-md-3 static-text">{t("Email")}</div>
+                        <div class="col-md-9">
+                            <input type="text" value="{$model['email']}" name="email" />
+                        </div> 
+                    </div>   
+                    <div class="row">
+                        <div class="col-md-3 static-text">{t("IP address")}</div>
+                        <div class="col-md-9">
+                            <input type="text" value="{$model['ip']}" name="ip" />
+                        </div> 
+                    </div>
+                    {if !$model["isSuperUser"]}
+                        <div class="row">
+                            <div class="col-md-3 static-text"></div>
+                            <div class="col-md-9">
+                                <label>
+                                    <input type=toggle_swipe name=block value='1' checked="{$model['isBlocked']}" data-icon-on="check" data-icon-off="close">
+                                    {t("Block account")}
+                                </label>
+                            </div> 
+                        </div>
+                        <div class="row">
+                            <div class="col-md-3 static-text"></div>
+                            <div class="col-md-9">
+                                <label>
+                                    <input type=toggle_swipe name=noactive value='1' checked="{$model['isNotActive']}" data-icon-on="check" data-icon-off="close">
+                                    {t("Account not active")} 
+                                </label>
+                                {if $model["showActivatingCode"]}<span class="badge badge-silver" style="margin-left: 5px;">{t("Activating code")}: <b>{$model["recoveryCode"]}</b></span>{/if}
+                            </div> 
+                        </div>
+                    {/if}
+                    {if $model["isEditorSuperUser"]}
+                        <div class="row">
+                            <div class="col-md-3 static-text"></div>
+                            {if $model["isSuperUser"]}
+                                <div class="col-md-9 static-text">
+                                    <span class="material-symbols-outlined">visibility_off</span> {t("User is hidden in user list")}
+                                </div>
+                            {else}
+                                <div class="col-md-9">
+                                    <label>
+                                        <input type=toggle_swipe name=hidefromlist value='1' checked="{$model['isHidden']}" data-icon-on="check" data-icon-off="close">
+                                        {t("Hide from list of users")}
+                                    </label>
+                                </div> 
+                            {/if}
+                        </div>
+                    {/if}
+                {/if}
+                {if $model["isExpiredPermission"]}
+                    <div class="row">
+                        <div class="col-md-3 static-text">{t("Account expired")}</div>
+                        <div class="col-md-9">
+                            <input type="text" class="{$model['expired']==''?'is-error':''}" value="{$model['expired']}" name="expired" />
+                            {if $model['expired']==""}
+                                <div class="help-text help-text-error">{t("Expiration has not been set, account is blocked")}</div>
+                            {/if}
+                            <div class="help-text">{t("For example")} <b> {date(Utilities::getTimeFormat(), time())}</b> {t("or")}&nbsp;<i><u>+1 month</u></i> {t("to add one month to the current expiration")}</div>
+                        </div> 
+                    </div>
+                {/if}
+                <div class="row">
+                    <div class="col-md-3"></div>
+                    <div class="col-md-9">
+                        <button type="submit" class="submit button button-primary" name="save">{t('Save')}</button> 
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="card" data-collapsable="1" data-id="activity">
+            <div class="card-title">
+                {t("Activity")}
+            </div>
+            <div class="card-content card-small card-table">
+                <table class='table table-fixed'>
+                    <thead>
+                        <tr>
+                            <th width=120>{t("Action")}</th>
+                            <th width=120>{t("When")}</th>
+                            <th width=40>{t("IP")}</th>
+                            <th width=150>{t("Description")}</th>
+                            <th width=80></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {if count($model["actions"]) == 0}
+                            <tr>
+                                <td colspan="5" class="empty">{t("No data")}</td>
+                            </tr>
+                        {/if}
+                        {for $model["actions"] as $key => $action} 
+                            <tr>
+                                <td>
+                                    {if $action["type"] == "user_activation_resend"}
+                                        {t("Request for re-sending the activation code")}
+                                    {elseif $action["type"] == "user_activation_activated"}
+                                        {t("The user account has been activated")}
+                                    {elseif $action["type"] == "user_wrongPass"}
+                                        {t("Attempted login with wrong password")}
+                                    {elseif $action["type"] == "user_created"}
+                                        {t("Account has been created")}
+                                    {elseif $action["type"] == "user_activated"}
+                                        {t("The account has been activated")}
+                                    {elseif $action["type"] == "user_edited"}
+                                        {t("The account has been modified")}
+                                    {elseif $action["type"] == "user_loginas"}
+                                        {t("Login as a user")}
+                                    {elseif $action["type"] == "user_passwordChange"}
+                                        {t("The user has changed the password")}
+                                    {elseif $action["type"] == "user_passwordReset"}
+                                        {t("The user has requested a password change")}
+                                    {else}
+                                        {t($action["type"])}
+                                    {/if}                                     
+                                </td>
+                                <td>
+                                    <span class="material-symbols-outlined">schedule</span> {Strings::str_time($action["date"])}
+                                </td>
+                                <td>
+                                    {$action["ip"]}
+                                </td>
+                                <td>
+                                    {$action["text"]}
+                                </td>
+                                <td>
+                                    <a href="#" onclick="$('#action-data-{$action['id']}').toggle();$(this).toggleClass('toggle');return false;" class="button"><span class="material-symbols-outlined">visibility</span> {t("Show data")}</a>
+                                </td>
+                            </tr>
+                            <tr id="action-data-{$action['id']}" style="display:none;">
+                                <td colspan="5">
+                                    <b>{t("Id")}</b>: {$action["id"]}<br/>
+                                    <b>{t("Type")}</b>: <i>{$action["type"]}</i><br/>
+                                    <pre>
+                                        {$action["data"]==""?"<i>".t("No data")."</i>":$action["data"]}
+                                    </pre>
+                                </td>
+                            </tr>
+                        {/for}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-lg-12">
+        <div class="card">
+            <div class="card-title">
+                {t("Actions")}
+            </div>
+            <div class="card-content">
+                {if !$model["isSuperUser"] && !$model["isMe"]}
+                    <a href='#' class="button"><span class="material-symbols-outlined">key</span> {t("Login as this user")}</a>
+                {else}
+                    <i>{t("No actions")}</i>
+                {/if}
+            </div>
+        </div>
+        <div class="card" data-collapsable="1" data-id="relations">
+            <div class="card-title">
+                {t("Relations")}
+            </div>
+            <div class="card-content">
+                {if count($model["relations"]) == 0}
+                    <i>{t("No data")}</i>
+                {else}
+                    <ul class="card-list card-list-small">
+                        {for $model["relations"] as $key => $relation}
+                            {var $dt = Config::sload($relation["data"])}
+                            {var $isNotActive = (time() > $relation["timeto"])}
+                            {var $cl = $isNotActive?"card-item-disabled":""}
+                            <li class="{$cl}">
+                                {if !$isNotActive}
+                                    <div class="right-text">
+                                        <a href="#" title="{t('Cancel')}">
+                                            <span class="material-symbols-outlined">close</span>
+                                        </a>
+                                    </div>
+                                {/if}
+                                <div><b>{t("Date of create")}</b>: {Strings::str_time($relation["date"])}</div>
+                                <div><b>{t("Valid until")}</b>: {Strings::str_time($relation["timeto"])}</div>
+                                <div><b>{t("IP")}</b>: {$relation["ip"]}</div>
+                                <div><b>{t("Browser")}</b>: {$dt["browser"]} ({$dt["version"]})</div>
+                                <div class="small"><b>{t("Hash")}</b>: {$relation["hash"]}</div>
+                            </li>
+                        {/for}
+                    </ul>
+                {/if}
+            </div>
+        </div>
+    </div>
+</div>

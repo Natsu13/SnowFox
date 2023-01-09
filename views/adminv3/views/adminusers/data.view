@@ -1,0 +1,48 @@
+{for $model["rows"] as $key => $row}
+{continueif $row["isSuperUser"] && User::current()["id"] != $row["id"]}
+<tr>
+    <td>#{$row["id"]}</td>
+    <td>
+        {if $row["isSystem"]}        
+            <span class="material-symbols-outlined" title="{t('System account')}">smart_toy</span>
+        {elseif $row["isNotActive"]}        
+            <span class="material-symbols-outlined" title="{t('The account has not been activated')}">warning</span>
+        {elseif $row["isNotActiveAndBlocked"]}        
+            <span class="material-symbols-outlined" title="{t('The account is inactive and blocked')}">error</span>
+        {elseif $row["isBlocked"]}
+            <span class="material-symbols-outlined" title="{t('Blocked')}">block</span>
+        {elseif $row["isSuperUser"]}
+            <span class="material-symbols-outlined" title="{t('Superuser')}">badge</span>
+        {/if}
+    </td>
+    <td>
+        {$row["name"]}
+    </td>
+    <td>
+        <a href="mailto:{$row['email']}">{$row["email"]}</a>
+    </td>
+    <td>
+        {if $row["isSystem"]}
+            <span style="color:silver;" class="system-account">{t("System account")}</span>
+        {else}
+            <span style="color:{$row['permission']['color']};">{$row["permission"]["name"]}</span>
+        {/if}
+    </td>
+    <td>
+        {$row["ip"]}
+    </td>
+    <td>
+        <a href="{~/adminv3/users/edit/}{$row['id']}" class="button"><span class="material-symbols-outlined">edit</span> {t("Edit")}</a> 
+        {if $row["isSuperUser"]}
+            <a href="#" class="button disabled" disabled="disabled" onclick="return false;"><span class="material-symbols-outlined" title="{t('Account cannot be deleted')}">lock</span></a>
+        {else}
+            <a href="#" class="button" onclick="deleteUser('{$row["id"]}');return false;"><span class="material-symbols-outlined" title="{t('Delete user')}">delete</span></a>
+        {/if}
+    </td>
+</tr>
+{/for}
+<script>
+    var total_rows = {$model['total']};
+    var page = {$model['page']};
+    table_users.pushInfo({ total: total_rows, page: page });
+</script>

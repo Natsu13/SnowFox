@@ -1,0 +1,43 @@
+<form action="{~/adminv3/article/edit_categorySave/}{$model['id']}" method="post" id="category-edit">
+    <div class="row">
+        <div class="col-md-9">
+            <div class="card">
+                <div class="row">
+                    <div class="col-md-3 static-text">{t("Name")}</div>
+                    <div class="col-md-9">
+                        <input type="text" value="{$model['name']}" name="name" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3 static-text">{t("Alias")}</div>
+                    <div class="col-md-9">
+                        <input type="text" value="{$model['alias']}" name="alias" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3 static-text">{t("Description")}</div>
+                    <div class="col-md-9">
+                        <textarea rows="4" name="description" class="tinimce_mini">{$model['description']}</textarea>                        
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3 static-text">{t("Minimal permission")}</div>
+                    <div class="col-md-9">
+                        <select id=permission name=permission style='width:100%;'>
+							{for $model['permissions'] as $n => $row}
+								<option value='{$row["id"]}' selected="{$row['id'] == $model['minlevel']}">{$row["name"]} (Level: {$row["level"]})</option>
+							{/for}
+                            <option value=0 selected="{$model['minlevel'] == 0}">{t("Unregistered user")}</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3"></div>
+                    <div class="col-md-9">
+                        <button type="submit" class="submit button button-primary" name="save">{t('Save')}</button> 
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>

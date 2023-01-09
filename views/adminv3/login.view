@@ -1,0 +1,38 @@
+<div class="login">
+    <div class="left"></div>
+    <div class="right">
+        <div class="login-container">
+            <div class="powerdby">
+                Powered by <a href="http://natsu.cz/SnowFox" target="_blank">SnowFox</a>
+            </div>
+            <h1>{t("Login")}</h1>
+            <p>{t("For continue you need to login")}</p>
+            <br/>
+            {if isset($model["message"]) && $model["message"] != ""}
+                <div class="alert alert-danger">
+                    {$model["message"]}
+                </div>
+            {/if}
+            <form action="{~/adminv3/login/}" method="post">
+                <input type="hidden" name="back_url" value="{$model['url']}"/>
+                <div>
+                    <div>
+                        <label>
+                            <div>{t("Login")}</div>
+                            <input type="text" name="login" value="{$model['login']}" placeholder="name@email.cz"/>
+                        </label>
+                    </div>
+                    <div>
+                        <label>
+                            <div>{t("Password")}</div>
+                            <input type="password" name="password" placeholder="············"/>
+                        </label>
+                    </div>
+                    <div class="mt-3">
+                        <input type="submit" class="button button-full" value="{t('Login')}"/>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

@@ -99,6 +99,19 @@ class AdminArticleController extends AdminController {
     /**
      * @method POST
      */
+    function recycle(){        
+        if(!User::isPerm("recycle")) {
+            return $this->Error("You don't have permission to recycle articles");
+        }
+
+        //remove other languages
+        dibi::query('DELETE FROM :prefix:article WHERE state = 4');
+        return $this->Success("Recycled");
+    }
+
+    /**
+     * @method POST
+     */
     public function editSave($id, $lang) {        
         $result = $this->getArticle($id, $lang);
 
@@ -362,6 +375,18 @@ class AdminArticleController extends AdminController {
         dibi::query('UPDATE :prefix:category SET ', $arr, 'WHERE `id`=%s', $id);
 
         return $this->Success();
+    }
+
+    /**
+     * @method POST
+     */
+    function category_delete($id){
+        if($id == 1) {
+            return $this->Error("You can't delete main category");
+        }
+        
+        dibi::query('DELETE FROM :prefix:category WHERE id = %i', $id);
+        return $this->Success("Deleted");
     }
 
     public function edit_category($id) {

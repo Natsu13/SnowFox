@@ -1,0 +1,24 @@
+{for $model["rows"] as $key => $row}
+<tr>
+    <td>#{$row["id"]}</td>    
+    <td>
+        {if $row["isDeprecated"]}
+            <span class="material-symbols-outlined" title="{t('Deprecated')}">thumb_down</span>
+        {/if}
+    </td>
+    <td>{$row["version"]}</td>
+    <td>{$row["name"]}</td>
+    <td>{Strings::str_time($row["created"])}</td>
+    <td class="text-center">{$row["answers"]}</td>
+    <td>
+        <a href="{~/adminv3/content/answers/}{$row['id']}" class="button"><span class="material-symbols-outlined">visibility</span> {t("Answers")}</a>  
+        <a href="{~/adminv3/content/edit/}{$row['id']}" class="button"><span class="material-symbols-outlined">edit</span> {t("Edit")}</a> 
+        <a href="#" class="button" onclick="deleteForm('{$row["id"]}');return false;"><span class="material-symbols-outlined" title="{t('Delete form')}">delete</span></a>
+    </td>
+</tr>
+{/for}
+<script>
+    var total_rows = {$model['total']};
+    var page = {$model['page']};
+    table_forms.pushInfo({ total: total_rows, page: page });
+</script>

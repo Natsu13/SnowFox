@@ -1,0 +1,5 @@
+<?php foreach($model["rows"] as $key => $row) { ?><tr><td>#<?php echo $row["id"]; ?></td><td><a  href="mailto:<?php echo $row['from']; ?>"><?php echo $row["from"]; ?></a> </td><td><a  href="mailto:<?php echo $row['to']; ?>"><?php echo $row["to"]; ?></a> </td><td> <?php echo $row["subject"]; ?></td><td><span  style="color:<?php echo $row['user']['perm']['color']; ?>;"><?php echo $row["user"]["nick"]; ?></span>   (<?php echo $row["ip"]; ?>)
+    </td><td> <?php echo Strings::str_time($row["time"]); ?></td><td><a  href="<?php echo Router::url(); ?>adminv3/system/show_email/<?php echo $row['id']; ?>"  class="button"><span  class="material-symbols-outlined">visibility</span>   <?php echo t("Show"); ?></a>  </td></tr> <?php } ?><script> var total_rows = <?php echo $model['total']; ?>;
+    var page = <?php echo $model['page']; ?>;
+    table_emails.pushInfo({total: total_rows, page: page });
+</script>

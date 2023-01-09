@@ -1,0 +1,30 @@
+{for $model["rows"] as $key => $row}
+<tr>
+    <td>#{$row["id"]}</td>
+    <td>
+        {if $row["isSystemPermission"]}
+            <span class="material-symbols-outlined" title="{t('System permission')}">security</span>
+        {/if}
+    </td>
+    <td>{$row["name"]}</td>
+    <td>{$row["count"]}</td>
+    <td>{$row["level"]}</td>
+    <td>
+        {var $style = $row["color"] == "black"? "color:white;": "";}
+        <span class="badge" style="--badge-color: {$row['color']};{$style}">{$row["color"]}</span>
+    </td>
+    <td>
+        <a href="{~/adminv3/users/edit_permission/}{$row['id']}" class="button"><span class="material-symbols-outlined">edit</span> {t("Edit")}</a> 
+        {if $row["isSystemPermission"]}
+            <a href="#" class="button disabled" disabled="disabled" onclick="return false;"><span class="material-symbols-outlined" title="{t('Permission cannot be deleted')}">lock</span></a>
+        {else}
+            <a href="#" class="button" onclick="deletePermission('{$row["id"]}');return false;"><span class="material-symbols-outlined" title="{t('Delete permission')}">delete</span></a>
+        {/if}
+    </td>
+</tr>
+{/for}
+<script>
+    var total_rows = {$model['total']};
+    var page = {$model['page']};
+    table_permission.pushInfo({ total: total_rows, page: page });
+</script>

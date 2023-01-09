@@ -1,0 +1,118 @@
+<div class="row">
+    <div class="col-xl-12 col-lg-12">
+        <div class="card">
+            <div class="verical-full-height">
+                <div class="editor-text">
+                    <div class="toolbar">
+                        <button onclick="save()";>Save</button>
+                        <button onclick="closeEditor();">Close</button>
+                        <span id="file-name"></span>
+                    </div>
+                    <textarea id=code style="height: 100%;"></textarea>
+                </div>
+                <div class="box">
+                    <div class="column" id="col1">
+                        FTP1
+                    </div>
+                    <div class="column" id="col2">
+                        FTP2
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<link rel="stylesheet" href="{~/include/codemirror/lib/codemirror.css}">
+<link rel="stylesheet" href="{~/include/codemirror/addon/display/fullscreen.css}">
+<link rel="stylesheet" href="{~/include/codemirror/addon/dialog/dialog.css}">
+<link rel="stylesheet" href="{~/include/codemirror/addon/search/matchesonscrollbar.css}">
+<script src="{~/include/codemirror/lib/codemirror.js}"></script>
+<script src="{~/include/codemirror/mode/javascript/javascript.js}"></script>
+<script src="{~/include/codemirror/mode/xml/xml.js}"></script>
+<script src="{~/include/codemirror/mode/css/css.js}"></script>
+<script src="{~/include/codemirror/mode/htmlmixed/htmlmixed.js}"></script>
+<script src="{~/include/codemirror/addon/selection/active-line.js}"></script>
+<script src="{~/include/codemirror/addon/edit/matchbrackets.js}"></script>
+<script src="{~/include/codemirror/addon/edit/closebrackets.js}"></script>
+<script src="{~/include/codemirror/addon/edit/closetag.js}"></script>
+<script src="{~/include/codemirror/addon/display/fullscreen.js}"></script>
+<script src="{~/include/codemirror/addon/scroll/annotatescrollbar.js}"></script>
+<script src="{~/include/codemirror/addon/search/matchesonscrollbar.js}"></script>
+<script src="{~/include/codemirror/addon/search/searchcursor.js}"></script>
+<script src="{~/include/codemirror/addon/search/match-highlighter.js}"></script>
+<script src="{~/include/codemirror/addon/fold/xml-fold.js}"></script>
+<script src="{~/include/codemirror/addon/edit/matchtags.js}"></script>
+<script src="{~/include/codemirror/addon/mode/overlay.js}"></script>
+<script src="{~/include/codemirror/addon/dialog/dialog.js}"></script>
+<script src="{~/include/codemirror/addon/search/searchcursor.js}"></script>
+<script src="{~/include/codemirror/addon/search/search.js}"></script>
+<script src="{~/include/codemirror/addon/search/jump-to-line.js}"></script>
+<script>
+    function resizeFtp(){
+        var v = $(".verical-full-height");
+        v.css("height", $(window).outerHeight() - 150);
+    }
+    resizeFtp();
+    $(window).resize(function(){ resizeFtp(); });
+
+    var ftp, ftp2;
+    function closeEditor() {
+        $(".editor-text").hide();		
+    }
+    function save(){
+        ftp.saveFile(editor.getValue(), function(){ $(".editor-text").hide(); });			
+    }
+    var editor;
+    $(function(){
+        ftp = new FTP("#col1");
+        ftp2 = new FTP("#col2");
+        
+        ftp.onResize(function(width, height){
+            if($(".CodeMirror").hasClass("CodeMirror-fullscreen")){
+                $(".adminheader").css("z-index", 1);
+            }else{
+                $(".adminheader").css("z-index", 400);
+                $(".CodeMirror").css("width", 0);
+                $(".CodeMirror").css("height", 0);
+                $(".CodeMirror").css("width", width);
+                $(".CodeMirror").css("height", height - $(".toolbar").outerHeight() - 10);
+            }
+        });
+        ftp.onOpenEditor(function(url, name, text){
+            $(".editor-text").show();
+            editor.setValue(text);
+            $("#file-name").text(name);
+        });
+
+        editor = CodeMirror.fromTextArea(document.getElementById("code"), {
+            lineNumbers: true,
+            styleActiveLine: true,
+            matchBrackets: true,
+            autoCloseBrackets: true,
+            autoCloseTags: true,
+            mode: "text/html",
+            extraKeys: {
+                "F11": function(cm) {
+                    cm.setOption("fullScreen", !cm.getOption("fullScreen"));
+                    resizeBrowser();
+                },
+                "Esc": function(cm) {
+                    if (cm.getOption("fullScreen")) cm.setOption("fullScreen", false);
+                    resizeBrowser();
+                }
+            },
+            //highlightSelectionMatches: { showToken: /\w/, annotateScrollbar: true },
+            matchTags: { bothTags: true },
+            extraKeys: {
+                "Ctrl-J": "toMatchingTag",
+                "Alt-F": "findPersistent"
+            }
+        });
+        editor.on('change', editor => {
+            //editorChange(editor.getValue())
+        });
+
+        setTimeout(function(){ $(".editor-text").hide(); }, 1);
+    });
+</script>

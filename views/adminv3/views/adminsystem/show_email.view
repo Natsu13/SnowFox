@@ -1,0 +1,54 @@
+<div class="row">
+    <div class="col-xl-9 col-lg-12">
+        <div class="card">
+            <div class="buttonline hide-mobile" id="preview-toggle">
+                <a href="#" class="button toggle" onclick="$('#preview-toggle >.toggle').removeClass('toggle');$(this).addClass('toggle');$('#ifp').stop().animate({ width: '100%' }, 500, function(){ });return false;"><span class="material-symbols-outlined">language</span> {t("Web")}</a>
+                <a href="#" class="button" onclick="$('#preview-toggle >.toggle').removeClass('toggle');$(this).addClass('toggle');$('#ifp').stop().animate({ width: '450px' }, 500, function(){ });return false;"><span class="material-symbols-outlined">phone_android</span> {t("Mobile")}</a>
+            </div>
+            <div style="border: 1px solid #ebebeb;margin: 10px 0px;">
+                <iframe id="ifp" style="width: 100%;margin: 0px auto;display:block;" src="http://localhost/www/SnowLeopard/adminv3-loadContent/?_pageLoad=system/content_email/{$model['id']}"></iframe>
+            </div>            
+        </div>
+    </div>
+    <div class="col-xl-3 col-lg-12">
+        <div class="card">
+            <div class="card-title">
+                {t("Informations")}
+            </div>
+            <div class="card-content">
+                <ul class="card-list">
+                    <li>
+                        <div class="row">
+                            <div class="col-md-6"><span class="material-symbols-outlined">mail</span> {t("From")}</div>
+                            <div class="col-md-6">{$model["from"]}</div>
+                        </div>
+                    </li>
+                    <li>
+                        <div class="row">
+                            <div class="col-md-6"><span class="material-symbols-outlined">outgoing_mail</span> {t("To")}</div>
+                            <div class="col-md-6">{$model["to"]}</div>
+                        </div>
+                    </li>
+                    <li>
+                        <div class="row">
+                            <div class="col-md-6"><span class="material-symbols-outlined">schedule</span> {t("Sended")}</div>
+                            <div class="col-md-6">{Strings::str_time($model["sended"])}</div>
+                        </div>
+                    </li>
+                    <li>
+                        <div class="row">
+                            <div class="col-md-6"><span class="material-symbols-outlined">person</span> {t("Logged user")}</div>
+                            <div class="col-md-6">{$model["user"]["login"]}</div>
+                        </div>
+                    </li>
+                    <li>
+                        <div class="row">
+                            <div class="col-md-6"><span class="material-symbols-outlined">hub</span> {t("IP")}</div>
+                            <div class="col-md-6">{$model["ip"]}</div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>

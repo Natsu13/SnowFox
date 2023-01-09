@@ -1,0 +1,39 @@
+{for $model["rows"] as $key => $row}
+<tr>
+    <td>#{$row["id"]}</td>
+    <td>
+        {if $row["isMain"]}
+            <span class="material-symbols-outlined" title="{t('Main article')}">verified</span>
+        {elseif !$row["isPublic"]}
+            <span class="material-symbols-outlined" title="{t('Not public')}">visibility_off</span>
+        {/if}
+    </td>
+    <td>
+        {if $row["isMain"]}
+            <b>{$row["title"]}</b>
+        {else}
+            {$row["title"]}
+        {/if}
+    </td>
+    <td>
+        {if $row["custom"]}
+            <span class="material-symbols-outlined">remove_moderator</span> <i>{$row["author"]}</i>
+        {else}
+            {$row["author"]}
+        {/if}
+    </td>
+    <td>{$row["alias"]}</td>
+    <td>{Strings::str_time($row["date"])}</td>
+    <td>
+        <a href="{~/adminv3/article/edit/}{$row['id']}" class="button"><span class="material-symbols-outlined">edit</span> {t("Edit")}</a> 
+        {if $row["isDeleted"]}<a href="#" class="button" onclick="undeleteArticle('{$row["id"]}');return false;"><span class="material-symbols-outlined" title="{t('Restore article')}">recycling</span></a> {else}
+        <a href="#" class="button" onclick="deleteArticle('{$row["id"]}');return false;"><span class="material-symbols-outlined" title="{t('Delete article')}">delete</span></a> {/if}
+        {if $row["isPublic"]}<a href="#" class="button" onclick="stopPublishArticle('{$row["id"]}');return false;"><span class="material-symbols-outlined" title="{t('Cancel publishing')}">stop_circle</span></a>{/if}
+    </td>
+</tr>
+{/for}
+<script>
+    var total_rows = {$model['total']};
+    var page = {$model['page']};
+    table_articles.pushInfo({ total: total_rows, page: page });
+</script>

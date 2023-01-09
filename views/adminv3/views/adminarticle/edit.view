@@ -1,0 +1,420 @@
+<form action="{~/adminv3/article/editSave/}{$model['id']}" method="post" id="article-edit">
+    <input type='hidden' name="oid" value="{$model['id']}">
+    <div class="row">
+        <div class="col-xl-9 col-lg-12">
+            <div class="card">
+                <label class="small-title">
+                    <span>{t("Title")}</span>
+                    <input type="text" name="title" value="{$model['title']}" class="big"/>
+                </label>
+                <hr/>
+                <div class="row">
+                    <div class="col-md-4 static-text">{t("Alias")}</div>
+                    <div class="col-md-6">
+                        <input type="text" name="alias" value="{$model['alias']}"/>
+                    </div>
+                    <div class="col-md-2">
+                        <a class="button button-full" href="{~/}{$model['alias']}" target="_blank"><span class="material-symbols-outlined">visibility</span> {t("View")}</a>
+                    </div>
+                </div>
+                <div>
+                    <div class="switch">
+                        <a href="#" class="{if !$model['isHtml']}selected{/if}" id="switch-editor" onclick="switchToEditor();return false;">Editor</a>
+                        <a href="#" class="{if $model['isHtml']}selected{/if}" id="switch-html" onclick="switchToHtml(true);return false;">HTML</a>
+                    </div>
+                    <input type=hidden name=html id=htmlonlyval value="{($model['isHtml']?1:0)}"/>
+                    <textarea name=text style='width:100%;' class='tinimcenocheck' id=intereditor rows=20>{htmlentities($model["text"])}</textarea>
+                    <textarea id="text-original" class="hidden">{htmlentities($model["text"])}</textarea>
+                </div>
+            </div>
+            <div class="card" data-collapsable="1" data-id="history">
+                <div class="card-title">
+                    {t("History")}
+                </div>
+                <div class="card-content card-small card-table">
+                    <table class='table table-fixed'>
+                        <thead>
+                            <tr>
+                                <th width=120>{t("Edited")}</th>
+                                <th width=120>{t("When")}</th>
+                                <th width=90>{t("IP")}</th>
+                                <th width=70>{t("Size")}</th>
+                                <th width=160>{t("Type")}</th>
+                                <th width=80>{t("Action")}</th></tr>
+                        </thead>
+                        <tbody>
+                            {if count($model["history"]) == 0}
+                                <tr>
+                                    <td colspan="6" class="empty">{t("No data")}</td>
+                                </tr>
+                            {/if}
+                            {for $model["history"] as $key => $history} 
+                                <tr>
+                                    <td>{User::get($history["user"])["nick"]}</td>
+                                    <td>{Strings::str_time($history["date"])}</td>
+                                    <td>{$history["ip"]}</td>
+                                    <td>
+                                        {if strlen(utf8_decode($history["text"])) == 0}
+                                            <i>---</i>
+                                        {else}
+                                            <span>{strlen(utf8_decode($history["text"])) . "b"}</span>
+                                        {/if}
+                                    </td>
+                                    {if $history["type"] == "article_history"}
+                                        <td><span class="article-history-type-{$history['type']}">{t("Editing article")}</span></td>
+                                        <td>
+                                            <a href="#" class="button"><span class="material-symbols-outlined">download</span> {t("Load")}</a> 
+                                        </td>
+                                    {/if}
+                                    {if $history["type"] == "article_concept"}
+                                        <td><span class="article-history-type-{$history['type']}">{t("Saved draft")}</span></td>
+                                        <td>
+                                            <a href="#" class="button"><span class="material-symbols-outlined">visibility</span> {t("Show")}</a> 
+                                        </td>
+                                    {/if}
+                                    {if $history["type"] == "article_recycled"}
+                                        <td><span class="article-history-type-{$history['type']}">{t("Article recycled")}</span></td>
+                                        <td></td>
+                                    {/if}
+                                    {if $history["type"] == "article_cancel_recycled"}
+                                        <td><span class="article-history-type-{$history['type']}">{t("Recycling is canceled")}</span></td>
+                                        <td></td>
+                                    {/if}
+                                </tr>
+                            {/for}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-lg-12">
+            <div class="card">
+                <div class="card-content">
+                    <ul class="card-list">
+                        <li>
+                            <div class="row">
+                                <div class="col-md-6 flex-middle">
+                                    <span class="title">{t("Language")}</span>
+                                </div>
+                                <div class="col-md-6">
+                                    <select id="lang" name="lang" style="width: 100%;">
+                                        {for $model["languages"] as $key => $lang}
+                                            <option value="{($lang == $model['default-language'] ? '': $lang)}" selected="{$lang == $model['language'] || ($model['language'] == '' && $lang == $model['default-language'])}">{t($lang)}</option>
+                                        {/for}
+                                    </select>
+                                </div>
+                            </div>
+                        </li>
+                    </ul>
+                </div>                    
+            </div>
+            <div class="card" data-collapsable="1" data-id="settings">
+                <div class="card-title">
+                    {t("Settings")}
+                </div>
+                <div class="card-content">
+                    <ul class="card-list">
+                        <li>
+                            {if $model["state"] == 5 || $model["state"] == 0}
+                                {if User::isPerm("public") == 0 && $model["state"] == 5}
+                                    <span>
+                                        <span class="material-symbols-outlined">close</span> {t("You do not have permission to publish articles")}
+                                    </span>
+                                {elseif Database::getConfig("mainpage") == $model["id"]}
+                                    <span>
+                                        <span class="material-symbols-outlined">verified</span> {t("Main article")}
+                                    </span>
+                                {else}
+                                    <label>
+                                        <div class="right-text text-bold">
+                                            <input type="toggle_swipe" checked="{$model['state'] != 5}" name="public" value="1" data-icon-on="check" data-icon-off="close">
+                                        </div>
+                                        {t("Publish article")}
+                                    </label>
+                                {/if}
+                            {else}
+                                <span><span class="material-symbols-outlined">delete</span> {t("Article recycled")}</span>
+                            {/if}
+                        </li>
+                        <li>
+                            <div class="row">
+                                <div class="col-md-6 flex-middle">
+                                    <span class="title">{t("Category")}</span>
+                                </div>
+                                <div class="col-md-6">
+                                    <select id="category" name="category" style="width: 100%;">
+                                        {for $model["categories"] as $key => $category}
+                                            <option value="{$category['id']}" selected="{$category['id']==$model['category']}">{$category["name"]}</option>
+                                        {/for}
+                                    </select>
+                                </div>
+                            </div>
+                        </li>
+                        {comment}
+                        <li>
+                            <div class="row">
+                                <div class="col-md-6 flex-middle">
+                                    <span class="title">{t("Language")}</span>
+                                </div>
+                                <div class="col-md-6">
+                                    <select id="lang" name="lang" style="width: 100%;">
+                                        {for $model["languages"] as $key => $lang}
+                                            <option value="{($lang == $model['default-language'] ? '': $lang)}" selected="{$lang == $model['language'] || ($model['language'] == '' && $lang == $model['default-language'])}">{t($lang)}</option>
+                                        {/for}
+                                    </select>
+                                </div>
+                            </div>
+                        </li>
+                        {/comment}
+                        <li>
+                            <div class="row">
+                                <div class="col-md-6 flex-middle">
+                                    <span class="title">{t("Visibility")}</span>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class='visibility-admin'>
+                                        <select id="visibility" name="visiblity" style="width: 100%;" onchange="changeVisibility(this);return false;">
+                                            <option value="1" selected="{$model['visiblity'] == ''}">{t("Public")}</option>
+                                            <option value="2" selected="{$model['visiblity'] == '2'}">{t("Private")}</option>
+                                            <option value="3" selected="{$model['visiblity'] != '' && $model['visiblity'] != '2'}">{t("Protected by password")}</option>
+                                        </select>                                    
+                                    </div>
+                                </div>
+                            </div>
+                            <span id='span-vishes' class="mini-div-bac" style='display: {($model["visiblity"] != "" && $model["visiblity"] != "2" ? "block" : "none")};'>
+                                <label>
+                                    {t("Enter password")}:
+                                    <input type=text name=vishes-pass id=vishes-pass value='{($model["visiblity"] != "" && $model["visiblity"] != "2" ? substr($model["visiblity"], 1) : "")}' style='width:100%;'>
+                                </label>
+                            </span>
+                        </li>
+                        <li>
+                            <button type=submit onclick='beforeSubmit();' class='button submit' name=edit>{t("Save article")}</button> 
+                            <button name=edit class='button button-warning' onClick="saveConcept();return false;">{t("Save draft")}</button> 
+                            <div id='state-info' style='margin-top: 7px;display:none;'></div>
+                        </li>
+                    </ul>                    
+                </div>
+            </div>
+            <div class="card" data-collapsable="1" data-id="utilities-menu">
+                <div class="card-title">
+                    {t("Utilities")}
+                </div>
+                <div class="card-content">
+                    <ul class="card-list">
+                        <li>
+                            <div class="row">
+                                <div class="col-md-6 flex-middle">
+                                    <span class="title">{t("Comments")}</span>
+                                </div>
+                                <div class="col-md-6">
+                                    <select id="comments" name="comments" style="width: 100%;">
+                                        <option value="1" selected="{$model['comments'] == 1}">{t("Enable comments")}</option>
+                                        <option value="2" selected="{$model['comments'] == 2}">{t("Only logged")}</option>
+                                        <option value="3" selected="{$model['comments'] == 3}">{t("Disable comments")}</option>
+                                    </select>
+                                </div>
+                            </div>                            
+                        </li>
+                        <li>
+                            <div class="row">
+                                <div class="col-md-6 flex-middle">
+                                    <span class="title">{t("Author")}</span>
+                                </div>
+                                <div class="col-md-6">
+                                    <select id="comments" name="author" style="width: 100%;" onchange="authorChange(this);return false;">
+                                        <option value='custom' selected="{$model['isCustomAuthor']}">{t("Custom")}</option>
+                                        {for $model["authors"] as $key => $author}
+                                            <option value="{$author['id']}" selected="{$model['author'] == $author['id'] && !$model['isCustomAuthor']}">{$author["nick"]}</option>
+                                        {/for}
+                                    </select>
+                                    <input type=text value="{$model['authorName']}" style="display:{$model['isCustomAuthor'] ? 'block' : 'none'};width:100%;padding: 6px 12px;border-top:0px;" placeholder="{t('Custom author')}" name=customname id=customname>
+                                </div>
+                            </div>                                                   
+                            <div class="text-right">
+                                {t("Original author")}: <b>{$model['originalAuthorName']}</b>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="row">
+                                <div class="col-md-6 flex-middle">
+                                    <span class="title">{t("Display other menu")}</span>
+                                </div>
+                                <div class="col-md-6">
+                                    <select id=box name=custommenu style='width:100%;'>
+                                        <option value=''> - {t("Not to use")} - </option>
+                                        {for $model["menus"] as $key => $menu}
+                                            <option value="{$key}" selected="{$model['custommenu'] == $key}">{$key}</option>
+                                        {/for}
+                                    </select>
+                                </div>
+                            </div>                                                        
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card" data-collapsable="1" data-id="tags-menu">
+                <div class="card-title">
+                    {t("Tags")}
+                </div>
+                <div class="card-content">
+                    <input type=text autocomplete=off onKeyDown="if(event.keyCode == 13){ addTags($('#tags').val());$('#tags').val('');return false; }" name=tag id=tags style='width: 78%; margin-right: 9px;'> <button onClick="addTags($('#tags').val());$('#tags').val('');return false;" class='btn btn-primary' style='padding: 6px;width: 66px;position: relative;top: -2px;'>{t("Add")}</button>
+                    <div id=tagsp class="tag-lines"></div>
+                    <hr/>
+                    <div class='info'>
+                        {t("More tags separated by commas")}<br>
+                        {t("Some special tags")}: <br>
+                        <div><a href="#" onClick="addTags('form');return false;">form</a> - hide top and bottom information, autor, tags</div>
+                        <div><a href="#" onClick="addTags('test');return false;">test</a> - at top add information this article is used for testing</div>
+                        <div><a href="#" onClick="addTags('no-header');return false;">no-header</a> - hidde header name</div>
+                        <div><a href="#" onClick="addTags('template');return false;">template</a> - show page as template</div>
+                        <div><a href="#" onClick="addTags('no-comments');return false;">no-comments</a> - hide comments</div>
+                    </div>
+                    <textarea id=tagst name=article_tags style='display:none;'>{$model["tags"]}</textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<script>
+    var isHtml = {$model['isHtml']==1?"true":"false"};
+    var lang = '{$model['language']}';
+</script>
+<script>
+    $(function(){
+        if(isHtml) {
+            setTimeout(function(){ 
+                switchToHtml(true); 
+                $("#intereditor").val($("#text-original").val());
+            }, 100); 
+        }
+
+        $("#lang").on("change", function(){
+            var newLang = $(this).find("option:selected").val();
+            if(newLang != lang) {
+                var url = "{~/adminv3/article/edit/}{$model['main_id']}";
+                if(newLang != "") {
+                    url += "?lang=" + newLang;
+                }                
+                manager.loadPage(url, null, null, true);
+            }
+        });
+
+        loadeditor();
+        bindEditor();
+    });
+
+    function bindEditor(){
+        $("#intereditor").on("keyup", function(){
+			if($("#htmlonlyval").val() == "0") {
+				var text = $(this).val();
+				tinymce.activeEditor.setContent(text);
+				tinymce.activeEditor.getDoc().designMode = 'Off';				
+			}
+		});
+    }
+
+    function beforeSubmit(){
+        if($("#htmlonlyval").val() == "0") {
+            $("[name=text]").val(tinymce.activeEditor.getContent());
+        }
+    }
+
+    function removeTag(a){
+		var t = $("#tagst").val();
+		var p = t.split(",");
+		var q = "";
+		for(var i = 0;i < p.length; i++){
+			if(i != a){
+				if(q != "") q+=",";
+				q+=p[i];
+			}
+		}
+		$("#tagst").val(q);
+		drawTags();
+	}
+	function drawTags(){
+		var t = $("#tagst").val();
+		if(t == "")
+			$("#tagsp").html("<span style='padding: 5px;color:silver;display: block;'>{t('No tags')}</span>");
+		else
+			$("#tagsp").html("");
+		var p = t.split(",");
+		for(var i = 0;i < p.length; i++){
+			if(p[i].trim() != ""){
+				$("#tagsp").append("<span class='adm_tag animate'><a href=# onClick='removeTag("+i+");return false;' class='delete-icon'><span class='material-symbols-outlined'>close</span></a> "+p[i]+"</span>");
+			}
+		}
+	}
+	function addTags(tags){
+		var t = $("#tagst").val();
+		var p = tags.split(",");
+		for(var i = 0;i < p.length; i++){
+			if(p[i].trim() != ""){
+				if(t != "") t+=",";
+				t+=p[i].trim();
+			}
+		}
+		$("#tagst").val(t);
+		drawTags();
+	}
+	drawTags();
+
+    function authorChange(el){
+        var val = $(el).find('option:selected').val();
+        if(val == 'custom'){
+            $("#customname").show();
+        }else{
+            $("#customname").hide();
+        }
+    }
+    function changeVisibility(el){
+        var val = $(el).find('option:selected').val();
+        if(val == 3){
+            $('#span-vishes').css('display','block');
+            $('#vishes-pass').select(); 
+        }else{
+            $('#span-vishes').hide();
+        }
+    }
+
+    var ace = null;
+    function switchToHtml(html){
+		//$('#htmlonly').show();	
+        $("#switch-html").addClass("selected");
+        $("#switch-editor").removeClass("selected");
+        ace = tinymce.activeEditor;
+        console.log(tinymce.activeEditor);
+        tinyMCE.remove();
+
+        console.log(html);				
+		if(html === true){
+			$('#htmlonly').val($("#oldtextsaved").val());
+		}else{
+			$('#htmlonly').val(tinymce.activeEditor.getContent());
+		}
+        
+		//tinymce.remove('#intereditor');
+		$('#htmlonlyval').val(1);
+		try{            
+			tinymce.activeEditor.hide();
+			tinymce.activeEditor.getDoc().designMode = 'Off';									
+		}catch{ }
+	}
+	function switchToEditor(html){
+		//if($("#htmlonlyval").val() == 1) {
+		//	window.location.href = "?lang="+lang+"&html=0";//fixme
+		//}else{
+			//ace.show();
+			//try{ ace.setContent($('#htmlonly').val()); }catch(e){ }
+			//ace.getDoc().designMode = 'On';
+            $("#switch-editor").addClass("selected");
+            $("#switch-html").removeClass("selected");
+
+            loadeditor();
+			$('#htmlonlyval').val(0);
+            bindEditor();
+		//}
+	}
+</script>

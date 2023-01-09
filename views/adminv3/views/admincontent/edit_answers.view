@@ -1,0 +1,100 @@
+<div class="row">
+    <div class="col-xl-9 col-lg-12">
+        <div class="card">     
+            {if $model["isFromRegistration"]}
+                <div class="alert alert-warning">
+                    <div>{t("This form was submited by registration form")}</div>
+                </div>
+            {/if}  
+
+            <form id="answeredit" method="post" action="{~/adminv3/content/update_answers/}{$model['id']}">   
+                {for $model["formData"] as $key => $data}
+                    {continueif $data["type"] == "submit"}
+                    
+                    <div class="row">
+                        <div class="col-md-3 static-text">{$data["title"]}</div>                        
+                            {if $data["type"] == "select"}
+                                <div class="col-md-9 static-text">
+                                    {for $data["value"] as $key => $val}
+                                        <div><span class="material-symbols-outlined">check_box</span> {$val}</div>
+                                    {/for}
+                                </div>
+                            {elseif $data["type"] == "picker"}
+                                <div class="col-md-9 static-text">
+                                    <div><b>{$data["value"]["title"]}</b></div>
+                                    <div class="help-text">{$data["value"]["description"]}</div>
+                                    <div class="help-text">{t("Minimal permission")}: <span style="color:{$data['value']['minimalPerm']['color']};">{$data["value"]["minimalPerm"]["name"]}</span></div>
+                                </div>
+                            {elseif $data["type"] == "textarea"}
+                                <div class="col-md-9">
+                                    <textarea rows="3" readonly>{$data['value']}</textarea>
+                                </div>
+                            {elseif $data["type"] == "recaptcha"}
+                                <div class="col-md-9 static-text">
+                                    <span class="material-symbols-outlined">done</span> {t("Captcha passed")}
+                                </div>
+                            {elseif $data["type"] == "password" && !$model["isFromRegistration"]}
+                                <div class="col-md-9">
+                                    <input type="password" id="field-{$data['id']}" readonly value="{$data['value']}"/>
+                                    <div class="help-text"><a href="#" onclick="$('#field-{$data['id']}').prop('type', 'text');$(this).hide();return false;"><span class="material-symbols-outlined">visibility</span> {t("View")}</a></div>
+                                </div>
+                            {elseif $data["type"] == "upload"}
+                                <div class="col-md-9 static-text">
+                                    <a href="{$data['value']}" target="_blank"><span class="material-symbols-outlined">attach_file</span> {t("Go to file")}</a>
+                                </div>
+                            {else}
+                                <div class="col-md-9">
+                                    <input type="text" readonly value="{$data['value']}" title="{t('Date type of this item is').': '.$data['type']}"/>                                    
+                                </div>
+                            {/if}
+                    </div> 
+                {/for}
+            </form>
+        </div>
+    </div>
+    <div class="col-xl-3 col-lg-12">
+        <div class="card">
+            <div class="card-title">
+                {t("Information about sender")}
+            </div>
+            <div class="card-content">
+                <ul class="card-list">
+                    <li>
+                        <div class="right-text">
+                            {if $model["user"] == null}
+                                <span class="material-symbols-outlined" title="{t('Not logged in')}">remove_moderator</span> <i class="text-not-important">{t("Not logged in")}</i>
+                            {else}
+                                {$model["user"]["nick"]}
+                            {/if}
+                        </div>
+                        {t("User")}
+                    </li>
+                    <li>
+                        <div class="right-text">
+                            {$model["ip"]}
+                        </div>
+                        {t("IP")}
+                    </li>
+                    <li>
+                        <div class="right-text">
+                            {$model["browser"]}
+                        </div>
+                        {t("Browser")}
+                    </li>
+                    <li>
+                        <div class="right-text">
+                            {Strings::str_time($model["created"])}
+                        </div>
+                        {t("Created")}
+                    </li>
+                    <li>
+                        <div class="right-text text-bold">
+                            {$model["submit"]}
+                        </div>
+                        {t("Send with")}
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>

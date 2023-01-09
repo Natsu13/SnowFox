@@ -1,0 +1,112 @@
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+<div class="admin">
+    <div class="admin-title">
+        <div class="admin-title-nofitication notification-success" style="display:none;">
+            <div class="notification-progress"></div>
+            <div class="text">Hello world</div>
+        </div>
+        <div class="left-side">
+            <div class="menu-bar" onclick="manager.toggleLeftMenu();return false;">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <div class="text">
+                AdminV3
+                <div class="subtitle">powered by <a href="https://natsu.cz/about/" target="_blank">SnowFox</a></div>
+            </div>
+        </div>
+        <div class="middle-side">
+            <div class="search-widget">
+                <div class="search-input">
+                    <div class="icon"></div>
+                    <input type="text" placeholder="{t('Search')}"/>
+                </div>
+            </div>
+        </div>
+        <div class="right-side">
+            <ul>
+                <li class="icon">
+                    <a href="#"><i class="far fa-bell"></i></a>
+                </li>
+                <li>
+                    <a href="#"><img class="avatar" src="{~/upload/avatars/}{$model['user']['avatar']}"/></a>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <div class="admin-content">
+        <div class="left-menu">
+            <ul class="admin-left-menu">
+                {for $model["icons"] as $key => $icon}
+                    {var $className = $key==$model["module"]?"selected":""}
+                    {if $key == "info"}{var $keyMain = ""}{else}{var $keyMain = $key;}{/if}
+                    {var $hasSubMenu = count($icon["menu"]) > 0}
+                    <li class="{if $hasSubMenu}has-submenu closed {/if}{$className}">
+                        <div>
+                            <a href="{~/adminv3/}{$keyMain}" onclick="return manager.loadPage('{$key}', this);">
+                                <span class="icon"><i class="{$icon['icon']}"></i></span>
+                                {t($icon["text"])}
+                            </a>
+                            {if $hasSubMenu}
+                                <a href="#" class="opener" onclick="return openMenu(this);">
+                                    <i class="fas fa-angle-up"></i>
+                                </a>
+                            {/if}
+                        </div>
+                        {if count($icon["menu"]) > 0}
+                            <ul class="admin-sub-menu">
+                                {for $icon["menu"] as $menu_key => $menu_value}
+                                    <li>
+                                        <a href="{~/adminv3/}{$key}/{$menu_value['link']}/" onclick="return manager.loadPage('{$key}/{$menu_value["link"]}/', this);">
+                                            {t($menu_value["text"])}
+                                        </a>
+                                    </li>
+                                {/for}
+                            </ul>
+                        {/if}
+                    </li>
+                {/for}
+            </ul>
+        </div>
+        <div class="admin-page">
+            <div class="page-title">
+                <h1>Loading...</h1>
+                <ul class="admin-breadcrumb">
+                    <li><a href="#">{t("Home")}</a></li>
+                    <li><a href="#">Loading...</a></li>
+                </ul>
+            </div>   
+            <div class="content-page" id="main-page">
+                Loading...
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    var separator = "{$model['separator']}";
+    var manager;
+    $(function(){
+        var selected = $(".admin-left-menu li.selected");
+        if(selected.hasClass("closed")){
+            selected.removeClass("closed");
+            selected.addClass("open");
+        }
+
+        manager = new pageManager(selected, separator);
+        manager.loadPage("{$model['url']}", null, true);
+        start();
+
+        DialogService.register(dialogCallback);
+    });
+
+    function dialogCallback(type, data) {
+        //console.log(">> Window callback", type, data);
+        if(type == "created") {
+            manager.windows.push(data);
+        }
+    }
+</script>

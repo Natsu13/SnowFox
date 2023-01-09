@@ -1,0 +1,22 @@
+<div class="row">
+    <div class="col-md-12">
+        <div class="tools">
+            <a class="button" href="{~/adminv3/content/edit/}{$model['id']}"><span class="material-symbols-outlined">edit</span>{t("Edit form")}</a>
+        </div>
+        <div class="card">
+            {table("answers", Router::url()."adminv3/content/data_answers/".$model["id"], [
+                "id" => ["name" => "Id", "width" => 70], 
+                "state" => ["width" => 5],
+                "user" => ["name" => "User"],
+                "created" => ["name" => "Created", "width" => 200],
+                "ip" => ["name" => "IP", "width" => 200],
+                "send" => ["name" => "Send with", "width" => 250],
+                "browser" => ["name" => "Browser", "width" => 350],
+                "action" => ["name" => "Action", "width" => 250]
+            ])}
+        </div>
+        <div class="card">
+            {tablePaginator("answers")}
+        </div>
+    </div>
+</div>

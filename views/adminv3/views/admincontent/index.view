@@ -1,0 +1,43 @@
+<div class="row">
+    <div class="col-md-12">
+        <div class="tools">
+            <button class="button" onclick="createForm();return false;"><span class="material-symbols-outlined">add</span>{t("New form")}</button> 
+            <a href="{~/adminv3/content/settings/}" class="button"><span class="material-symbols-outlined">settings</span> {t("Settings")}</a>
+        </div>
+        <div class="card">
+            {table("forms", Router::url()."adminv3/content/data/", [
+                "id" => ["name" => "Id", "width" => 70],                 
+                "state" => ["width" => 5],
+                "version" => ["name" => "Ver", "title" => "Version", "width" => 70], 
+                "title" => ["name" => "Title"],
+                "created" => ["name" => "Created", "width" => 200],
+                "answers" => ["name" => "Answers", "width" => 100],
+                "action" => ["name" => "Action", "width" => 350]
+            ])}
+        </div>
+        <div class="card">
+            {tablePaginator("forms")}
+        </div>
+    </div>
+</div>
+<script>
+    function createForm(){
+        inputBox("{t('New form')}", "{t('Enter name for new form')}", "{t('New form')}", function(value){
+            manager.get("{~/adminv3/content/create/}", { name: value },  function (data, isSuccess) {
+                if(isSuccess) {
+                    manager.loadPage("{~/adminv3/content/edit/}" + data.id, null);
+                }
+            });
+        }, function(){ });
+    }
+
+    function deleteForm(id){
+        confirmBox("{t('Remove form')}", "{t('Are you sure you want to remove this form?')}", function(){
+            manager.get("{~/adminv3/content/delete/}"+id, { },  function (data, isSuccess) {
+                if(isSuccess) {
+                    table_forms.reload();
+                }
+            });
+        }, function(){ });
+    }
+</script>
